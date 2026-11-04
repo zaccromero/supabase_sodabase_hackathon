@@ -37,12 +37,17 @@ function livePool(): Pool {
   const local = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
   // pg lets sslmode in the URL override the ssl object below, so the object decides.
   url.searchParams.delete('sslmode');
+  // Session mode caps clients at a small limit that a few serverless instances can fill.
+  // Transaction mode (6543, same host) shares connections, and every query here runs inside a transaction.
+  if (url.hostname.endsWith('.pooler.supabase.com') && url.port === '5432') url.port = '6543';
   const ca = process.env.SUPABASE_DB_CA?.replace(/\\n/g, '\n') || (isSupabaseHost(url.hostname) ? SUPABASE_CA : undefined);
   const pool = new Pool({
     connectionString: url.toString(),
-    max: 4,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 30000,
+    // One per instance: page sections wait their turn, so the timeout allows for the queue.
+    max: 1,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 2000,
+    allowExitOnIdle: true,
     // Certificates are always verified: against SUPABASE_DB_CA if set, the bundled
     // Supabase CA on a Supabase host, otherwise the system's trusted roots.
     ssl: local ? undefined : ca ? { ca } : true,
