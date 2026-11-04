@@ -87,7 +87,7 @@ Timings are cumulative. Twenty seconds a beat leaves no spare time, so cut words
 
 **Say:** "This is a real model run with a fresh start: [read the model off the screen]. It got no repair notes. It pinned my decision, it revised that same line, it passed the gate, and I did not have to repeat myself."
 
-Say "Yes" only if the hero says **Yes**. The hero says it only when the finding is verified, the verifying run is a different run, it completed, and it pinned the correction.
+Say "Yes" only if the hero says **Yes**. The hero says it only when the finding is verified, the verifying run is a different run, it completed, and it pinned the decision. If the hero asks "Did a fresh run follow the accepted decision?", use those words, not "the correction survived": no new decision version was made in this chain.
 
 *If it has not run:* "It says 'Not yet', because no fresh run has followed this correction. The screen does not get to claim it."
 

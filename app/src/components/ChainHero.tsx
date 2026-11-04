@@ -45,15 +45,28 @@ const passCount = (e: EvaluationRow[]) => e.filter((x) => x.verdict === 'pass').
 export function ChainHero({ chain, records, label }: { chain: Chain | null; records: Records; label: ReactNode }) {
   const h = headline(chain);
   const now = records.readAt;
+  // No new decision version means nothing was corrected here: the run followed what was already accepted.
+  const followedAccepted = !!chain?.proven && !chain.correctionIsNewVersion;
   return (
     <section id="chain" className="hero" aria-labelledby="q-correction">
       <div className="hero-head">
-        <h2 id="q-correction" className="question">Did the correction work? {label}</h2>
-        <p className={h.yes ? 'answer yes' : 'answer'}><em>{h.lead}</em> {h.rest}</p>
+        {followedAccepted ? (
+          <>
+            {label ? <p className="question">{label}</p> : null}
+            <h2 id="q-correction" className="answer yes">Did a fresh run follow the accepted decision? <em>Yes.</em></h2>
+          </>
+        ) : (
+          <>
+            <h2 id="q-correction" className="question">Did the correction work? {label}</h2>
+            <p className={h.yes ? 'answer yes' : 'answer'}><em>{h.lead}</em> {h.rest}</p>
+          </>
+        )}
         {chain?.conflictIsReplay ? (
           <p className="flag-line hero-flag">
             <span className="flag">historical replay</span>
-            The conflict is a labeled replay of an old slide line, not new model output. {chain.freshRun ? 'The fresh run is a real model run.' : ''}
+            {chain.proven && chain.rejection && chain.correction
+              ? `A historical line was replayed and rejected by the gate, then a new run pinned ${chain.correction.decision_key} v${chain.correction.version} and passed.`
+              : 'The conflict is a labeled replay of an old slide line, not new model output.'}
           </p>
         ) : null}
       </div>

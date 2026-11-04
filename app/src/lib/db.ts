@@ -25,8 +25,9 @@ export function liveDatabaseLabel(): string {
 // A hosted page never shows test rows: with no database it says so.
 export const dbMode = (): DbMode => (process.env.SUPABASE_DB_URL ? 'live' : hosted() ? 'none' : 'local');
 
-// Founder writes stay on the owner's machine. The hosted page is read-only.
-export const founderWritesAllowed = () => !hosted();
+// Hosted, founder writes exist only behind DASHBOARD_PASSWORD, which then gates every page
+// (src/proxy.ts). Without it the hosted page is read-only, whoever can open it.
+export const founderWritesAllowed = () => !hosted() || Boolean(process.env.DASHBOARD_PASSWORD);
 
 const globals = globalThis as unknown as { __cmPool?: Pool };
 
