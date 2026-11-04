@@ -10,6 +10,7 @@ import { createHandlers, driftReviewTask, handlers, modelClientFromEnv } from '.
 import { createDriftReviewer, textLeaves } from '../src/agents/driftReviewer.js';
 import { ageInDays, createGymOperator } from '../src/agents/gymOperator.js';
 import { type GymReader, readerFromExecutor, validateGymSql } from '../src/agents/gymReader.js';
+import { withHermesGeneration } from '../src/governance-demo/hermes-transport.js';
 import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, DEFAULT_SLIDE_PACKET, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
 import { AgentOutputError, AgentRefusalError, type ModelClient, ModelClientRequiredError, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
 import { buildSystemPrompt, withTechnique } from '../src/agents/prompt.js';
@@ -17,8 +18,10 @@ import { buildSystemPrompt, withTechnique } from '../src/agents/prompt.js';
 type Block = Record<string, unknown>;
 const reply = (content: Block[], stop_reason: string, extra: Block = {}) =>
   ({ id: 'msg_test', type: 'message', role: 'assistant', model: 'scripted-test-model', content, stop_reason, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 5 }, ...extra }) as unknown as ModelResponse;
-const toolCall = (name: string, input: Block, id = `tool_${name}`) => reply([{ type: 'tool_use', id, name, input }], 'tool_use');
 const json = (value: unknown) => reply([{ type: 'text', text: JSON.stringify(value) }], 'end_turn');
+
+const explore = (...sql: string[]) => json({ explore: sql, final: null });
+const submit = (final: Block) => json({ explore: [], final });
 
 class ScriptedModelClientForTests implements ModelClient {
   readonly transport = 'scripted_test_double';
@@ -144,9 +147,8 @@ describe('gym read-only reader', () => {
 
   it('builds the contract body from executed SQL and records SQL and counts as evidence', async () => {
     const model = new ScriptedModelClientForTests([
-      toolCall('describe_gym_schema', {}),
-      toolCall('run_sql', { sql: 'select count(*) as n from memberships_test_fixture' }),
-      toolCall('submit_answer', { sql: answerSql, definition: 'memberships_test_fixture where active', freshness_sql: freshnessSql }),
+      explore('select count(*) as n from memberships_test_fixture'),
+      submit({ sql: answerSql, definition: 'memberships_test_fixture where active', freshness_sql: freshnessSql }),
     ]);
     const { body, evidence } = await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
     expect(body).toEqual({
@@ -161,19 +163,19 @@ describe('gym read-only reader', () => {
     expect(sqlEvidence.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(evidence.find((item) => item.kind === 'data_freshness')!.payload.sql).toBe(freshnessSql);
     expect((evidence.find((item) => item.kind === 'sql_trace')!.payload.queries as unknown[]).length).toBe(3);
-    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 3 });
+    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 2 });
   });
 
   it('reports no total rather than a zero when the query returns no rows', async () => {
     const empty = "select location_id, count(*) as active_individual_members from memberships_test_fixture where location_id = 'none' group by 1";
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: empty, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: empty, definition: 'd', freshness_sql: freshnessSql })]);
     const { body, evidence } = await gym(model)({ ...base, task: 'q', decisions: [] });
     expect(body.answer).toEqual([]);
     expect(evidence.find((item) => item.kind === 'sql_result')!.payload.metric_totals).toEqual({});
   });
 
   it('gives the baseline no definition hint', async () => {
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
     const sent = JSON.stringify(model.requests[0]);
     for (const hint of ['MATCHED_INDIVIDUAL', 'bridge_class', 'ezf_active_memberships', 'churned_at', 'projection', 'pinned_decisions']) {
@@ -182,31 +184,84 @@ describe('gym read-only reader', () => {
   });
 
   it('carries a pinned definition into the system prompt when one exists', async () => {
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     const pinned = { ...decision, decision_key: 'gym.active_definition', statement: 'Count MATCHED_INDIVIDUAL from the latest complete projection.' };
     await gym(model)({ ...base, task: 'q', decisions: [pinned], technique: { style: 'count churned_at IS NULL instead' } });
     expect(String(model.requests[0]!.system)).toContain('MATCHED_INDIVIDUAL');
     expect(String(model.requests[0]!.system)).not.toContain('churned_at IS NULL');
   });
 
-  it('returns tool errors to the model and lets it recover, keeping the failure in the trace', async () => {
+  it('returns query and answer errors to the model and lets it recover, keeping the failure in the trace', async () => {
     const model = new ScriptedModelClientForTests([
-      toolCall('run_sql', { sql: 'delete from memberships_test_fixture' }),
-      toolCall('submit_answer', { sql: 'select count(*) as n from memberships_test_fixture', definition: 'd', freshness_sql: freshnessSql }),
-      toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql }),
+      explore('delete from memberships_test_fixture'),
+      submit({ sql: 'select count(*) as n from memberships_test_fixture', definition: 'd', freshness_sql: freshnessSql }),
+      submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql }),
     ]);
     const { evidence } = await gym(model)({ ...base, task: 'q', decisions: [] });
-    const firstResult = model.requests[1]!.messages.at(-1)!.content as unknown as Block[];
-    expect(firstResult[0]).toMatchObject({ type: 'tool_result', is_error: true });
-    const secondResult = model.requests[2]!.messages.at(-1)!.content as unknown as Block[];
-    expect(secondResult[0]!.content).toMatch(/location_id/);
+    expect(JSON.stringify(model.requests[1]!.messages.at(-1))).toMatch(/SELECT or WITH/);
+    expect(JSON.stringify(model.requests[2]!.messages.at(-1))).toMatch(/location_id/);
     const queries = evidence.find((item) => item.kind === 'sql_trace')!.payload.queries as Array<{ error?: string }>;
     expect(queries[0]!.error).toMatch(/SELECT or WITH/);
+    expect((await db.query<{ n: number }>('select count(*)::int n from gym.memberships_test_fixture')).rows[0]!.n).toBe(4);
   });
 
-  it('never fabricates when the model will not submit', async () => {
-    const model = new ScriptedModelClientForTests([reply([{ type: 'text', text: 'About 500.' }], 'end_turn'), reply([{ type: 'text', text: 'About 500.' }], 'end_turn')]);
-    await expect(gym(model)({ ...base, task: 'q', decisions: [] })).rejects.toBeInstanceOf(AgentOutputError);
+  it('sends the real schema up front and no tools on any turn', async () => {
+    const model = new ScriptedModelClientForTests([explore('select 1 as n'), submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    await gym(model)({ ...base, task: 'q', decisions: [] });
+    expect(JSON.stringify(model.requests[0]!.messages[0])).toContain('memberships_test_fixture');
+    expect(JSON.stringify(model.requests[0]!.messages[0])).not.toContain('email');
+    for (const request of model.requests) {
+      expect(request.tools).toBeUndefined();
+      expect(request.output_config?.format).toBeTruthy();
+    }
+  });
+
+  it('accepts a fenced reply and keeps an unknown count as null, with no total', async () => {
+    const unknown = "select 'site_a' as location_id, null::int as active_individual_members";
+    const fenced = reply([{ type: 'text', text: '```json\n' + JSON.stringify({ explore: [], final: { sql: unknown, definition: 'd', freshness_sql: freshnessSql } }) + '\n```' }], 'end_turn');
+    const { body, evidence } = await gym(new ScriptedModelClientForTests([fenced]))({ ...base, task: 'q', decisions: [] });
+    expect(body.answer).toEqual([{ location_id: 'site_a', active_individual_members: null }]);
+    expect(evidence.find((item) => item.kind === 'sql_result')!.payload.metric_totals).toEqual({});
+  });
+
+  it('never fabricates when the model will not finish, and keeps its text out of the error', async () => {
+    const prose = () => reply([{ type: 'text', text: 'About 500 members.' }], 'end_turn');
+    const model = new ScriptedModelClientForTests(Array.from({ length: 8 }, prose));
+    const failure = await gym(model)({ ...base, task: 'q', decisions: [] }).catch((error: Error) => error);
+    expect(failure).toBeInstanceOf(AgentOutputError);
+    expect((failure as Error).message).toMatch(/within 8 turns \(queries_run=0, queries_rejected=0, unusable_replies=8\)/);
+    expect((failure as Error).message).not.toContain('500');
+  });
+
+  it('runs end to end through the real Hermes adapter envelope, with no application tools', async () => {
+    const replies = [
+      { explore: ['select count(*) as n from memberships_test_fixture'], final: null },
+      { explore: [], final: { sql: answerSql, definition: 'd', freshness_sql: freshnessSql } },
+    ];
+    const sent: Array<{ system: string; user: string }> = [];
+    const run = async (payload: { system: string; user: string }) => {
+      sent.push(payload);
+      return {
+        ok: true,
+        text: JSON.stringify(replies[sent.length - 1]),
+        receipt: {
+          state: 'RECEIVED', provider: 'openai-codex', served_model: 'fixture-model', model_provider: 'openai', requested_model: 'fixture-model', model_turns: 1, tool_iterations: 0, guard_bypass: false, credential_exported: false,
+          isolation: { use_memories: false, generate_memories: false, thread_memory_mode: 'disabled' },
+          no_tools_scope: { tool_policy: 'none', max_authorized_actions: 0 },
+          token_usage: { inputTokens: 7, outputTokens: 3 },
+        },
+      };
+    };
+    const handler = withHermesGeneration((client) => gym(client), { run });
+    const { body, evidence } = await handler({ ...base, task: 'q', decisions: [] });
+    expect(body.answer).toEqual([{ location_id: 'site_a', active_individual_members: 2 }, { location_id: 'site_b', active_individual_members: 1 }]);
+    for (const payload of sent) {
+      const user = JSON.parse(payload.user) as { allowedApplicationTools: unknown[]; outputSchema: { required?: string[] } };
+      expect(user.allowedApplicationTools).toEqual([]);
+      expect(user.outputSchema.required).toEqual(['explore', 'final']);
+    }
+    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'hermes_oauth', served_by: ['fixture-model'], calls: 2 });
+    expect(evidence.filter((item) => item.kind === 'hermes_transport')).toHaveLength(2);
   });
 
   it('surfaces a refusal as a typed error', async () => {
