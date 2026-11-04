@@ -36,7 +36,7 @@ export default async function ClaimsPage() {
       ) : null}
       <header className="masthead">
         <div>
-          <h1 className="wordmark">Claims and turns</h1>
+          <h1 className="wordmark"><Link href="/"><span className="brand-glyph" aria-hidden="true">cm</span>Claims and turns</Link></h1>
           <p className="pitch">Who holds each page, who waits next, and what the agents told each other. <Link href="/app" className="inline-link">Company Memory</Link></p>
         </div>
         <dl className="freshness">

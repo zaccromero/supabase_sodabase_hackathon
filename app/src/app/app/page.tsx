@@ -3,6 +3,7 @@ import { ChainHero } from '@/components/ChainHero';
 import { GovernanceAdvisory } from '@/components/GovernanceAdvisory';
 import { VERIFIED_MILO_RUN, VerifiedRun } from '@/components/VerifiedRun';
 import { LiveRefresh } from '@/components/LiveRefresh';
+import { Safeguards } from '@/components/Safeguards';
 import { Agents, Decisions, Drift, Evidence, Sodabase } from '@/components/Sections';
 import { dbMode, liveDatabaseLabel, type DbMode } from '@/lib/db';
 import { et, ago } from '@/lib/format';
@@ -61,7 +62,7 @@ function Masthead({ mode, records, source }: { mode: DbMode; records: Records | 
       ) : null}
       <header className="masthead">
         <div>
-          <h1 className="wordmark"><Link href="/">Company Memory</Link></h1>
+          <h1 className="wordmark"><Link href="/"><span className="brand-glyph" aria-hidden="true">cm</span>Company Memory</Link></h1>
           <p className="pitch">I can build faster than ever. Why am I still repeating myself to my agents?</p>
         </div>
         <dl className="freshness">
@@ -116,6 +117,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         <div className="verified-run"><VerifiedRun r={r} /></div>
         <GovernanceAdvisory runId={VERIFIED_MILO_RUN} gate={verifiedGate} />
       </div>
+      <Safeguards />
       <div className="columns">
         <Decisions r={r} tag={tag} />
         <Agents r={r} tag={tag} />

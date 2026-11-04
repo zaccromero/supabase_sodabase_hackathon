@@ -1,4 +1,4 @@
-import { historicalLabel, type Records } from '@/lib/records';
+import { historicalLabel, servedModel, type Records } from '@/lib/records';
 export const VERIFIED_MILO_RUN='eed0520a-f35d-4a5b-8b04-123695082aa8';
 const CHECKS=['milo.no_forbidden_claim','milo.claims_sourced','critic.meaning'];
 /** Exact persisted proof, independent from cm.findings/repair lifecycle. Never starts a run. */
@@ -21,6 +21,8 @@ export function VerifiedRun({r,runId=VERIFIED_MILO_RUN}:{r:Records;runId?:string
     <p className="decision-statement">{verified?'Completed with the approved partnership decision retrieved and pinned.':'Some required evidence is absent or does not match this run.'}</p>
     <p className="meta" style={{overflowWrap:'anywhere'}}>Run <a href={`#run-${runId}`}>{runId}</a> · memory {run.memory_mode} · attempt {run.attempt_no??'unknown'}</p>
     <p className="meta">Approved pin: {pin?'milo.gym_nyc_partner@1':'not verified'} {pin?.accepted_by?`· accepted by ${pin.accepted_by}`:''}</p>
+    <p className="meta" style={{overflowWrap:'anywhere'}}>Approved source: {r.sources.find(x=>x.id===pin?.source_id)?.uri??'not readable'}</p>
+    <p className="meta">Served by: {servedModel(r,runId)??'not recorded'}</p>
     <div className="columns columns-even"><div><h3>Historical input</h3><p className="meta">{historicalLabel(r,run.output_id)||'Historical before text; not a new incident.'}</p><blockquote>{before||'Not supplied.'}</blockquote></div><div><h3>Actual corrected output</h3><p>{after||'Not supplied.'}</p></div></div>
     <ul className="rows">{checks.map(c=><li key={c.check}><span className={`mark mark-${c.passes?'pass':'uncertain'}`}>{c.passes?'Pass':c.e?.verdict||'not verified'}</span> <strong>{c.check}</strong><p>{c.e?.reason||'No current bound evaluation supplied.'}</p><p className="meta">Independent current-output evidence {c.evidence?.id||'not verified'}</p></li>)}</ul>
     <p>Stored database gate: <strong>{gate?.verdict||'not supplied'}</strong> · {gate?.missing.length===0?'no missing requirements':`${gate?.missing.length??'unknown'} missing requirements`}</p>

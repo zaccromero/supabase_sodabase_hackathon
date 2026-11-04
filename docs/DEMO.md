@@ -4,7 +4,9 @@
 
 **The line.** "Supabase holds the decisions and execution record. Sodabase checks the underlying data quality. Our evaluators check whether the agent actually followed the decisions."
 
-**One moment to land.** A correction survives a fresh run. Everything else sets that up or backs it.
+**One moment to land.** A fresh run follows the accepted decision. Show the approved source and version, run `eed0520a`, its corrected output, its three checks and the completion gate.
+
+**The words.** Tracing shows what happened. Evaluators detect behavioral drift. Sodabase checks data quality. Say Langfuse only if you can show a real trace ID or URL. Skill and MCP improvement is a next extension: propose a diff, approve, apply within scope, verify a fresh run. Never say it improves itself.
 
 ## Before you start
 
@@ -14,7 +16,7 @@ Run the dashboard on the real records, from `app/`, after `pnpm --ignore-workspa
 doppler run -p hackathon -c dev -- pnpm --ignore-workspace start
 ```
 
-Open `http://127.0.0.1:4971/app` in the browser used for the demo. `/` is the product page, `/app` is the board.
+Open https://company-memory-zacc-r.vercel.app in the browser used for the demo. `/` is the product page and `/app` is the board. Port 4971 is development only.
 
 `SUPABASE_DB_URL` is the only switch: set means live, unset means the local test database. Accept and Approve on this local page write to the real record, so click them only when you mean it.
 
@@ -83,7 +85,7 @@ Timings are cumulative. Twenty seconds a beat leaves no spare time, so cut words
 *If it has not run:* "No repair or correction is recorded yet."
 
 ### 2:05 Beat 7: a fresh run follows it
-**Show:** step 5 and the headline. **This is the moment. Stop and let them read it.**
+**Show:** step 5 and the headline, then "Fresh accepted-memory run" for run `eed0520a`: approved source and version, corrected output, three checks, completion gate. **This is the moment. Stop and let them read it.**
 
 **Say:** "This is a real model run with a fresh start: [read the model off the screen]. It got no repair notes. It pinned my decision, it revised that same line, it passed the gate, and I did not have to repeat myself."
 
