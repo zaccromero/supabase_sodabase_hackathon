@@ -92,6 +92,8 @@ export async function writeLocalTestRows(db: PGlite): Promise<void> {
     const outputSha = sha256(body);
     const output = await as('agent_worker', async (tx) => {
       const o = await one(tx, `insert into cm.outputs (attempt_id, body, output_sha256) values ($1,$2,$3) returning id`, [a.id, JSON.stringify(body), outputSha]);
+      await tx.query(`insert into cm.evidence (output_id, kind, payload, created_by) values ($1,'hermes_transport',$2,'agent_worker')`,
+        [o.id, JSON.stringify({ purpose: 'local test row', receipt: { served_model: 'local-test-model' } })]);
       if (historical) {
         await tx.query(`insert into cm.evidence (output_id, kind, uri, payload, created_by) values ($1,'slide_source','local-test://slide-packet',$2,'agent_worker')`,
           [o.id, JSON.stringify({ historical: true, historical_label: HISTORICAL_LABEL })]);

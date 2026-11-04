@@ -4,7 +4,7 @@ import { acceptDecision, approveEvaluation } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
 import { founderWritesAllowed } from '@/lib/db';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
-import { countedEvaluationIds, historicalLabel, newest, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow } from '@/lib/records';
+import { countedEvaluationIds, historicalLabel, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type QualityRow, type Records, type RunRow } from '@/lib/records';
 
 function Head({ id, question, age, now, tag }: { id: string; question: string; age: Date | null; now: Date; tag: ReactNode }) {
   return (
@@ -71,7 +71,7 @@ const asOfLabel = (v: string) =>
 
 function GymAnswer({ r, run }: { r: Records; run: RunRow }) {
   const body = latestOutput(r, run)?.body;
-  if (!body) return <p className="not-yet">This run has no output yet.</p>;
+  if (!body) return <p className="not-yet">{run.status === 'failed' ? 'The latest run ended with no answer.' : 'This run has no output yet.'}</p>;
   const answer = Array.isArray(body.answer) ? (body.answer as Array<Record<string, unknown>>) : [];
   const asOf = text(body.data_as_of);
   const ageDays = typeof body.data_age_days === 'number' ? body.data_age_days : null;
@@ -124,6 +124,7 @@ function SlideRevision({ r, run }: { r: Records; run: RunRow }) {
 }
 
 const lineage = (r: RunRow) => [
+  `run ${short(r.run_id, 8)}`,
   `attempt ${r.attempt_no ?? 'none'}`,
   r.memory_mode === 'baseline' ? 'memory off, baseline' : 'memory on',
   r.technique_id ? 'reel technique' : null,
@@ -200,8 +201,36 @@ export function Agents({ r, tag }: { r: Records; tag: ReactNode }) {
           ) : <p className="not-yet">No reel has gone through the process. No run carries a technique yet.</p>}
         </article>
       </div>
+      {r.runs.length ? (
+        <>
+          <h3 className="kicker runs-head">Every run as it happened, newest first ({r.runs.length})</h3>
+          <ul className="runs">
+            {r.runs.slice(0, 30).map((x) => (
+              <li key={x.run_id} className="run">
+                <Mark verdict={x.status} />
+                <div>
+                  <p className="run-title">{profileName(x.profile)} <span className="run-id">{short(x.run_id, 8)}</span></p>
+                  <p className="meta">
+                    <span>{x.memory_mode === 'baseline' ? 'memory off, baseline' : 'memory on'}</span>
+                    {x.technique_id ? <span>reel technique</span> : null}
+                    <span>attempt {x.attempt_no ?? 'none'}</span>
+                    <span>{servedModel(r, x.run_id) ?? 'model not recorded'}</span>
+                    <span>{et(x.created_at)}</span>
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </section>
   );
+}
+
+function driftEmpty(r: Records): string {
+  const reviews = r.runs.filter((x) => x.profile === 'drift_reviewer' && x.status === 'completed').length;
+  if (reviews === 0) return 'The drift reviewer has not completed a review, so nothing has been checked for drift yet.';
+  return `The drift reviewer completed ${reviews} ${reviews === 1 ? 'review' : 'reviews'} and no finding is on record. That covers only the outputs it read, not every run.`;
 }
 
 export function Drift({ r, selected, tag }: { r: Records; selected: string | null; tag: ReactNode }) {
@@ -209,7 +238,7 @@ export function Drift({ r, selected, tag }: { r: Records; selected: string | nul
     <section aria-labelledby="q-drift">
       <Head id="q-drift" question="Where did it drift?" age={newest(r.chains.map((c) => c.created_at))} now={r.readAt} tag={tag} />
       {r.chains.length === 0 ? (
-        <p className="empty">The drift reviewer has not filed a finding. That is not the same as no drift: nothing has been reviewed yet.</p>
+        <p className="empty">{driftEmpty(r)}</p>
       ) : (
         <ul className="rows">
           {r.chains.map((c: ChainRow) => (
@@ -278,6 +307,21 @@ export function Evidence({ r, tag }: { r: Records; tag: ReactNode }) {
   );
 }
 
+// Worst first, so the twelve shown are the ones that matter. Newest first within a verdict, as read.
+const QUALITY_ORDER = ['untrusted', 'fail', 'open', 'unknown', 'rule_unknown', 'rule_held', 'pass'];
+const qualityFirst = (rows: QualityRow[]) => {
+  const rank = (v: string) => (QUALITY_ORDER.includes(v) ? QUALITY_ORDER.indexOf(v) : QUALITY_ORDER.length);
+  // A check run twice reports the same problem twice; only the newest observation is listed.
+  const seen = new Set<string>();
+  const latest = rows.filter((q) => {
+    const key = `${q.provider}/${q.table_name}/${q.verdict}/${q.problem ?? q.provider_finding_id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return latest.sort((a, b) => rank(a.verdict) - rank(b.verdict));
+};
+
 export function Sodabase({ r, tag }: { r: Records; tag: ReactNode }) {
   return (
     <section className="soda" aria-labelledby="q-soda">
@@ -290,16 +334,28 @@ export function Sodabase({ r, tag }: { r: Records; tag: ReactNode }) {
           <p className="age">{tag}{r.quality.length ? `newest observation ${ago(r.quality[0].observed_at, r.readAt)}` : 'no observations yet'}</p>
         </header>
         <p className="section-note">Sodabase findings describe tables, not agent behavior. They do not feed the completion gate above.</p>
+        {r.quality.length ? (
+          <p className="flag-line soda-flag"><span className="flag">unvalidated</span> As reported by the provider. Our own checks have not validated these yet.</p>
+        ) : null}
+        {r.quality.length ? (
+          <p className="section-count soda-count">
+            {r.quality.length} observations: {QUALITY_ORDER.concat([...new Set(r.quality.map((q) => q.verdict))].filter((v) => !QUALITY_ORDER.includes(v)))
+              .map((v) => [v, r.quality.filter((q) => q.verdict === v).length] as const)
+              .filter(([, n]) => n > 0)
+              .map(([v, n]) => `${n} ${v.replaceAll('_', ' ')}`)
+              .join(', ')}. Showing the newest of each problem, worst first.
+          </p>
+        ) : null}
         {r.quality.length === 0 ? (
           <p className="empty">Sodabase has not reported. No row in <code>cm.quality_findings</code> yet, so the data underneath has not been checked. An empty table is not a passing score.</p>
         ) : (
           <ul className="quality">
-            {r.quality.slice(0, 12).map((q) => (
+            {qualityFirst(r.quality).slice(0, 12).map((q) => (
               <li key={q.id} className="quality-row">
                 <Mark verdict={q.verdict} />
                 <div>
                   <p className="eval-check">{q.table_name}</p>
-                  <p className="eval-reason">{q.problem ?? 'No problem reported.'}</p>
+                  <p className="eval-reason">{q.problem ?? (['pass', 'rule_held'].includes(q.verdict) ? 'No problem reported.' : 'The provider gave no detail.')}</p>
                 </div>
                 <p className="meta">
                   {q.finding_count !== null ? <span>{q.finding_count} {q.finding_count === 1 ? 'finding' : 'findings'}</span> : null}
