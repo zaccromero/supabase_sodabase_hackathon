@@ -431,6 +431,7 @@ export function Sodabase({ r, tag, source }: { r: Records; tag: ReactNode; sourc
                         <p className="meta">
                           {q.finding_count !== null ? <span>{q.finding_count} {q.finding_count === 1 ? 'finding' : 'findings'}</span> : null}
                           <span>provider verdict: {view.providerVerdict.replaceAll('_', ' ')}</span>
+                          {view.storedDisposition ? <span>stored disposition: {String(view.storedDisposition).replaceAll('_', ' ')}</span> : null}
                           <span>{q.provider}</span>
                           <span>{ago(q.observed_at, r.readAt)}</span>
                         </p>
