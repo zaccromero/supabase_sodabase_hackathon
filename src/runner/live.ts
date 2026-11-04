@@ -1,18 +1,24 @@
 // The real agents and evaluators, wired for the runner. run.ts and fresh.ts stay free of these imports.
+// Generation and the critic go through Hermes OAuth only: no API key, no local CLI, no fallback.
 import { createHandlers, driftReviewTask, type AgentDeps } from '../agents/index';
 import type { Profile } from '../contract/types';
-import { checksFor, createStoredRegistry } from '../evaluators/index';
+import { createCriticEvaluator } from '../evaluators/critic';
+import { checksFor, createStoredRegistry, guarded } from '../evaluators/index';
+import { withHermesCritic, withHermesGeneration } from '../governance-demo/hermes-transport';
 import type { Db } from './db';
 import { recordReviewFindings } from './fresh';
 import { runAgent, type AgentBinding, type RunReport } from './run';
 
 const SLIDE_PACKET = new URL('../../data/curated/milo-slide-text.json', import.meta.url).pathname;
 
-export function liveBinding(db: Db, profile: Profile, deps: AgentDeps = {}): AgentBinding {
-  const handlers = createHandlers({ slidePacketPath: process.env.MILO_SLIDE_PACKET ?? SLIDE_PACKET, ...deps });
+export function liveBinding(db: Db, profile: Profile, deps: Omit<AgentDeps, 'model'> = {}): AgentBinding {
+  const critic = withHermesCritic((transport) => guarded(
+    createCriticEvaluator({ transport: { ...transport, model: 'hermes_served_model_in_receipt' } as never, criticTimeoutMs: 120_000 }),
+    'critic.meaning',
+  ));
   return {
-    handler: handlers[profile],
-    evaluators: createStoredRegistry(db),
+    handler: withHermesGeneration((client) => createHandlers({ slidePacketPath: SLIDE_PACKET, ...deps, model: () => client })[profile]),
+    evaluators: { ...createStoredRegistry(db), 'critic.meaning': critic },
     checks: (decisions) => checksFor(profile, decisions),
   };
 }

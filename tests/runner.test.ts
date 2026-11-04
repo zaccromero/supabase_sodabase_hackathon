@@ -5,7 +5,7 @@ import { sha256 } from '../src/contract/hash';
 import type { CheckSpec, DbRole, Evaluator, Handler, PinnedDecision } from '../src/contract/types';
 import { pinnedFor, retrieveAccepted } from '../src/memory/index';
 import {
-  acceptDecision, approve, contractHash, correct, pgliteDb, recordFinding, recordReviewFindings, resumeRun, runAgent, settleVerification, verifyFresh,
+  acceptDecision, approve, contractHash, correct, linkAcceptedCorrection, pgliteDb, recordFinding, recordReviewFindings, resumeRun, runAgent, settleVerification, verifyFresh,
   type AgentBinding, type Db,
 } from '../src/runner/index';
 
@@ -331,6 +331,24 @@ describe('correction survives a fresh run', () => {
     await expect(db.withRole('gate_service', (tx) => tx.query(`update cm.decisions set status = 'accepted', accepted_by = 'x', accepted_at = now() where id = $1`, [decisionId]))).rejects.toThrow(/permission denied/);
     await acceptDecision(db, { decisionId, acceptedBy: 'test-founder' });
     await expect(acceptDecision(db, { decisionId, acceptedBy: 'test-founder' })).rejects.toThrow(/DECISION_NOT_PROPOSED/);
+  });
+
+  it('a finding can link to the decision it cites when that decision is already accepted, with no new version', async () => {
+    const { findingId } = await findingOnFirstRun();
+    const proposed = await addDecision('test.key.other', 'x', ['gym_operator'], 'proposed');
+    const otherKey = await addDecision('test.other_accepted', 'y', ['gym_operator'], 'accepted');
+    await expect(linkAcceptedCorrection(db, { findingId, decisionId: proposed })).rejects.toThrow(/CORRECTION_NOT_ACCEPTED/);
+    await expect(linkAcceptedCorrection(db, { findingId, decisionId: otherKey })).rejects.toThrow(/CORRECTION_KEY_MISMATCH/);
+    expect((await finding(findingId)).status).toBe('open');
+
+    await linkAcceptedCorrection(db, { findingId, decisionId: v1 });
+    expect(await finding(findingId)).toMatchObject({ status: 'corrected', correction_decision_id: v1 });
+    expect(await rows(`select 1 from cm.decisions where decision_key = 'test.key'`)).toHaveLength(1);
+    await expect(linkAcceptedCorrection(db, { findingId, decisionId: v1 })).rejects.toThrow(/FINDING_NOT_OPEN/);
+
+    const result = await verifyFresh(db, { findingId, profile: 'gym_operator', task: TASK, binding: binding(faithful) });
+    expect(result.verified).toBe(true);
+    expect(ids(result.report.pinned)).toContain(v1);
   });
 
   it('the database refuses a verified finding with no completed run behind it', async () => {
