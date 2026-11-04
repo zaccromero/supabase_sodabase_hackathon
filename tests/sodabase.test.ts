@@ -182,6 +182,37 @@ describe('pullFindings with the test double', () => {
     expect(readFileSync(result.receipt_path!, 'utf8')).not.toMatch(/jane@example\.com|select \*/);
   });
 
+  it('handles the empty-state answers captured from the live service on 4 Nov 2026', async () => {
+    const dir = tmp();
+    const prose = (result: string) => ({ content: [{ type: 'text', text: result }], structuredContent: { result }, isError: false });
+    const noTable = { dataset: 'gym.checkins', status: 'unknown', rule: '', column: null, family: '', failing_count: null, precise: true, note: "I don't have a table matching that in your workspace." };
+    const result = await pullFindings(new SodabaseTestDouble({
+      data_trust_health: prose('No data-trust scans yet \u2014 run data_trust_scan to check your watched tables.'),
+      list_inbox: prose('Your inbox is clear \u2014 nothing needs a look right now.'),
+      check_rule: asLiveEnvelope(noTable),
+    }), { db: asEvaluator, runRules: true, rules: INTEGRITY_RULES.slice(0, 1), receiptsDir: dir, now: NOW });
+    expect(result.quality_evidence).toBe('NO_SCANS_YET');
+    expect(result.counts).toMatchObject({ unparsed: 0, clean: 0, actionable: 0, undetermined: 1 });
+    expect(result.rows[0]).toMatchObject({ verdict: 'rule_unknown', finding_count: null });
+  });
+
+  it('reads failing_count, the count field the live check_rule returns', async () => {
+    const dir = tmp();
+    const answer = asLiveEnvelope({ dataset: 'gym.ezf_active_memberships', status: 'fail', failing_count: 7, precise: true });
+    const result = await pullFindings(new SodabaseTestDouble({ check_rule: answer }), { runRules: true, rules: INTEGRITY_RULES.slice(0, 1), receiptsDir: dir, now: NOW });
+    expect(result.rows[0]).toMatchObject({ verdict: 'rule_breached', finding_count: 7 });
+  });
+
+  it('still writes the receipt when the database fails, keeping only an error code', async () => {
+    const dir = tmp();
+    const broken = { query: async () => { throw Object.assign(new Error('password=hunter2 in message'), { code: 'SELF_SIGNED_CERT_IN_CHAIN' }); } };
+    const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ tables: [{ table: 'gym.members', status: 'trusted', problems: [] }] }) }), { db: broken, receiptsDir: dir, now: NOW });
+    expect(result).toMatchObject({ inserted: 0, database_error: 'SELF_SIGNED_CERT_IN_CHAIN' });
+    const receipt = readFileSync(result.receipt_path!, 'utf8');
+    expect(JSON.parse(receipt)).toMatchObject({ database_error: 'SELF_SIGNED_CERT_IN_CHAIN', inserted_into_quality_findings: 0 });
+    expect(receipt).not.toContain('hunter2');
+  });
+
   it('reports zero watched tables as no evidence, never as healthy', async () => {
     const dir = tmp();
     const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ tables: [] }) }), { db: asEvaluator, receiptsDir: dir, now: NOW });

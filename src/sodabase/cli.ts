@@ -3,7 +3,7 @@
 //   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts scan
 //   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts pull --rules
 // pull writes to cm.quality_findings when SUPABASE_DB_URL is set, and always writes a dated receipt on a ready connection.
-import pg from 'pg';
+import { pgDb } from '../runner/db.js';
 import { SodabaseClient, SODABASE_PROJECT_REF } from './client.js';
 import { pullFindings } from './pull.js';
 import { sanitize } from './sanitize.js';
@@ -21,16 +21,18 @@ if (command === 'status') {
   else console.log(JSON.stringify(sanitize(await client.startScan()), null, 2));
   await client.close();
 } else if (command === 'pull') {
+  // Lane 1's connection, so TLS follows the URL and SUPABASE_DB_CA, and every write runs under evaluator_service.
   const url = process.env.SUPABASE_DB_URL;
-  const db = url ? new pg.Client({ connectionString: url }) : null;
-  if (db) { await db.connect(); await db.query('set role evaluator_service'); }
-  try {
-    const result = await pullFindings(client, { ...(db ? { db } : {}), runRules: flags.includes('--rules') });
-    console.log(JSON.stringify({ state: result.status.state, reason: result.status.reason, provenance: result.provenance, project_ref: SODABASE_PROJECT_REF, quality_evidence: result.quality_evidence, counts: result.counts, inserted: result.inserted, receipt: result.receipt_path, database: db ? 'connected' : 'SUPABASE_DB_URL absent' }, null, 2));
-    if (result.status.state !== 'ready') process.exitCode = 3;
-  } finally {
-    await db?.end();
+  if (url && !url.includes(SODABASE_PROJECT_REF)) {
+    console.error(`SUPABASE_DB_URL does not point at project ${SODABASE_PROJECT_REF}. Nothing was read or written.`);
+    process.exit(3);
   }
+  const db = url ? pgDb(url) : null;
+  const asEvaluator = db && { query: (text: string, params?: unknown[]) => db.withRole('evaluator_service', async (tx) => ({ rows: await tx.query(text, params) })) };
+  const result = await pullFindings(client, { ...(asEvaluator ? { db: asEvaluator } : {}), runRules: flags.includes('--rules') });
+  console.log(JSON.stringify({ state: result.status.state, reason: result.status.reason, provenance: result.provenance, project_ref: SODABASE_PROJECT_REF, quality_evidence: result.quality_evidence, counts: result.counts, inserted: result.inserted, database_error: result.database_error, receipt: result.receipt_path, database: db ? 'SUPABASE_DB_URL set' : 'SUPABASE_DB_URL absent' }, null, 2));
+  if (result.status.state !== 'ready' || result.database_error) process.exitCode = 3;
+  process.exit();
 } else {
   console.error(`Unknown command: ${command}`);
   process.exitCode = 2;

@@ -22,8 +22,8 @@ export interface PullResult {
   status: ConnectionStatus; provenance: PullClient['provenance']; observed_at: string; rows: QualityRow[];
   counts: Record<Disposition | 'clean' | 'undetermined' | 'unparsed' | 'errors', number>;
   /** A table count of zero means nothing was checked. It is not a healthy result. */
-  quality_evidence: 'NOT_RUN' | 'RECEIVED' | 'NO_WATCHED_TABLES' | 'UNPARSED';
-  receipt_path: string | null; inserted: number;
+  quality_evidence: 'NOT_RUN' | 'RECEIVED' | 'NO_SCANS_YET' | 'NO_WATCHED_TABLES' | 'UNPARSED';
+  receipt_path: string | null; inserted: number; database_error: string | null;
 }
 
 export const DEFAULT_RECEIPTS_DIR = 'docs/receipts';
@@ -33,6 +33,15 @@ const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v =
 const firstString = (o: Record<string, unknown>, keys: string[]) => { for (const k of keys) if (typeof o[k] === 'string' && o[k]) return o[k] as string; return null; };
 const firstNumber = (o: Record<string, unknown>, keys: string[]) => { for (const k of keys) if (typeof o[k] === 'number' && Number.isFinite(o[k])) return o[k] as number; return null; };
 
+/** The provider's own plain-text answers for empty states, seen live on 4 Nov 2026. Neither is a statement about data health. */
+const NO_SCANS = /no data-trust scans yet/i;
+const INBOX_CLEAR = /inbox is clear/i;
+function proseResult(raw: unknown): string {
+  if (!isObject(raw)) return '';
+  if (isObject(raw.structuredContent) && typeof raw.structuredContent.result === 'string') return raw.structuredContent.result;
+  return '';
+}
+
 function listOf(data: unknown, keys: string[]): Record<string, unknown>[] | null {
   if (Array.isArray(data)) return data.filter(isObject);
   if (isObject(data)) for (const k of keys) if (Array.isArray(data[k])) return (data[k] as unknown[]).filter(isObject);
@@ -41,7 +50,7 @@ function listOf(data: unknown, keys: string[]): Record<string, unknown>[] | null
 const TABLE_KEYS = ['table', 'table_name', 'dataset', 'name'];
 const PROBLEM_TEXT = ['problem', 'title', 'summary', 'description', 'message', 'kind'];
 const STATUS_KEYS = ['status', 'verdict'];
-const COUNT_KEYS = ['count', 'finding_count', 'violations', 'violation_count', 'breaking_rows', 'rows_breaking', 'failing_rows', 'rows'];
+const COUNT_KEYS = ['failing_count', 'count', 'finding_count', 'violations', 'violation_count', 'breaking_rows', 'rows_breaking', 'failing_rows', 'rows'];
 const ID_KEYS = ['finding_id', 'id', 'issue_id'];
 
 function toRow(tool: string, table: string, verdict: string, p: Record<string, unknown> | null, observedAt: string, extra: Record<string, unknown> = {}): QualityRow {
@@ -131,7 +140,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
   const counts: PullResult['counts'] = { actionable: 0, expected_by_definition: 0, exploratory: 0, clean: 0, undetermined: 0, unparsed: 0, errors: 0 };
   const status = await client.connect();
   const observedAt = now().toISOString();
-  const blocked = (s: ConnectionStatus): PullResult => ({ status: s, provenance: client.provenance, observed_at: observedAt, rows: [], counts, quality_evidence: 'NOT_RUN', receipt_path: null, inserted: 0 });
+  const blocked = (s: ConnectionStatus): PullResult => ({ status: s, provenance: client.provenance, observed_at: observedAt, rows: [], counts, quality_evidence: 'NOT_RUN', receipt_path: null, inserted: 0, database_error: null });
   if (status.state !== 'ready') { await client.close(); return blocked(status); }
   if (!(await client.verifyProject(SODABASE_PROJECT_REF))) {
     await client.close();
@@ -163,15 +172,16 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       if (raw) {
         const h = healthRows(raw, observedAt);
         rows.push(...h.rows);
-        if (!h.parsed) counts.unparsed++;
-        quality = !h.parsed ? 'UNPARSED' : h.tables === 0 ? 'NO_WATCHED_TABLES' : 'RECEIVED';
+        const noScans = !h.parsed && NO_SCANS.test(proseResult(raw));
+        if (!h.parsed && !noScans) counts.unparsed++;
+        quality = noScans ? 'NO_SCANS_YET' : !h.parsed ? 'UNPARSED' : h.tables === 0 ? 'NO_WATCHED_TABLES' : 'RECEIVED';
       }
     }
     if (status.tools.includes('list_inbox')) {
       const raw = await call('list_inbox', {});
       if (raw) {
         const known = new Set(rows.map((r) => r.provider_finding_id).filter((x): x is string => !!x));
-        const i = inboxRows(raw, observedAt, known); rows.push(...i.rows); if (!i.parsed) counts.unparsed++;
+        const i = inboxRows(raw, observedAt, known); rows.push(...i.rows); if (!i.parsed && !INBOX_CLEAR.test(proseResult(raw))) counts.unparsed++;
       }
     }
     if (status.tools.includes('explain')) {
@@ -195,15 +205,25 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       else counts.undetermined++;
     }
 
-    const inserted = options.db ? await insertQualityRows(options.db, rows) : 0;
+    // A database failure must not lose real provider results, so the receipt is still written. Only the code is kept.
+    let inserted = 0;
+    let databaseError: string | null = null;
+    if (options.db) {
+      try {
+        inserted = await insertQualityRows(options.db, rows);
+      } catch (e) {
+        const code = (e as { code?: unknown }).code;
+        databaseError = typeof code === 'string' ? code : (e as Error).name;
+      }
+    }
     mkdirSync(receiptsDir, { recursive: true });
     const receiptPath = join(receiptsDir, `sodabase-${observedAt.replace(/\.\d+Z$/, 'Z').replace(/:/g, '-')}.json`);
     writeFileSync(receiptPath, `${JSON.stringify({
       provider: 'sodabase', provenance: client.provenance, endpoint: status.endpoint, project_ref: SODABASE_PROJECT_REF, observed_at: observedAt, scope: SCOPE_NOTE,
       quality_evidence: quality,
-      tools_discovered: status.tools, tool_calls: calls, counts, inserted_into_quality_findings: inserted, findings: rows,
+      tools_discovered: status.tools, tool_calls: calls, counts, inserted_into_quality_findings: inserted, database_error: databaseError, findings: rows,
     }, null, 2)}\n`);
-    return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, quality_evidence: quality, receipt_path: receiptPath, inserted };
+    return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, quality_evidence: quality, receipt_path: receiptPath, inserted, database_error: databaseError };
   } finally {
     await client.close();
   }
