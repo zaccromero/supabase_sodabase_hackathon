@@ -24,7 +24,10 @@ export interface RunOptions {
   memoryMode?: MemoryMode;
   parentRunId?: string;
   techniqueId?: string;
-  /** Column default (2) applies when omitted. The database enforces whatever is set. */
+  /**
+   * The database enforces whatever is set. When omitted: 2, or 0 on a baseline run, because repair notes quote
+   * the evaluators and would hand a memory-free run the decision it is meant to be measured without.
+   */
   repairBudget?: number;
   /** Called once the run row exists, before any attempt. */
   onRunCreated?: (runId: string) => Promise<void>;
@@ -303,7 +306,7 @@ export async function runAgent(db: Db, opts: RunOptions): Promise<RunReport> {
     const [row] = await tx.query<{ id: string }>(
       `insert into cm.runs (profile, task, status, memory_mode, parent_run_id, technique_id, repair_budget)
        values ($1, $2, 'pending', $3, $4::uuid, $5::uuid, coalesce($6::int, 2)) returning id`,
-      [opts.profile, opts.task, memoryMode, opts.parentRunId ?? null, opts.techniqueId ?? null, opts.repairBudget ?? null],
+      [opts.profile, opts.task, memoryMode, opts.parentRunId ?? null, opts.techniqueId ?? null, opts.repairBudget ?? (memoryMode === 'baseline' ? 0 : null)],
     );
     if (memoryMode === 'on') await pinAccepted(tx, row!.id, opts.profile);
     return row!.id;
