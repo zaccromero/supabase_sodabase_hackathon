@@ -44,7 +44,13 @@ function targetClient(url: string, source: string): pg.Client {
   if (host === new URL(source).hostname) throw new Error('TARGET_IS_SOURCE');
   if (/neon\.tech$/.test(host)) throw new Error('TARGET_IS_NEON');
   if (!/(supabase\.(co|com)|^localhost|^127\.0\.0\.1)$/.test(host)) throw new Error('TARGET_NOT_SUPABASE');
-  if (!targetSslNoVerify) return new pg.Client({ connectionString: url });
+  const ca = process.env.SUPABASE_DB_CA;
+  if (!targetSslNoVerify) {
+    if (!ca) return new pg.Client({ connectionString: url });
+    const v = new URL(url);
+    v.searchParams.delete('sslmode');
+    return new pg.Client({ connectionString: v.toString(), ssl: { ca } });
+  }
   const u = new URL(url);
   u.searchParams.delete('sslmode');
   return new pg.Client({ connectionString: u.toString(), ssl: { rejectUnauthorized: false } });
