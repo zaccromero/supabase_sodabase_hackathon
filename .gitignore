@@ -10,3 +10,4 @@ media/
 dist/
 .drako/
 .claude/
+supabase/.temp/
