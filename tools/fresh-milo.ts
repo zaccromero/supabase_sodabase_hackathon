@@ -14,7 +14,7 @@ import { runAgent } from '../src/runner/run';
 const root = new URL('..', import.meta.url).pathname;
 const db = pgDb();
 const handler = withHermesGeneration((client) => createHandlers({ model: () => client, slidePacketPath: `${root}data/curated/milo-slide-text.json` }).milo_pitch);
-const critic = withHermesCritic((transport) => guarded(createCriticEvaluator({ transport, criticTimeoutMs: 120_000 }), 'critic.meaning'));
+const critic = withHermesCritic((transport) => guarded(createCriticEvaluator({ transport: { ...transport, model: 'hermes_served_model_in_receipt' }, criticTimeoutMs: 120_000 }), 'critic.meaning'));
 const binding = {
   handler,
   checks: (d: any) => checksFor('milo_pitch', d),
