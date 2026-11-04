@@ -4,7 +4,8 @@ import { acceptDecision, approveEvaluation } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
 import { founderWritesAllowed } from '@/lib/db';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
-import { countedEvaluationIds, historicalLabel, isReplayRun, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type QualityRow, type Records, type RunRow } from '@/lib/records';
+import { countedEvaluationIds, historicalLabel, isReplayRun, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow, type SourceFreshness } from '@/lib/records';
+import { presentQuality, QUALITY_GROUP_ORDER } from '@/lib/sodabase-presentation';
 
 function Head({ id, question, age, now, tag }: { id: string; question: string; age: Date | null; now: Date; tag: ReactNode }) {
   return (
@@ -243,7 +244,7 @@ export function Drift({ r, selected, tag }: { r: Records; selected: string | nul
         <ul className="rows">
           {r.chains.map((c: ChainRow) => (
             <li key={c.finding_id} className={selected === c.finding_id ? 'finding is-selected' : 'finding'}>
-              <Link href={`/?finding=${c.finding_id}#chain`} className="finding-link">
+              <Link href={`/app?finding=${c.finding_id}#chain`} className="finding-link">
                 <span className="finding-excerpt">“{c.excerpt}”</span>
                 <span className="finding-why">{c.explanation}</span>
                 <span className="meta">
@@ -307,22 +308,26 @@ export function Evidence({ r, tag }: { r: Records; tag: ReactNode }) {
   );
 }
 
-// Worst first, so the twelve shown are the ones that matter. Newest first within a verdict, as read.
-const QUALITY_ORDER = ['untrusted', 'fail', 'open', 'unknown', 'rule_unknown', 'rule_held', 'pass'];
-const qualityFirst = (rows: QualityRow[]) => {
-  const rank = (v: string) => (QUALITY_ORDER.includes(v) ? QUALITY_ORDER.indexOf(v) : QUALITY_ORDER.length);
+const PROJECT_REF = 'dgqcanfiapxztmqqlqnh';
+const SHOWN: Record<string, number> = { review: 8, coverage: 4, expected: 6, passed: 3, pending: 3 };
+const GROUP_TITLE: Record<string, string> = {
+  review: 'Needs review', coverage: 'Coverage gaps', expected: 'Expected by definition', passed: 'Reported passes', pending: 'Unresolved or not checked',
+};
+
+export function Sodabase({ r, tag, source }: { r: Records; tag: ReactNode; source: SourceFreshness }) {
+  const scope = {
+    projectRef: process.env.SUPABASE_DB_URL?.includes(PROJECT_REF) ? PROJECT_REF : 'not-this-project',
+    mirrorRunId: source.mirrorRunId ?? 'unknown',
+  };
   // A check run twice reports the same problem twice; only the newest observation is listed.
   const seen = new Set<string>();
-  const latest = rows.filter((q) => {
+  const latest = r.quality.filter((q) => {
     const key = `${q.provider}/${q.table_name}/${q.verdict}/${q.problem ?? q.provider_finding_id}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  return latest.sort((a, b) => rank(a.verdict) - rank(b.verdict));
-};
-
-export function Sodabase({ r, tag }: { r: Records; tag: ReactNode }) {
+  const presented = latest.map((q) => ({ q, view: presentQuality(q, scope) }));
   return (
     <section className="soda" aria-labelledby="q-soda">
       <div className="soda-inner">
@@ -334,38 +339,50 @@ export function Sodabase({ r, tag }: { r: Records; tag: ReactNode }) {
           <p className="age">{tag}{r.quality.length ? `newest observation ${ago(r.quality[0].observed_at, r.readAt)}` : 'no observations yet'}</p>
         </header>
         <p className="section-note">Sodabase findings describe tables, not agent behavior. They do not feed the completion gate above.</p>
-        {r.quality.length ? (
-          <p className="flag-line soda-flag"><span className="flag">unvalidated</span> As reported by the provider. Our own checks have not validated these yet.</p>
+        {source.asOf ? (
+          <p className="flag-line soda-flag">
+            <span className="flag">{source.ageDays !== null && source.ageDays > 1 ? 'stale source' : 'source date'}</span>
+            Latest complete gym source report is {source.asOf}{source.ageDays !== null ? `, ${source.ageDays} days old` : ''}.
+          </p>
         ) : null}
         {r.quality.length ? (
-          <p className="section-count soda-count">
-            {r.quality.length} observations: {QUALITY_ORDER.concat([...new Set(r.quality.map((q) => q.verdict))].filter((v) => !QUALITY_ORDER.includes(v)))
-              .map((v) => [v, r.quality.filter((q) => q.verdict === v).length] as const)
-              .filter(([, n]) => n > 0)
-              .map(([v, n]) => `${n} ${v.replaceAll('_', ' ')}`)
-              .join(', ')}. Showing the newest of each problem, worst first.
-          </p>
+          <p className="flag-line soda-flag"><span className="flag">unvalidated</span> As reported by the provider. Our own checks have not validated these yet.</p>
         ) : null}
         {r.quality.length === 0 ? (
           <p className="empty">Sodabase has not reported. No row in <code>cm.quality_findings</code> yet, so the data underneath has not been checked. An empty table is not a passing score.</p>
         ) : (
-          <ul className="quality">
-            {qualityFirst(r.quality).slice(0, 12).map((q) => (
-              <li key={q.id} className="quality-row">
-                <Mark verdict={q.verdict} />
-                <div>
-                  <p className="eval-check">{q.table_name}</p>
-                  <p className="eval-reason">{q.problem ?? (['pass', 'rule_held'].includes(q.verdict) ? 'No problem reported.' : 'The provider gave no detail.')}</p>
+          <>
+            <p className="section-count soda-count">{r.quality.length} observations, {latest.length} distinct.</p>
+            {QUALITY_GROUP_ORDER.map((group) => {
+              const rows = presented.filter((x) => x.view.group === group);
+              if (rows.length === 0) return null;
+              const limit = SHOWN[group] ?? 4;
+              return (
+                <div key={group} className="soda-group">
+                  <h3 className="soda-group-title">{GROUP_TITLE[group]} <span className="run-id">{rows.length}</span></h3>
+                  <ul className="quality">
+                    {rows.slice(0, limit).map(({ q, view }) => (
+                      <li key={q.id} className="quality-row">
+                        <span className={`mark mark-group-${group}`}>{view.label}</span>
+                        <div>
+                          <p className="eval-check">{q.table_name}</p>
+                          <p className="eval-reason">{q.problem ?? 'The provider gave no detail.'}</p>
+                          <p className="soda-explain">{view.explanation}</p>
+                        </div>
+                        <p className="meta">
+                          {q.finding_count !== null ? <span>{q.finding_count} {q.finding_count === 1 ? 'finding' : 'findings'}</span> : null}
+                          <span>provider verdict: {view.providerVerdict.replaceAll('_', ' ')}</span>
+                          <span>{q.provider}</span>
+                          <span>{ago(q.observed_at, r.readAt)}</span>
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  {rows.length > limit ? <p className="section-count soda-more">{rows.length - limit} more in this group.</p> : null}
                 </div>
-                <p className="meta">
-                  {q.finding_count !== null ? <span>{q.finding_count} {q.finding_count === 1 ? 'finding' : 'findings'}</span> : null}
-                  {q.severity ? <span>{q.severity}</span> : null}
-                  <span>{q.provider}</span>
-                  <span>{ago(q.observed_at, r.readAt)}</span>
-                </p>
-              </li>
-            ))}
-          </ul>
+              );
+            })}
+          </>
         )}
       </div>
     </section>

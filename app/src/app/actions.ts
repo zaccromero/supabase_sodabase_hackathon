@@ -34,7 +34,7 @@ export async function acceptDecision(_: ActionState, form: FormData): Promise<Ac
       await tx.query(`update cm.findings set status = 'corrected' where correction_decision_id = $1 and status = 'open'`, [id]);
       return rows.length === 1;
     });
-    revalidatePath('/');
+    revalidatePath('/app');
     return accepted ? { done: 'Accepted' } : { error: 'This decision is no longer proposed.' };
   } catch (error) {
     return { error: explain(error) };
@@ -57,7 +57,7 @@ export async function approveEvaluation(_: ActionState, form: FormData): Promise
         [id, founder()]);
       return rows.length === 1;
     });
-    revalidatePath('/');
+    revalidatePath('/app');
     return approved ? { done: 'Approved' } : { error: 'This evaluation can no longer be approved.' };
   } catch (error) {
     return { error: explain(error) };

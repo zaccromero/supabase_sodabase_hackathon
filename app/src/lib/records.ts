@@ -37,7 +37,7 @@ export interface GateRow {
 }
 export interface QualityRow {
   id: string; provider: string; provider_finding_id: string | null; table_name: string; verdict: string;
-  problem: string | null; finding_count: number | null; severity: string | null; observed_at: Date;
+  problem: string | null; finding_count: number | null; severity: string | null; observed_at: Date; disposition: string | null;
 }
 export interface AttemptRow {
   id: string; run_id: string; attempt_no: number; kind: string; created_at: Date;
@@ -78,7 +78,7 @@ async function readAll(tx: Tx): Promise<Records> {
      from cm.evaluations order by created_at desc, id desc limit 300`);
   const gates = await tx.query<GateRow>(`select * from cm.gate_decisions order by created_at desc, id limit 300`);
   const quality = await tx.query<QualityRow>(
-    `select id, provider, provider_finding_id, table_name, verdict, problem, finding_count, severity, observed_at
+    `select id, provider, provider_finding_id, table_name, verdict, problem, finding_count, severity, observed_at, raw->>'disposition' as disposition
      from cm.quality_findings order by observed_at desc, id limit 500`);
   const attempts = await tx.query<AttemptRow>(
     `select a.id, a.run_id, a.attempt_no, a.kind, a.created_at, o.id as output_id, o.output_sha256, o.body
@@ -92,6 +92,24 @@ async function readAll(tx: Tx): Promise<Records> {
   const approvals = await tx.query<ApprovalRow>(`select evaluation_id, decision, approver, created_at from cm.approvals`);
   const pins = await tx.query<PinRow>(`select run_id, decision_id from cm.run_decisions`);
   return { readAt: now, runs, chains, decisions, sources, evaluations, gates, quality, attempts, evidence, approvals, pins };
+}
+
+export interface SourceFreshness { asOf: string | null; ageDays: number | null; mirrorRunId: string | null }
+
+/** How old the gym data underneath is. In its own transaction: a missing table must not blank the board. */
+export async function readSourceFreshness(): Promise<SourceFreshness> {
+  const empty = { asOf: null, ageDays: null, mirrorRunId: null };
+  try {
+    return await withRole('dashboard_reader', async (tx) => {
+      const [sync] = await tx.query<{ as_of: string | null; age: number | null }>(
+        `select max(report_as_of)::text as as_of, (current_date - max(report_as_of))::int as age
+         from gym.ezf_active_membership_sync_runs where status = 'complete'`);
+      const [mirror] = await tx.query<{ id: string }>(`select id::text as id from gym.mirror_runs order by finished_at desc nulls last limit 1`);
+      return { asOf: sync?.as_of ?? null, ageDays: sync?.age ?? null, mirrorRunId: mirror?.id ?? null };
+    });
+  } catch {
+    return empty;
+  }
 }
 
 export const readRecords = () => withRole('dashboard_reader', readAll);

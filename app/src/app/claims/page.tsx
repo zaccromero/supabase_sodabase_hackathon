@@ -37,7 +37,7 @@ export default async function ClaimsPage() {
       <header className="masthead">
         <div>
           <h1 className="wordmark">Claims and turns</h1>
-          <p className="pitch">Who holds each page, who waits next, and what the agents told each other. <Link href="/" className="inline-link">Company Memory</Link></p>
+          <p className="pitch">Who holds each page, who waits next, and what the agents told each other. <Link href="/app" className="inline-link">Company Memory</Link></p>
         </div>
         <dl className="freshness">
           <div><dt>Records</dt><dd>{mode === 'local' ? 'Local test database' : mode === 'live' ? liveDatabaseLabel() : 'Not connected'}</dd></div>

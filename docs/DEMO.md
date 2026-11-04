@@ -14,7 +14,7 @@ Run the dashboard on the real records, from `app/`, after `pnpm --ignore-workspa
 doppler run -p hackathon -c dev -- pnpm --ignore-workspace start
 ```
 
-Open `http://127.0.0.1:4971` in the browser used for the demo.
+Open `http://127.0.0.1:4971/app` in the browser used for the demo. `/` is the product page, `/app` is the board.
 
 `SUPABASE_DB_URL` is the only switch: set means live, unset means the local test database. Accept and Approve on this local page write to the real record, so click them only when you mean it.
 

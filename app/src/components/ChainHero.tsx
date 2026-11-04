@@ -71,6 +71,15 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
         ) : null}
       </div>
 
+      {records.runs.length ? (
+        <p className="run-tally">
+          {records.runs.length} runs on record: {['completed', 'failed', 'blocked', 'awaiting_approval', 'running', 'pending']
+            .map((status) => [status, records.runs.filter((x) => x.status === status).length] as const)
+            .filter(([, n]) => n > 0)
+            .map(([status, n]) => `${n} ${status.replaceAll('_', ' ')}`)
+            .join(', ')}. Every one is listed below, as it happened.
+        </p>
+      ) : null}
       {!chain ? (
         <p className="empty">The chain appears here once the drift reviewer writes a finding. No finding exists in <code>cm.findings</code> yet.</p>
       ) : (
