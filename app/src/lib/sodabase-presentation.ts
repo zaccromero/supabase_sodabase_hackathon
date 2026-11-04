@@ -29,7 +29,8 @@ export function presentQuality(row:QualityPresentationRow,scope:QualityPresentat
  const dateRule=row.problem?.trim();
  const unresolvedDate=memberTable&&(
   (row.finding_count===91&&dateRule==='Rule broken: joined_at must be on or before expiration_date')||
-  (row.finding_count===52&&dateRule==='Rule broken: joined_at must be on or before churned_at'));
+  (row.finding_count===52&&dateRule==='Rule broken: joined_at must be on or before churned_at')||
+  (row.finding_count===143&&dateRule==='gym.members — rule broken'));
  if(reviewedMirror&&unresolvedDate)return {...base,group:'review',label:'Needs review · field semantics unresolved',explanation:'Client-record creation is being compared with contract expiry or cancellation-status dates, not membership activation. These observations are not all proven expected or defective. Only two separately documented 1980 expiry placeholders are normalized to unknown; raw values and provider findings remain unchanged. Stored disposition is retained as provenance, not a validated conclusion.'};
  const at=row.observed_at instanceof Date?row.observed_at.getTime():Date.parse(row.observed_at);
  const verified=scope.projectRef===project&&scope.mirrorRunId===mirror&&at>=Date.parse('2026-11-04T22:15:51Z')&&at<=Date.parse('2026-11-04T22:38:30Z');
