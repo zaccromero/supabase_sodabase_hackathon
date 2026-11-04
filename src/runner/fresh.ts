@@ -22,6 +22,42 @@ export async function recordFinding(db: Db, f: NewFinding): Promise<string> {
 }
 
 /**
+ * Moves what a drift review found into cm.findings. Only a review the gate completed counts, so a finding
+ * the evaluators rejected never lands. Safe to call twice: a finding already recorded for this run is reused.
+ */
+export async function recordReviewFindings(db: Db, reviewerRunId: string): Promise<string[]> {
+  return db.withRole('evaluator_service', async (tx) => {
+    const [run] = await tx.query<{ profile: string; status: string; body: { target_output_id?: string; findings?: Array<Record<string, string>> } | null }>(
+      `select r.profile, r.status, o.body
+       from cm.runs r
+       left join lateral (select id from cm.attempts a where a.run_id = r.id order by attempt_no desc limit 1) a on true
+       left join cm.outputs o on o.attempt_id = a.id
+       where r.id = $1::uuid`,
+      [reviewerRunId],
+    );
+    if (!run) throw new Error(`RUN_NOT_FOUND: ${reviewerRunId}`);
+    if (run.profile !== 'drift_reviewer') throw new Error(`NOT_A_REVIEW_RUN: ${run.profile}`);
+    if (run.status !== 'completed') throw new Error(`REVIEW_NOT_COMPLETED: ${run.status}`);
+
+    const ids: string[] = [];
+    for (const f of run.body?.findings ?? []) {
+      const target = f.target_output_id ?? run.body?.target_output_id;
+      const [existing] = await tx.query<{ id: string }>(
+        `select id from cm.findings where reviewer_run_id = $1::uuid and target_output_id = $2::uuid and decision_id = $3::uuid and excerpt = $4`,
+        [reviewerRunId, target, f.decision_id, f.excerpt],
+      );
+      const [row] = existing ? [existing] : await tx.query<{ id: string }>(
+        `insert into cm.findings (reviewer_run_id, target_output_id, decision_id, excerpt, explanation, proposed_repair)
+         values ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6) returning id`,
+        [reviewerRunId, target, f.decision_id, f.excerpt, f.explanation, f.proposed_repair],
+      );
+      ids.push(row!.id);
+    }
+    return ids;
+  });
+}
+
+/**
  * Proposes the next version of the decision a finding cites. Nothing can pin it until a founder accepts it.
  * The finding stays 'open' with correction_decision_id set; it becomes 'corrected' on acceptance.
  * The statement defaults to the finding's proposed repair. The source records where the correction came from.

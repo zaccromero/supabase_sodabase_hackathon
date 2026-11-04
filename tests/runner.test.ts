@@ -5,12 +5,13 @@ import { sha256 } from '../src/contract/hash';
 import type { CheckSpec, DbRole, Evaluator, Handler, PinnedDecision } from '../src/contract/types';
 import { pinnedFor, retrieveAccepted } from '../src/memory/index';
 import {
-  acceptDecision, approve, contractHash, correct, pgliteDb, recordFinding, resumeRun, runAgent, settleVerification, verifyFresh,
+  acceptDecision, approve, contractHash, correct, pgliteDb, recordFinding, recordReviewFindings, resumeRun, runAgent, settleVerification, verifyFresh,
   type AgentBinding, type Db,
 } from '../src/runner/index';
 
 // All strings below are test fixtures, confined to throwaway in-memory databases.
-const sql = readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8');
+const migration = (name: string) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8');
+const sql = migration('001_core.sql') + migration('003_runner_roles.sql');
 const V1 = 'test fixture: statement v1';
 const V2 = 'test fixture: statement v2';
 const TASK = 'test fixture: task';
@@ -95,8 +96,11 @@ describe('memory', () => {
 
   it('baseline pins nothing, is labeled, and is judged by the memory it was denied', async () => {
     const { calls, handler } = recorded(faithful);
-    const report = await runAgent(db, { profile: 'gym_operator', task: TASK, memoryMode: 'baseline', repairBudget: 0, binding: binding(handler) });
+    const report = await runAgent(db, { profile: 'gym_operator', task: TASK, memoryMode: 'baseline', binding: binding(handler) });
     expect(calls[0]!.decisions).toEqual([]);
+    // One attempt only: a repair note would quote the decision to a run meant to be measured without it.
+    expect(calls).toHaveLength(1);
+    expect((await runRow(report.run_id)).repair_budget).toBe(0);
     expect(report).toMatchObject({ memory_mode: 'baseline', pinned: [], status: 'failed' });
     expect(report.attempts[0]!.evaluations[0]).toMatchObject({ verdict: 'fail' });
     expect((await runRow(report.run_id)).memory_mode).toBe('baseline');
@@ -327,6 +331,46 @@ describe('correction survives a fresh run', () => {
     await expect(db.withRole('gate_service', (tx) => tx.query(`update cm.decisions set status = 'accepted', accepted_by = 'x', accepted_at = now() where id = $1`, [decisionId]))).rejects.toThrow(/permission denied/);
     await acceptDecision(db, { decisionId, acceptedBy: 'test-founder' });
     await expect(acceptDecision(db, { decisionId, acceptedBy: 'test-founder' })).rejects.toThrow(/DECISION_NOT_PROPOSED/);
+  });
+
+  it('the database refuses a verified finding with no completed run behind it', async () => {
+    const { findingId } = await findingOnFirstRun();
+    await expect(rows(`update cm.findings set status = 'verified' where id = $1`, [findingId])).rejects.toThrow(/FINDING_NOT_VERIFIED_BY_RUN/);
+  });
+
+  describe('drift review findings', () => {
+    const reviewCheck: CheckSpec = { check_id: 'drift.findings_cited', kind: 'deterministic', required: true, requires_evidence: true, spec: {} };
+    const verdict = (v: 'pass' | 'fail'): Evaluator => async ({ check }) => ({
+      check_id: check.check_id, verdict: v, reason: 'fixture', evaluator: 'test.drift', evaluator_version: '1', evidence: { kind: 'test_note', payload: {} },
+    });
+    async function review(v: 'pass' | 'fail') {
+      const { first } = await findingOnFirstRun();
+      const target = first.attempts[0]!.output_id!;
+      const handler: Handler = async () => ({
+        body: { target_output_id: target, findings: [{ decision_id: v1, excerpt: V1, explanation: 'fixture', proposed_repair: V2 }] },
+        evidence: [],
+      });
+      return { target, report: await runAgent(db, { profile: 'drift_reviewer', task: TASK, repairBudget: 0, binding: binding(handler, verdict(v), [reviewCheck]) }) };
+    }
+
+    it('a completed review records its findings once, and a correction can start from one', async () => {
+      const { target, report } = await review('pass');
+      expect(ids(report.pinned)).toEqual([v1]);
+      const recorded = await recordReviewFindings(db, report.run_id);
+      expect(recorded).toHaveLength(1);
+      expect(await recordReviewFindings(db, report.run_id)).toEqual(recorded);
+      expect(await finding(recorded[0]!)).toMatchObject({ status: 'open', reviewer_run_id: report.run_id, target_output_id: target, decision_id: v1, proposed_repair: V2 });
+      await expect(correct(db, { findingId: recorded[0]!, proposedBy: 'test.reviewer' })).resolves.toMatchObject({ version: 2 });
+    });
+
+    it('a review the gate did not complete records nothing, and only review runs qualify', async () => {
+      const { report, target } = await review('fail');
+      expect(report.status).toBe('failed');
+      await expect(recordReviewFindings(db, report.run_id)).rejects.toThrow(/REVIEW_NOT_COMPLETED/);
+      expect(await rows(`select 1 from cm.findings where reviewer_run_id = $1 and target_output_id = $2`, [report.run_id, target])).toEqual([]);
+      const pitch = await runAgent(db, { profile: 'gym_operator', task: TASK, binding: binding(faithful) });
+      await expect(recordReviewFindings(db, pitch.run_id)).rejects.toThrow(/NOT_A_REVIEW_RUN/);
+    });
   });
 
   it('settleVerification is safe to call early and picks up a resumed run', async () => {
