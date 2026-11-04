@@ -5,6 +5,8 @@
 // Isolation is part of honesty here: a run that inherited the owner's CLAUDE.md, memory or skills
 // would not be a no-hint baseline. So the CLI runs in safe mode with no tools, in an empty working
 // directory, with a minimal environment. Content travels on stdin and in a temp file, never in argv.
+// The CLI still adds its own environment block and the logged-in account's email to the request;
+// a context probe on 2026-11-04 found no project, memory or definition text.
 // ANTHROPIC_API_KEY stays out of the child's environment because it would override the login.
 import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -126,7 +128,7 @@ interface CliResult {
   stop_reason?: string;
   structured_output?: unknown;
   session_id?: string;
-  usage?: { input_tokens?: number; output_tokens?: number };
+  usage?: { input_tokens?: number; output_tokens?: number; cache_creation_input_tokens?: number; cache_read_input_tokens?: number };
   modelUsage?: Record<string, unknown>;
 }
 
@@ -162,6 +164,9 @@ function message(parsed: CliResult, content: unknown[], stop_reason: string): Mo
     content,
     stop_reason,
     stop_sequence: null,
-    usage: { input_tokens: parsed.usage?.input_tokens ?? 0, output_tokens: parsed.usage?.output_tokens ?? 0 },
+    usage: {
+      input_tokens: (parsed.usage?.input_tokens ?? 0) + (parsed.usage?.cache_creation_input_tokens ?? 0) + (parsed.usage?.cache_read_input_tokens ?? 0),
+      output_tokens: parsed.usage?.output_tokens ?? 0,
+    },
   } as unknown as ModelResponse;
 }

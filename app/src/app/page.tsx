@@ -1,7 +1,7 @@
 import { ChainHero } from '@/components/ChainHero';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { Agents, Decisions, Drift, Evidence, Sodabase } from '@/components/Sections';
-import { dbMode, type DbMode } from '@/lib/db';
+import { dbMode, liveDatabaseLabel, type DbMode } from '@/lib/db';
 import { et, ago } from '@/lib/format';
 import { buildChain, newest, readRecords, type Records } from '@/lib/records';
 
@@ -62,7 +62,7 @@ function Masthead({ mode, records }: { mode: DbMode; records: Records | null }) 
           <p className="pitch">I can build faster than ever. Why am I still repeating myself to my agents?</p>
         </div>
         <dl className="freshness">
-          <div><dt>Records</dt><dd>{mode === 'local' ? 'Local test database' : mode === 'live' ? 'Live, Supabase' : 'Not connected'}</dd></div>
+          <div><dt>Records</dt><dd>{mode === 'local' ? 'Local test database' : mode === 'live' ? liveDatabaseLabel() : 'Not connected'}</dd></div>
           <div><dt>Read</dt><dd>{records ? et(records.readAt) : mode === 'none' ? 'not attempted' : 'failed'}</dd></div>
           <div><dt>Newest record</dt><dd>{records && newestRecord ? ago(newestRecord, records.readAt) : 'none yet'}</dd></div>
         </dl>

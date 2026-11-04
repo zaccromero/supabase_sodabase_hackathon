@@ -114,7 +114,7 @@ describe('pullFindings with the test double', () => {
     expect(result.counts.unparsed).toBe(2);
     expect((await db.query<any>('select count(*)::int n from cm.quality_findings')).rows[0].n).toBe(0);
     const receipt = JSON.parse(readFileSync(result.receipt_path!, 'utf8'));
-    expect(receipt.tool_calls[0].unparsed_response.content[0].text).toContain('score 100');
+    expect(receipt.tool_calls[0].response.content[0].text).toContain('score 100');
   });
 
   it('writes nothing at all when the connection is not ready', async () => {
@@ -213,6 +213,21 @@ describe('pullFindings with the test double', () => {
     expect(receipt).not.toContain('hunter2');
   });
 
+  it('the health-only probe calls nothing else, touches no database, and retains the sanitized response', async () => {
+    const dir = tmp();
+    const client = new SodabaseTestDouble({
+      data_trust_health: asLiveEnvelope({ tables: [], query: 'select * from gym.members' }), list_inbox: asLiveEnvelope({ issues: [] }), explain: asLiveEnvelope({}), check_rule: asLiveEnvelope({ status: 'pass' }),
+    });
+    const untouchable = { query: async () => { throw new Error('the probe must not use the database'); } };
+    const result = await pullFindings(client, { healthOnly: true, runRules: true, db: untouchable, receiptsDir: dir, now: NOW });
+    expect(client.calls.map((c) => c.tool)).toEqual(['data_trust_health']);
+    expect(result).toMatchObject({ database_error: null, inserted: 0, quality_evidence: 'NO_WATCHED_TABLES' });
+    const receipt = readFileSync(result.receipt_path!, 'utf8');
+    expect(JSON.parse(receipt).tool_calls[0].response.structuredContent.result.tables).toEqual([]);
+    expect(receipt).not.toContain('select *');
+    expect(JSON.parse(receipt).scope).toMatch(/not a healthy verdict/);
+  });
+
   it('reports zero watched tables as no evidence, never as healthy', async () => {
     const dir = tmp();
     const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ tables: [] }) }), { db: asEvaluator, receiptsDir: dir, now: NOW });
@@ -293,6 +308,8 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     const client = new SodabaseClient(TOKEN);
     const status = await client.connect();
     expect(status.state).toBe('ready');
+    expect(status.catalog).toContain('data_trust_sample');
+    expect(status.tools).not.toContain('data_trust_sample');
     expect(status.tools.sort()).toEqual(['check_rule', 'connect_project', 'data_trust', 'data_trust_health', 'data_trust_scan', 'explain', 'list_inbox']);
     expect(seen.auth.every((a) => a === `Bearer ${TOKEN}`)).toBe(true);
     await expect(client.callReadTool('data_trust_sample' as any, { finding_id: 'x' })).rejects.toThrow(/allowlist/);

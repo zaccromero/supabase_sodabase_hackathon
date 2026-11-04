@@ -111,7 +111,8 @@ export function createGymOperator(deps: { model: () => ModelClient; reader: () =
         Object.fromEntries(Object.entries(row).map(([key, value]) => [key, key === 'location_id' ? value : asNumber(value)])));
       const metricTotals = Object.fromEntries(answerResult.columns.filter((c) => c !== 'location_id').flatMap((column) => {
         const values = answer.map((row) => row[column]);
-        return values.every((v) => typeof v === 'number') ? [[column, (values as number[]).reduce((sum, v) => sum + v, 0)]] : [];
+        // No rows means unknown, not zero: a total is only reported when there is something to add up.
+        return values.length > 0 && values.every((v) => typeof v === 'number') ? [[column, (values as number[]).reduce((sum, v) => sum + v, 0)]] : [];
       }));
       const sqlPayload = { sql: input.sql, columns: answerResult.columns, row_count: answer.length, rows: answer, metric_totals: metricTotals };
       const freshnessPayload = { sql: input.freshness_sql, data_as_of: dataAsOf, data_age_days: dataAgeDays, measured_at: now.toISOString() };
