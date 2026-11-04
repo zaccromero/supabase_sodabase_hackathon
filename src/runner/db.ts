@@ -43,7 +43,10 @@ export function pgliteDb(instance: PGlite): Db {
 export function pgDb(url = process.env.SUPABASE_DB_URL): Db {
   if (!url) throw new Error('SUPABASE_DB_URL is not set. Run under: doppler run --project hackathon --config dev --');
   const ca = process.env.SUPABASE_DB_CA;
-  const pool = new pg.Pool({ connectionString: url, max: 5, ...(ca ? { ssl: { ca } } : {}) });
+  // pg lets sslmode in the URL override the ssl option, so drop it when a CA is pinned. Verification stays on.
+  const target = new URL(url);
+  if (ca) target.searchParams.delete('sslmode');
+  const pool = new pg.Pool({ connectionString: target.toString(), max: 5, ...(ca ? { ssl: { ca } } : {}) });
   return {
     withRole: async <T>(role: DbRole, fn: (tx: Tx) => Promise<T>) => {
       const sql = setLocalRole(role);
