@@ -2,6 +2,13 @@
 
 Deadline: **work-ready 17:50 ET, submit 18:30 ET**. Source of truth for tables and rules: `supabase/migrations/001_core.sql`, proven by `tests/gate.test.ts`. Types: `src/contract/types.ts`. Hash: `src/contract/hash.ts`.
 
+## One production board (owner, 2026-11-04)
+- **The only evidence board is https://company-memory-zacc-r.vercel.app**, built from `app/` on `main`, reading hosted Supabase `dgqcanfiapxztmqqlqnh`. Port 4971 is a local view of the same app and the same data.
+- No other evidence board, mock or deployment. Other packages feed this one; they do not run beside it.
+- All runs write to hosted Supabase. PGlite and local Postgres are for tests only and never appear as results.
+- Only the Dashboard lane deploys, only from a commit on `main`, after the governor merges it.
+- "Prod" here means this hackathon project only. Gym NYC and Milo production stay off limits.
+
 ## Non-negotiables
 - No fake data. Real sources only; historical items stay labeled `historical`; fault injection is labeled. Never fabricate an incident or a pass.
 - No DEV scheduler restart, no PROD access, no change in any company repo, no external publication, no new lanes. Other repos are read-only.
