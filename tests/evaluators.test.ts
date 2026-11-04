@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { sha256 } from '../src/contract/hash';
 import type { CheckSpec, EvaluationBinding, EvaluationResult, PinnedDecision } from '../src/contract/types';
 import {
-  checksFor, createCriticEvaluator, createRegistry, createStoredRegistry, frozenChecksHash, guarded, recordEvaluation,
+  checksFor, createCriticEvaluator, createPgGymSource, createRegistry, createStoredRegistry, frozenChecksHash, guarded, recordEvaluation,
   type CriticTransport, type GymSource,
 } from '../src/evaluators/index';
 
@@ -151,6 +151,17 @@ describe('gym.data_age_reported', () => {
     expect((await run('gym_operator', id, zero, { gymSource: lex })).verdict).toBe('fail');
     const unknown = gymBody({ answer: [{ location_id: 'lex', active_individual_members: 1 }, { location_id: 'mul', active_individual_members: null }] });
     expect((await run('gym_operator', id, unknown, { gymSource: lex })).verdict).toBe('pass');
+  });
+  it('the source reader uses the latest complete run; a later failed run does not erase its date', async () => {
+    const db = new PGlite();
+    await db.exec(`create schema gym;
+      create table gym.ezf_active_membership_sync_runs (location_id text, status text, report_as_of date, started_at timestamptz);
+      create table gym.ezf_active_memberships (location_id text, bridge_class text);
+      insert into gym.ezf_active_membership_sync_runs values ('east3','complete','2026-10-01','2026-10-01'), ('east3','failed',null,'2026-10-05'), ('east3','running',null,'2026-10-06'), ('none','failed',null,'2026-10-05');
+      insert into gym.ezf_active_memberships values ('east3','MATCHED_INDIVIDUAL');`);
+    const reader = createPgGymSource({ query: (t, p) => db.query(t, p) as any }, { schema: 'gym' });
+    expect(await reader.dataAsOf()).toEqual({ east3: '2026-10-01' });
+    expect(await reader.canonicalCounts!()).toEqual({ east3: 1 });
   });
   it('is uncertain, never a pass, with no independent source', async () => {
     expect((await run('gym_operator', id, gymBody())).verdict).toBe('uncertain');

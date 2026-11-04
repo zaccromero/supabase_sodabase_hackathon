@@ -22,6 +22,10 @@ export const INTEGRITY_RULES: IntegrityRule[] = [
     rule: 'Each combination of location_id and source_membership_key must be unique.' },
   { id: 'finance-location-known-or-all', dataset: 'gym.finance_snapshots', status: 'active', basis: "schema.ts: location_id has no FK because of the 'all' rollup. Keeps a real broken reference visible.",
     rule: "location_id must be 'all' or one of lex, bk, east3, mul." },
+  // Replaces the provider's joined_at comparisons, which are not valid (see joined-at-is-client-created). Keeps the two
+  // real bad dates visible: both mul, Expired, 1980, also noted in gym-nyc docs/audits/db-accuracy-2026-07-29.md:174.
+  { id: 'expiration-date-plausible', dataset: 'gym.members', status: 'active', basis: 'Client records in this source begin in 2024, so an expiration in 1980 is a source entry error.',
+    rule: 'expiration_date must be on or after 2000-01-01.' },
   { id: 'decision-version-unique', dataset: 'cm.decisions', status: 'active', basis: '001_core.sql unique (decision_key, version)',
     rule: 'Each combination of decision_key and version must be unique.' },
   { id: 'evaluation-verdict-domain', dataset: 'cm.evaluations', status: 'active', basis: '001_core.sql evaluations verdict check',
@@ -54,6 +58,10 @@ export const NEVER_FLAG: Array<{ id: string; matches: RegExp[]; why: string }> =
     why: "All 28 failing rows have location_id 'all', the rollup row; schema.ts documents no FK because of it." },
   { id: 'repeat-membership-number', matches: [/\bezf_active_memberships\b/i, /\bezf_membership_number\b/i, /\b(?:unique|duplicate)/i],
     why: 'The one repeated group is one MATCHED_INDIVIDUAL plus one MULTIPLE_ACTIVE_MEMBERSHIPS_ONE_CLIENT, as the definition intends. The key is source_membership_key.' },
+  { id: 'joined-at-is-client-created', matches: [/\bjoined_at\b/i, /\b(?:expiration_date|churned_at)\b/i],
+    why: 'joined_at is EZFacility client DateCreated, not a membership start (gym-nyc docs/audits/ezfacility-membership-movement-key-authority.md:119), so it can legitimately follow a membership end. Of 143 rows: 67 same NY day, a timestamp against a date at midnight; 68 records created in the 2024 migration window; 6 record created after the end date; 2 are real bad 1980 dates, kept visible by expiration-date-plausible.' },
+  { id: 'no-contract-no-number', matches: [/\bmembers\b/i, /\bezf_membership_number\b/i, /\bmissing\b/i],
+    why: 'The column is nullable. 63 of 64 rows have no contract status and type other, so there is no membership to number; none are in the canonical count.' },
   { id: 'sparse-by-design', matches: [/\b(?:finance_snapshots|checkin_sync_runs|members|decisions)\b/i, /\b(?:flagged|error_code|churned_at|supersedes_id)\b/i, /\bunused\b/i],
     why: 'Set only when something happened: a flag, a failed run, a churn, a superseded decision. churned_at is null on 34,330 of 35,543 members against a canonical count of 1,838, which is why churned_at IS NULL is not the definition.' },
   { id: 'negative-price', matches: [/\bprice_cents\b/i, /\bnegative\b/i],
