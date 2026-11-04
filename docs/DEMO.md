@@ -32,7 +32,7 @@ Read from hosted Supabase at 22:57 UTC on 2026-11-04. Re-check on screen. If the
 
 ## Before you start
 
-**Open the board.** Check it signed out first: `https://company-memory-kohl.vercel.app/app`. `/` is the product page and `/app` is the board. At 22:49 UTC signed-out visitors were redirected to a Vercel login.
+**Open the board.** Check it signed out first: `https://company-memory-kohl.vercel.app/app?view=evidence`. The run IDs, hero and gate records are in this evidence view; plain `/app` opens on a labeled illustrative example. `/` is the product page and `/app` is the board. At 22:49 UTC signed-out visitors were redirected to a Vercel login.
 
 **If the board is login-walled:** run the demo from Zacc's signed-in browser and say so: "This page is behind our Vercel login, so I am showing it from my own session." Do not tell judges they can open the link unless you have just checked it signed out.
 
