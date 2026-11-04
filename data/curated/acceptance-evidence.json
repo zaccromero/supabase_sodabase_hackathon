@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-11-04T21:35:01.976439+00:00",
+  "imported_accepted_decisions": 0,
+  "founder_import_approval": "APPROVED_BY_DIRECT_OWNER_MESSAGE",
+  "policy": "The direct owner approved the exact six candidate versions in this source chat. The governor is authorized to import and record acceptance through founder_approver. Local candidate rows remain proposed to preserve original import data; target database acceptance still needs a receipt.",
+  "source_assertions": [
+    {
+      "source_id": "milo-corrected-context",
+      "assertion": "Reports owner corrections; direct approval event not included."
+    },
+    {
+      "source_id": "milo-positioning",
+      "assertion": "Records owner decision dated 2026-10-30; not target-system import acceptance."
+    },
+    {
+      "source_id": "gym-member-contract",
+      "assertion": "Canonical implementation definition; code is not a founder approval event."
+    },
+    {
+      "source_id": "gym-decisions-proposal",
+      "assertion": "Explicitly identifies Blueprint proposals as unaccepted."
+    }
+  ],
+  "approval_receipt": "docs/sources/owner-approval.json",
+  "target_database_acceptance": "PASS_LOCAL_PERSISTENT_PGLITE_ONLY",
+  "local_acceptance_receipt": "docs/sources/local-approved-import-receipt.json",
+  "hosted_supabase": "NOT_RUN",
+  "fresh_agent_run": "NOT_RUN"
+}

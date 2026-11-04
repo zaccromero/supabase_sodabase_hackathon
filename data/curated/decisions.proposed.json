@@ -1,0 +1,74 @@
+[
+  {
+    "id": "gym-active-individual",
+    "version": 1,
+    "statement": "Count active individual members as one client-backed MATCHED_INDIVIDUAL row from the latest complete official EZFacility Memberships By Status projection. Include PIF; exclude business classes and additional active memberships for the same client. Do not substitute churned_at IS NULL.",
+    "scope": "gym",
+    "status": "proposed",
+    "source_id": "gym-member-contract",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  },
+  {
+    "id": "gym-freshness-completeness",
+    "version": 1,
+    "statement": "Report the actual source report date and fetch timestamp per location. Missing, incomplete, or unreconciled projections produce unknown/partial counts, never fabricated zero counts. Label stale data using observed timestamps.",
+    "scope": "gym",
+    "status": "proposed",
+    "source_id": "gym-membership-quality",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  },
+  {
+    "id": "milo-partner",
+    "version": 1,
+    "statement": "Gym NYC is a partner, not the founder's gym; equity ownership is unconfirmed.",
+    "scope": "milo",
+    "status": "proposed",
+    "source_id": "milo-corrected-context",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  },
+  {
+    "id": "milo-conditional-fee",
+    "version": 1,
+    "statement": "The Gym NYC operations fee is founder-reported and conditional on dashboard completion and buyer acceptance. Activation and collections are unverified; do not describe it as collected revenue.",
+    "scope": "milo",
+    "status": "proposed",
+    "source_id": "milo-fee-caveat",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  },
+  {
+    "id": "milo-alpha-evidence",
+    "version": 1,
+    "statement": "Controlled alpha scope is not proof of enrollment, usage, deployment, or certification. Enrollment is unknown, not zero; do not invent usage evidence.",
+    "scope": "milo",
+    "status": "proposed",
+    "source_id": "milo-corrected-context",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  },
+  {
+    "id": "milo-current-positioning",
+    "version": 1,
+    "statement": "Milo is the operating system for athletic life. Organization agents for athletics operators are being built; do not describe unshipped agents as live.",
+    "scope": "milo",
+    "status": "proposed",
+    "source_id": "milo-positioning",
+    "accepted_by": null,
+    "accepted_at": null,
+    "supersedes_id": null,
+    "implementation_state": "not_started"
+  }
+]

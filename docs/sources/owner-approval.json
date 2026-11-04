@@ -1,0 +1,56 @@
+{
+  "schema": "source-packet.owner-approval/v1",
+  "recorded_at": "2026-11-04T21:39:16.437100+00:00",
+  "approver": "Zacc Romero",
+  "authority": "Direct human message in source chat",
+  "source_thread_id": "01a1a87b-06e7-7290-9248-339ebecabe46",
+  "owner_message": "I approve the six proposed decisions. Have the governor import them and verify that the correction survives a fresh run.",
+  "approved_packet_sha256": "44f684a37655a5bbae291dea3625eb80839c1ad069f8b258942374cbbe24c85c",
+  "approved_decisions": [
+    {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition",
+      "version": 1,
+      "statement": "Count active individual members as one client-backed MATCHED_INDIVIDUAL row from the latest complete official EZFacility Memberships By Status projection. Include PIF; exclude business classes and additional active memberships for the same client. Do not substitute churned_at IS NULL.",
+      "source_id": "9597b987-8e47-5273-bdad-55438f0a9be1"
+    },
+    {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness",
+      "version": 1,
+      "statement": "Report the actual source report date and fetch timestamp per location. Missing, incomplete, or unreconciled projections produce unknown/partial counts, never fabricated zero counts. Label stale data using observed timestamps.",
+      "source_id": "6371deea-575a-576a-b2ed-4f4a3d9ffa3a"
+    },
+    {
+      "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "decision_key": "milo.gym_nyc_partner",
+      "version": 1,
+      "statement": "Gym NYC is a partner, not the founder's gym; equity ownership is unconfirmed.",
+      "source_id": "6b05ab6f-2703-50cf-bc1f-35982ce1b75d"
+    },
+    {
+      "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+      "decision_key": "milo.fee_not_collected",
+      "version": 1,
+      "statement": "The Gym NYC operations fee is founder-reported and conditional on dashboard completion and buyer acceptance. Activation and collections are unverified; do not describe it as collected revenue.",
+      "source_id": "4c248e5b-fd0d-5bd3-bab9-dff0eab16185"
+    },
+    {
+      "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+      "decision_key": "milo.alpha_not_usage",
+      "version": 1,
+      "statement": "Controlled alpha scope is not proof of enrollment, usage, deployment, or certification. Enrollment is unknown, not zero; do not invent usage evidence.",
+      "source_id": "6b05ab6f-2703-50cf-bc1f-35982ce1b75d"
+    },
+    {
+      "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+      "decision_key": "milo.current_positioning",
+      "version": 1,
+      "statement": "Milo is the operating system for athletic life. Organization agents for athletics operators are being built; do not describe unshipped agents as live.",
+      "source_id": "7aa10620-8399-5b68-8807-df25bd78afcc"
+    }
+  ],
+  "target_database_acceptance": "NOT_RUN_BY_SOURCE_LANE",
+  "requested_action": "Governor imports these exact six candidate versions, records human approval through founder_approver, and verifies the correction in a distinct fresh run using retrieved accepted memory.",
+  "limits": "Approval covers these exact statements/versions; no changes to source, scope, release, or new financial disclosure."
+}

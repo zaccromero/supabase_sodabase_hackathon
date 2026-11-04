@@ -9,3 +9,4 @@ media/
 .next/
 dist/
 .drako/
+.claude/

@@ -1,0 +1,88 @@
+{
+  "checked_at": "2026-11-04T21:38:25.661452+00:00",
+  "packet_checks": "PASS",
+  "checks": [
+    "All JSON parses",
+    "Unique source and decision IDs",
+    "Decision source references resolve",
+    "All six candidates proposed; acceptance fields null",
+    "All seven source files unchanged in their working trees at capture",
+    "Known financial values and credential assignments absent from packet"
+  ],
+  "source_binding": "Local repository HEAD plus full-file SHA-256; no remote freshness or release-state claim",
+  "accepted_decision_count": 0,
+  "contract_mapping": "PASS - exact-column rows imported into ephemeral PGlite using actual 001_core.sql; see import-verification.json",
+  "live_gates": {
+    "supabase_import": "NOT_RUN",
+    "sodabase_verdict": "NOT_RUN",
+    "founder_acceptance": "NOT_RUN",
+    "agent_execution": "NOT_RUN",
+    "fresh_run": "NOT_RUN",
+    "reel_extraction": "BLOCKED_OWNER_FILE_REQUIRED"
+  },
+  "files": [
+    {
+      "path": "data/curated/acceptance-evidence.json",
+      "sha256": "e56f5bf1b1a6665c82987d73b7b41d574d4a9ffa5fe39153036507f9c4cd06ad"
+    },
+    {
+      "path": "data/curated/decisions.proposed.json",
+      "sha256": "818a2157fab0eba6cf7d49323587bb8022de1bc12d15125166e3db06bd3e3e98"
+    },
+    {
+      "path": "data/curated/import-id-map.json",
+      "sha256": "d24743884c1c99657a5d5d9bbe60575e2b835fe7bb727c031c095a3196425a05"
+    },
+    {
+      "path": "data/curated/import.contract.json",
+      "sha256": "44f684a37655a5bbae291dea3625eb80839c1ad069f8b258942374cbbe24c85c"
+    },
+    {
+      "path": "data/curated/milo-slide-text.json",
+      "sha256": "4f0832025ced06b7bb2b45d8798cb879c06d3974c7e4ca051e7c2e85094cee71"
+    },
+    {
+      "path": "data/curated/reel-input-status.json",
+      "sha256": "0e41f9a8fd0ddefba53b9bdb578754a635a40f91191fb1612619bc6a68ce2206"
+    },
+    {
+      "path": "data/curated/sources.json",
+      "sha256": "d17d90fbebbd20944831e1685fca435906262d15cfbcb199e267443f75ce9dee"
+    },
+    {
+      "path": "docs/sources/README.md",
+      "sha256": "28ee72ec1f62e3132f063f410762c801f40ae750342ee77c49d8d676d1cd1006"
+    },
+    {
+      "path": "docs/sources/contract-binding.json",
+      "sha256": "93d3568533bbafd5a1f57849f0efdaa97c56e70446fd041142a8d29f11c776fc"
+    },
+    {
+      "path": "docs/sources/import-verification.json",
+      "sha256": "22dfa8199edfc457383535c8c61f84f6cc23da85e20691026b6a5a5cb358488c"
+    },
+    {
+      "path": "docs/sources/local-approved-import-receipt.json",
+      "sha256": "2029c17038162c3a810aff9035149d2ee734b5756d70d78a70fb32d9838f9043"
+    },
+    {
+      "path": "docs/sources/owner-approval.json",
+      "sha256": "0ab526d26a44e7fa6aaef016cee67ccbb23cd9f5e5c3c0f6e2d22c4614f52a1c"
+    }
+  ],
+  "final_scoped_review": {
+    "status": "PASS",
+    "scope": "Curated packet, source binding, proposed-only import and nonfinancial slide; no repository-wide review",
+    "P0": 0,
+    "P1": 0,
+    "remaining_gates": "Live integration and runtime evidence owned by parent lanes; no acceptance fabricated."
+  },
+  "approval_update": {
+    "observed_at": "2026-11-04T21:40:30.350182+00:00",
+    "founder_approval": "APPROVED_BY_DIRECT_OWNER_MESSAGE",
+    "receipt": "docs/sources/owner-approval.json",
+    "database_acceptance": "PASS_LOCAL_PERSISTENT_PGLITE_ONLY",
+    "fresh_run": "NOT_YET_VERIFIED",
+    "receipt_local_import": "docs/sources/local-approved-import-receipt.json"
+  }
+}
