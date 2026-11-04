@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { acceptDecision } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
 import { founderWritesAllowed } from '@/lib/db';
-import type { Chain, EvaluationRow, Records } from '@/lib/records';
+import { servedModel, type Chain, type EvaluationRow, type Records } from '@/lib/records';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
 
 function headline(chain: Chain | null): { lead: string; rest: string; yes: boolean } {
@@ -50,6 +50,12 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
       <div className="hero-head">
         <h2 id="q-correction" className="question">Did the correction work? {label}</h2>
         <p className={h.yes ? 'answer yes' : 'answer'}><em>{h.lead}</em> {h.rest}</p>
+        {chain?.conflictIsReplay ? (
+          <p className="flag-line hero-flag">
+            <span className="flag">historical replay</span>
+            The conflict is a labeled replay of an old slide line, not new model output. {chain.freshRun ? 'The fresh run is a real model run.' : ''}
+          </p>
+        ) : null}
       </div>
 
       {!chain ? (
@@ -68,11 +74,13 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
 
           <Step n="2" label="Conflicting output" reached={!!chain.conflictAttempt}>
             <blockquote className="excerpt">“{chain.row.excerpt}”</blockquote>
-            {chain.conflictIsHistoricalInput ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a new incident.</p> : null}
+            {chain.conflictIsReplay ? <p className="flag-line"><span className="flag">historical replay</span> Not a model output.</p>
+              : chain.conflictIsHistoricalInput ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a new incident.</p> : null}
             <p className="step-note">{chain.row.explanation}</p>
             <Binding items={[
-              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}${chain.conflictRun.memory_mode === 'baseline' ? ', memory off' : ''}` : 'not readable'],
+              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}${chain.conflictIsReplay ? ', replay' : chain.conflictRun.memory_mode === 'baseline' ? ', memory off' : ''}` : 'not readable'],
               ['attempt', chain.conflictAttempt ? `${chain.conflictAttempt.attempt_no}, ${chain.conflictAttempt.kind}` : 'not readable'],
+              ['model', chain.conflictIsReplay ? 'none, not model-generated' : servedModel(records, chain.conflictRun?.run_id) ?? 'not recorded'],
               ['output', short(chain.conflictAttempt?.output_sha256)],
             ]} />
           </Step>
@@ -93,11 +101,14 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
           <Step n="4" label="Repair and correction" reached={!!chain.repairAttempt || !!chain.correction}>
             {chain.repairAttempt || chain.correction ? (
               <>
-                {chain.correction ? <p className="step-lead">{chain.correction.statement}</p> : <p className="step-note">{chain.row.proposed_repair}</p>}
+                {chain.correction && chain.correctionIsNewVersion ? <p className="step-lead">{chain.correction.statement}</p> : <p className="step-lead">{chain.row.proposed_repair}</p>}
                 <Binding items={[
-                  ...(chain.correction ? [['correction', `${chain.correction.decision_key} v${chain.correction.version}, ${chain.correction.status}`] as [string, string]] : []),
+                  ...(chain.correction ? [['correction', chain.correctionIsNewVersion
+                    ? `${chain.correction.decision_key} v${chain.correction.version}, ${chain.correction.status}`
+                    : `${chain.correction.decision_key} v${chain.correction.version}, accepted before this check, no new version`] as [string, string]] : []),
                   ['repair', chain.repairAttempt
                     ? `attempt ${chain.repairAttempt.attempt_no}, gate ${chain.repairGate?.verdict ?? 'not called'}`
+                    : chain.conflictIsReplay ? 'none, a replay is not repaired'
                     : chain.conflictRun?.memory_mode === 'baseline' ? 'none, a memory-off baseline gets no repairs' : 'no repair attempt recorded'],
                   ...(chain.repairAttempt ? [['output', short(chain.repairAttempt.output_sha256)] as [string, string]] : []),
                 ]} />
@@ -113,6 +124,7 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
                 {chain.freshRun.memory_mode === 'baseline' ? <p className="step-note">This run has memory off, so it cannot verify a correction.</p> : null}
                 <Binding items={[
                   ['run', `${profileName(chain.freshRun.profile)} ${short(chain.freshRun.run_id, 8)}${chain.freshIsNewRun ? '' : ' (same run)'}`],
+                  ['model', servedModel(records, chain.freshRun.run_id) ?? 'not recorded'],
                   ['memory', chain.freshPinsCorrection ? 'pins the correction' : 'correction not pinned'],
                   ['checks', `${passCount(chain.freshEvaluations)} of ${chain.freshEvaluations.length} passed, attempt ${chain.freshRun.attempt_no ?? 'none'}`],
                   ['at', chain.freshRun.completed_at ? et(chain.freshRun.completed_at) : ago(chain.freshRun.created_at, now)],

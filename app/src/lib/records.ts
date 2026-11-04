@@ -45,7 +45,7 @@ export interface AttemptRow {
 }
 export interface EvidenceRow {
   id: string; output_id: string; kind: string; uri: string | null; sha256: string | null; created_by: string; created_at: Date;
-  historical_label: string | null;
+  historical_label: string | null; served_model: string | null;
 }
 export interface ApprovalRow { evaluation_id: string; decision: string; approver: string; created_at: Date }
 export interface PinRow { run_id: string; decision_id: string }
@@ -79,14 +79,16 @@ async function readAll(tx: Tx): Promise<Records> {
   const gates = await tx.query<GateRow>(`select * from cm.gate_decisions order by created_at desc, id limit 300`);
   const quality = await tx.query<QualityRow>(
     `select id, provider, provider_finding_id, table_name, verdict, problem, finding_count, severity, observed_at
-     from cm.quality_findings order by observed_at desc, id limit 100`);
+     from cm.quality_findings order by observed_at desc, id limit 500`);
   const attempts = await tx.query<AttemptRow>(
     `select a.id, a.run_id, a.attempt_no, a.kind, a.created_at, o.id as output_id, o.output_sha256, o.body
      from cm.attempts a left join cm.outputs o on o.attempt_id = a.id
      order by a.created_at desc, a.id limit 300`);
   const evidence = await tx.query<EvidenceRow>(
-    `select id, output_id, kind, uri, sha256, created_by, created_at, payload->>'historical_label' as historical_label
-     from cm.evidence order by created_at desc, id limit 300`);
+    // The model comes from the transport receipt. declared_agent_model is a legacy label and is never read.
+    `select id, output_id, kind, uri, sha256, created_by, created_at, payload->>'historical_label' as historical_label,
+       case when kind = 'hermes_transport' then payload->'receipt'->>'served_model' end as served_model
+     from cm.evidence order by created_at desc, id limit 600`);
   const approvals = await tx.query<ApprovalRow>(`select evaluation_id, decision, approver, created_at from cm.approvals`);
   const pins = await tx.query<PinRow>(`select run_id, decision_id from cm.run_decisions`);
   return { readAt: now, runs, chains, decisions, sources, evaluations, gates, quality, attempts, evidence, approvals, pins };
@@ -108,6 +110,21 @@ export function countedEvaluationIds(r: Records): Set<string> {
   return counted;
 }
 
+/** Which model actually served a run, from its transport receipts. Null when no receipt names one. */
+export function servedModel(r: Records, runId: string | null | undefined): string | null {
+  const outputs = new Set(r.attempts.filter((a) => a.run_id === runId).map((a) => a.output_id));
+  const models = new Set(r.evidence.filter((e) => e.served_model && outputs.has(e.output_id)).map((e) => e.served_model));
+  return models.size ? [...models].join(', ') : null;
+}
+
+/** A replayed historical line goes through the normal checks, but no model wrote it. */
+export function isReplay(body: Record<string, unknown> | null | undefined): boolean {
+  const p = body?.provenance as { kind?: unknown; model_generated?: unknown } | undefined;
+  return p?.kind === 'historical_replay' || p?.model_generated === false;
+}
+export const isReplayRun = (r: Records, runId: string | null | undefined) =>
+  r.attempts.some((a) => a.run_id === runId && isReplay(a.body));
+
 /** The label the Milo handler records in evidence when its input is a historical excerpt. */
 export const historicalLabel = (r: Records, outputId: string | null | undefined): string | null =>
   r.evidence.find((e) => e.output_id === outputId && e.historical_label)?.historical_label ?? null;
@@ -126,6 +143,8 @@ export interface Chain {
   conflictAttempt: AttemptRow | null;
   conflictRun: RunRow | null;
   conflictIsHistoricalInput: boolean;
+  conflictIsReplay: boolean;
+  correctionIsNewVersion: boolean;
   failedEvaluation: EvaluationRow | null;
   rejection: GateRow | null;
   repairAttempt: AttemptRow | null;
@@ -168,7 +187,9 @@ export function buildChain(r: Records, row: ChainRow): Chain {
   const freshGate = freshRun ? r.gates.find((g) => g.run_id === freshRun.run_id) ?? null : null;
   const proven = row.status === 'verified' && freshIsNewRun && freshRun?.status === 'completed' && freshPinsCorrection;
   const conflictIsHistoricalInput = !!historicalLabel(r, row.target_output_id) && quotesOnlyInput(conflictAttempt?.body, row.excerpt);
-  return { row, decision, source, conflictAttempt, conflictRun, conflictIsHistoricalInput, failedEvaluation, rejection, repairAttempt, repairEvaluation, repairGate, correction, freshRun, freshIsNewRun, freshPinsCorrection, freshEvaluations, freshGate, proven };
+  const conflictIsReplay = isReplay(conflictAttempt?.body);
+  const correctionIsNewVersion = !!correction && correction.id !== decision?.id;
+  return { row, decision, source, conflictAttempt, conflictRun, conflictIsHistoricalInput, conflictIsReplay, correctionIsNewVersion, failedEvaluation, rejection, repairAttempt, repairEvaluation, repairGate, correction, freshRun, freshIsNewRun, freshPinsCorrection, freshEvaluations, freshGate, proven };
 }
 
 export function newest(dates: Array<Date | null | undefined>): Date | null {

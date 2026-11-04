@@ -1,11 +1,10 @@
-// Model access for all agent profiles. Handlers depend on the ModelClient seam,
-// so tests inject a double and production uses the Anthropic SDK.
-import Anthropic from '@anthropic-ai/sdk';
+// Model access for all agent profiles. Handlers depend on the ModelClient seam: tests inject a
+// double and real runs inject the Hermes client. The SDK supplies message types only, never a request.
+import type Anthropic from '@anthropic-ai/sdk';
 import { sha256 } from '../contract/hash.js';
 import type { EvidenceInput } from '../contract/types.js';
 
 export const AGENT_MODEL = 'claude-sonnet-5-5';
-const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
 export type ModelRequest = Pick<
   Anthropic.Beta.Messages.MessageCreateParamsNonStreaming,
@@ -15,22 +14,10 @@ export type ModelResponse = Anthropic.Beta.Messages.BetaMessage;
 export type ModelMessage = Anthropic.Beta.Messages.BetaMessageParam;
 export interface ModelClient { readonly transport: string; create(request: ModelRequest): Promise<ModelResponse>; }
 
-/** Reads ANTHROPIC_API_KEY when first called, so importing the registry needs no secret. */
-export function anthropicModelClient(): ModelClient {
-  let client: Anthropic | undefined;
-  return {
-    transport: 'anthropic_api',
-    create(request) {
-      client ??= new Anthropic();
-      return client.beta.messages.create({
-        ...request,
-        model: AGENT_MODEL,
-        max_tokens: 16000,
-        betas: [FALLBACK_BETA],
-        fallbacks: 'default',
-      });
-    },
-  };
+/** Raised when a handler needs a model and none was injected. There is no default transport to fall back to. */
+export class ModelClientRequiredError extends Error {
+  readonly code = 'MODEL_CLIENT_NOT_INJECTED';
+  constructor() { super('MODEL_CLIENT_NOT_INJECTED'); this.name = 'ModelClientRequiredError'; }
 }
 
 export class AgentRefusalError extends Error {
@@ -54,6 +41,12 @@ export function assertUsable(response: ModelResponse): void {
 
 export const responseText = (response: ModelResponse): string =>
   response.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('');
+
+/** Parses a JSON reply. Some transports do not enforce the schema, so a surrounding code fence is tolerated. */
+export function parseJsonReply<T>(text: string): T {
+  const fenced = text.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  return JSON.parse(fenced ? fenced[1]! : text) as T;
+}
 
 /** Records what actually served each attempt, including any server-side fallback. */
 export class ModelTrace {
@@ -113,7 +106,7 @@ export async function structuredCall<T>(opts: {
     });
     let value: T;
     try {
-      value = JSON.parse(responseText(response)) as T;
+      value = parseJsonReply<T>(responseText(response));
     } catch {
       throw new AgentOutputError('Model output was not the requested JSON');
     }

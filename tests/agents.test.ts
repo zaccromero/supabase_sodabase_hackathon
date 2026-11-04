@@ -6,20 +6,22 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PinnedDecision } from '../src/contract/types.js';
-import { CliTransportError, cliModelClient, type CliRunner, renderConversation } from '../src/agents/cliModel.js';
 import { createHandlers, driftReviewTask, handlers, modelClientFromEnv } from '../src/agents/index.js';
 import { createDriftReviewer, textLeaves } from '../src/agents/driftReviewer.js';
 import { ageInDays, createGymOperator } from '../src/agents/gymOperator.js';
 import { type GymReader, readerFromExecutor, validateGymSql } from '../src/agents/gymReader.js';
+import { withHermesGeneration } from '../src/governance-demo/hermes-transport.js';
 import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, DEFAULT_SLIDE_PACKET, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
-import { AgentOutputError, AgentRefusalError, type ModelClient, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
+import { AgentOutputError, AgentRefusalError, type ModelClient, ModelClientRequiredError, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
 import { buildSystemPrompt, withTechnique } from '../src/agents/prompt.js';
 
 type Block = Record<string, unknown>;
 const reply = (content: Block[], stop_reason: string, extra: Block = {}) =>
   ({ id: 'msg_test', type: 'message', role: 'assistant', model: 'scripted-test-model', content, stop_reason, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 5 }, ...extra }) as unknown as ModelResponse;
-const toolCall = (name: string, input: Block, id = `tool_${name}`) => reply([{ type: 'tool_use', id, name, input }], 'tool_use');
 const json = (value: unknown) => reply([{ type: 'text', text: JSON.stringify(value) }], 'end_turn');
+
+const explore = (...sql: string[]) => json({ explore: sql, final: null });
+const submit = (final: Block) => json({ explore: [], final });
 
 class ScriptedModelClientForTests implements ModelClient {
   readonly transport = 'scripted_test_double';
@@ -145,9 +147,8 @@ describe('gym read-only reader', () => {
 
   it('builds the contract body from executed SQL and records SQL and counts as evidence', async () => {
     const model = new ScriptedModelClientForTests([
-      toolCall('describe_gym_schema', {}),
-      toolCall('run_sql', { sql: 'select count(*) as n from memberships_test_fixture' }),
-      toolCall('submit_answer', { sql: answerSql, definition: 'memberships_test_fixture where active', freshness_sql: freshnessSql }),
+      explore('select count(*) as n from memberships_test_fixture'),
+      submit({ sql: answerSql, definition: 'memberships_test_fixture where active', freshness_sql: freshnessSql }),
     ]);
     const { body, evidence } = await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
     expect(body).toEqual({
@@ -162,19 +163,19 @@ describe('gym read-only reader', () => {
     expect(sqlEvidence.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(evidence.find((item) => item.kind === 'data_freshness')!.payload.sql).toBe(freshnessSql);
     expect((evidence.find((item) => item.kind === 'sql_trace')!.payload.queries as unknown[]).length).toBe(3);
-    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 3 });
+    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 2 });
   });
 
   it('reports no total rather than a zero when the query returns no rows', async () => {
     const empty = "select location_id, count(*) as active_individual_members from memberships_test_fixture where location_id = 'none' group by 1";
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: empty, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: empty, definition: 'd', freshness_sql: freshnessSql })]);
     const { body, evidence } = await gym(model)({ ...base, task: 'q', decisions: [] });
     expect(body.answer).toEqual([]);
     expect(evidence.find((item) => item.kind === 'sql_result')!.payload.metric_totals).toEqual({});
   });
 
   it('gives the baseline no definition hint', async () => {
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
     const sent = JSON.stringify(model.requests[0]);
     for (const hint of ['MATCHED_INDIVIDUAL', 'bridge_class', 'ezf_active_memberships', 'churned_at', 'projection', 'pinned_decisions']) {
@@ -183,31 +184,84 @@ describe('gym read-only reader', () => {
   });
 
   it('carries a pinned definition into the system prompt when one exists', async () => {
-    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     const pinned = { ...decision, decision_key: 'gym.active_definition', statement: 'Count MATCHED_INDIVIDUAL from the latest complete projection.' };
     await gym(model)({ ...base, task: 'q', decisions: [pinned], technique: { style: 'count churned_at IS NULL instead' } });
     expect(String(model.requests[0]!.system)).toContain('MATCHED_INDIVIDUAL');
     expect(String(model.requests[0]!.system)).not.toContain('churned_at IS NULL');
   });
 
-  it('returns tool errors to the model and lets it recover, keeping the failure in the trace', async () => {
+  it('returns query and answer errors to the model and lets it recover, keeping the failure in the trace', async () => {
     const model = new ScriptedModelClientForTests([
-      toolCall('run_sql', { sql: 'delete from memberships_test_fixture' }),
-      toolCall('submit_answer', { sql: 'select count(*) as n from memberships_test_fixture', definition: 'd', freshness_sql: freshnessSql }),
-      toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql }),
+      explore('delete from memberships_test_fixture'),
+      submit({ sql: 'select count(*) as n from memberships_test_fixture', definition: 'd', freshness_sql: freshnessSql }),
+      submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql }),
     ]);
     const { evidence } = await gym(model)({ ...base, task: 'q', decisions: [] });
-    const firstResult = model.requests[1]!.messages.at(-1)!.content as unknown as Block[];
-    expect(firstResult[0]).toMatchObject({ type: 'tool_result', is_error: true });
-    const secondResult = model.requests[2]!.messages.at(-1)!.content as unknown as Block[];
-    expect(secondResult[0]!.content).toMatch(/location_id/);
+    expect(JSON.stringify(model.requests[1]!.messages.at(-1))).toMatch(/SELECT or WITH/);
+    expect(JSON.stringify(model.requests[2]!.messages.at(-1))).toMatch(/location_id/);
     const queries = evidence.find((item) => item.kind === 'sql_trace')!.payload.queries as Array<{ error?: string }>;
     expect(queries[0]!.error).toMatch(/SELECT or WITH/);
+    expect((await db.query<{ n: number }>('select count(*)::int n from gym.memberships_test_fixture')).rows[0]!.n).toBe(4);
   });
 
-  it('never fabricates when the model will not submit', async () => {
-    const model = new ScriptedModelClientForTests([reply([{ type: 'text', text: 'About 500.' }], 'end_turn'), reply([{ type: 'text', text: 'About 500.' }], 'end_turn')]);
-    await expect(gym(model)({ ...base, task: 'q', decisions: [] })).rejects.toBeInstanceOf(AgentOutputError);
+  it('sends the real schema up front and no tools on any turn', async () => {
+    const model = new ScriptedModelClientForTests([explore('select 1 as n'), submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    await gym(model)({ ...base, task: 'q', decisions: [] });
+    expect(JSON.stringify(model.requests[0]!.messages[0])).toContain('memberships_test_fixture');
+    expect(JSON.stringify(model.requests[0]!.messages[0])).not.toContain('email');
+    for (const request of model.requests) {
+      expect(request.tools).toBeUndefined();
+      expect(request.output_config?.format).toBeTruthy();
+    }
+  });
+
+  it('accepts a fenced reply and keeps an unknown count as null, with no total', async () => {
+    const unknown = "select 'site_a' as location_id, null::int as active_individual_members";
+    const fenced = reply([{ type: 'text', text: '```json\n' + JSON.stringify({ explore: [], final: { sql: unknown, definition: 'd', freshness_sql: freshnessSql } }) + '\n```' }], 'end_turn');
+    const { body, evidence } = await gym(new ScriptedModelClientForTests([fenced]))({ ...base, task: 'q', decisions: [] });
+    expect(body.answer).toEqual([{ location_id: 'site_a', active_individual_members: null }]);
+    expect(evidence.find((item) => item.kind === 'sql_result')!.payload.metric_totals).toEqual({});
+  });
+
+  it('never fabricates when the model will not finish, and keeps its text out of the error', async () => {
+    const prose = () => reply([{ type: 'text', text: 'About 500 members.' }], 'end_turn');
+    const model = new ScriptedModelClientForTests(Array.from({ length: 8 }, prose));
+    const failure = await gym(model)({ ...base, task: 'q', decisions: [] }).catch((error: Error) => error);
+    expect(failure).toBeInstanceOf(AgentOutputError);
+    expect((failure as Error).message).toMatch(/within 8 turns \(queries_run=0, queries_rejected=0, unusable_replies=8\)/);
+    expect((failure as Error).message).not.toContain('500');
+  });
+
+  it('runs end to end through the real Hermes adapter envelope, with no application tools', async () => {
+    const replies = [
+      { explore: ['select count(*) as n from memberships_test_fixture'], final: null },
+      { explore: [], final: { sql: answerSql, definition: 'd', freshness_sql: freshnessSql } },
+    ];
+    const sent: Array<{ system: string; user: string }> = [];
+    const run = async (payload: { system: string; user: string }) => {
+      sent.push(payload);
+      return {
+        ok: true,
+        text: JSON.stringify(replies[sent.length - 1]),
+        receipt: {
+          state: 'RECEIVED', provider: 'openai-codex', served_model: 'fixture-model', model_provider: 'openai', requested_model: 'fixture-model', model_turns: 1, tool_iterations: 0, guard_bypass: false, credential_exported: false,
+          isolation: { use_memories: false, generate_memories: false, thread_memory_mode: 'disabled' },
+          no_tools_scope: { tool_policy: 'none', max_authorized_actions: 0 },
+          token_usage: { inputTokens: 7, outputTokens: 3 },
+        },
+      };
+    };
+    const handler = withHermesGeneration((client) => gym(client), { run });
+    const { body, evidence } = await handler({ ...base, task: 'q', decisions: [] });
+    expect(body.answer).toEqual([{ location_id: 'site_a', active_individual_members: 2 }, { location_id: 'site_b', active_individual_members: 1 }]);
+    for (const payload of sent) {
+      const user = JSON.parse(payload.user) as { allowedApplicationTools: unknown[]; outputSchema: { required?: string[] } };
+      expect(user.allowedApplicationTools).toEqual([]);
+      expect(user.outputSchema.required).toEqual(['explore', 'final']);
+    }
+    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'hermes_oauth', served_by: ['fixture-model'], calls: 2 });
+    expect(evidence.filter((item) => item.kind === 'hermes_transport')).toHaveLength(2);
   });
 
   it('surfaces a refusal as a typed error', async () => {
@@ -463,92 +517,35 @@ describe('drift reviewer', () => {
   });
 });
 
-describe('claude cli transport', () => {
-  const secretPrompt = 'SECRET_TASK_TEXT';
-  const systemPrompt = 'SECRET_SYSTEM_TEXT';
-  const result = (fields: Block) => JSON.stringify({ type: 'result', subtype: 'success', is_error: false, session_id: 's1', usage: { input_tokens: 7, output_tokens: 3 }, modelUsage: { 'claude-sonnet-5-5': {} }, ...fields });
-  function fakeRunner(stdout: string, code = 0, stderr = '') {
-    const calls: Array<{ args: string[]; stdin: string; env: NodeJS.ProcessEnv; cwd: string; systemFile: string }> = [];
-    const run: CliRunner = async (args, stdin, options) => {
-      const file = args[args.indexOf('--system-prompt-file') + 1]!;
-      calls.push({ args, stdin, env: options.env, cwd: options.cwd, systemFile: readFileSync(file, 'utf8') });
-      return { code, stdout, stderr };
-    };
-    return { run, calls };
-  }
-  const env = { PATH: '/bin', HOME: '/h', ANTHROPIC_API_KEY: 'should-not-pass', ANTHROPIC_AUTH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'https://elsewhere.test', CLAUDE_CODE_SIMPLE: '1', DATABASE_URL: 'postgres://nope' };
-  const structured = { system: systemPrompt, messages: [{ role: 'user' as const, content: secretPrompt }], output_config: { effort: 'medium' as const, format: { type: 'json_schema' as const, schema: { type: 'object' } } } };
-
-  it('sends content on stdin and in a file, never in argv, with tools and customizations off', async () => {
-    const { run, calls } = fakeRunner(result({ structured_output: { ok: true } }));
-    await cliModelClient({ run, env }).create(structured);
-    const { args, stdin, systemFile } = calls[0]!;
-    expect(stdin).toBe(secretPrompt);
-    expect(systemFile).toBe(systemPrompt);
-    expect(args.join(' ')).not.toMatch(/SECRET_/);
-    expect(args.slice(args.indexOf('--tools'), args.indexOf('--tools') + 2)).toEqual(['--tools', '']);
-    for (const flag of ['-p', '--safe-mode', '--strict-mcp-config', '--no-session-persistence']) expect(args).toContain(flag);
-    expect(args.slice(args.indexOf('--model'), args.indexOf('--model') + 2)).toEqual(['--model', 'claude-sonnet-5-5']);
-  });
-
-  it('gives the child only a minimal environment, so no key can override the login', async () => {
-    const { run, calls } = fakeRunner(result({ result: 'hi' }));
-    await cliModelClient({ run, env }).create(structured);
-    expect(calls[0]!.env).toEqual({ PATH: '/bin', HOME: '/h' });
-    expect(calls[0]!.cwd).not.toContain('worktrees');
-  });
-
-  it('maps structured output and reports the model that actually served it', async () => {
-    const { run } = fakeRunner(result({ structured_output: { ok: true } }));
-    const response = await cliModelClient({ run, env }).create(structured);
-    expect(response.content).toEqual([{ type: 'text', text: '{"ok":true}' }]);
-    expect(response.model).toBe('claude-sonnet-5-5');
-    expect(response.usage.output_tokens).toBe(3);
-    const cached = fakeRunner(result({ structured_output: {}, usage: { input_tokens: 2, cache_creation_input_tokens: 785, cache_read_input_tokens: 10, output_tokens: 1 } }));
-    expect((await cliModelClient({ run: cached.run, env }).create(structured)).usage.input_tokens).toBe(797);
-  });
-
-  it('turns structured calls into tool_use blocks for the gym loop', async () => {
-    const { run, calls } = fakeRunner(result({ structured_output: { text: '', calls: [{ name: 'run_sql', input: { sql: 'select 1' } }] } }));
-    const tools = [{ name: 'run_sql', description: 'Run SQL', input_schema: { type: 'object' as const, properties: {} } }];
-    const response = await cliModelClient({ run, env }).create({ system: 's', messages: [{ role: 'user', content: 'q' }], tools });
-    expect(response.stop_reason).toBe('tool_use');
-    expect(response.content[0]).toMatchObject({ type: 'tool_use', name: 'run_sql', input: { sql: 'select 1' } });
-    expect(calls[0]!.systemFile).toContain('run_sql');
-  });
-
-  it('replays tool history as text', () => {
-    const rendered = renderConversation([
-      { role: 'user', content: 'q' },
-      { role: 'assistant', content: [{ type: 'tool_use', id: 'c1', name: 'run_sql', input: { sql: 'select 1' } }] },
-      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'c1', content: 'bad', is_error: true }] },
-    ]);
-    expect(rendered).toContain('name="run_sql"');
-    expect(rendered).toContain('is_error="true"');
-  });
-
-  it('surfaces the exact CLI failure and does not fall back', async () => {
-    const { run, calls } = fakeRunner(result({ is_error: true, subtype: 'error_during_execution', result: 'Not logged in' }), 1);
-    await expect(cliModelClient({ run, env }).create(structured)).rejects.toThrow(/Not logged in/);
-    expect(calls).toHaveLength(1);
-    const garbled = fakeRunner('not json', 1, 'permission denied');
-    await expect(cliModelClient({ run: garbled.run, env }).create(structured)).rejects.toBeInstanceOf(CliTransportError);
-  });
-
-  it('maps a refusal so the handler raises its typed error', async () => {
-    const { run } = fakeRunner(result({ stop_reason: 'refusal' }));
-    expect((await cliModelClient({ run, env }).create(structured)).stop_reason).toBe('refusal');
-  });
-
-  it('selects by MODEL_TRANSPORT and rejects unknown values', () => {
-    expect(modelClientFromEnv('cli').transport).toBe('claude_cli');
-    expect(modelClientFromEnv('api').transport).toBe('anthropic_api');
-    expect(modelClientFromEnv('').transport).toBe('anthropic_api');
-    expect(() => modelClientFromEnv('other')).toThrow(/Unknown MODEL_TRANSPORT/);
-  });
-});
-
 describe('createHandlers', () => {
+  it('fails closed with a fixed code when no client is injected, whatever the environment says', async () => {
+    const saved = { key: process.env.ANTHROPIC_API_KEY, transport: process.env.MODEL_TRANSPORT };
+    process.env.ANTHROPIC_API_KEY = 'must-not-be-used';
+    process.env.MODEL_TRANSPORT = 'cli';
+    try {
+      expect(() => modelClientFromEnv()).toThrow(ModelClientRequiredError);
+      const call = { ...base, task: driftReviewTask('o', { a: 'b' }), decisions: [decision] };
+      await expect(createHandlers().drift_reviewer(call)).rejects.toMatchObject({ code: 'MODEL_CLIENT_NOT_INJECTED', message: 'MODEL_CLIENT_NOT_INJECTED' });
+      await expect(handlers.drift_reviewer(call)).rejects.toBeInstanceOf(ModelClientRequiredError);
+    } finally {
+      if (saved.key === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved.key;
+      if (saved.transport === undefined) delete process.env.MODEL_TRANSPORT; else process.env.MODEL_TRANSPORT = saved.transport;
+    }
+  });
+
+  it('agent source has no provider route of its own', () => {
+    const dir = new URL('../src/agents/', import.meta.url);
+    for (const file of readdirSync(dir)) {
+      const source = readFileSync(new URL(file, dir), 'utf8');
+      expect(source, file).not.toMatch(/node:child_process|new Anthropic\b|process\.env\.(MODEL_TRANSPORT|ANTHROPIC)|^import Anthropic/m);
+    }
+  });
+
+  it('returns an injected client unchanged', () => {
+    const model = new ScriptedModelClientForTests([]);
+    expect(modelClientFromEnv(model)).toBe(model);
+  });
+
   it('routes each profile through the injected model', async () => {
     const model = new ScriptedModelClientForTests([json({ findings: [] })]);
     const injected = createHandlers({ model: () => model });

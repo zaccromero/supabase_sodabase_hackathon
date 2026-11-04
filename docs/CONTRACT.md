@@ -2,6 +2,14 @@
 
 Deadline: **work-ready 17:50 ET, submit 18:30 ET**. Source of truth for tables and rules: `supabase/migrations/001_core.sql`, proven by `tests/gate.test.ts`. Types: `src/contract/types.ts`. Hash: `src/contract/hash.ts`.
 
+## How we are judged (event slide, 25% each)
+1. **Data quality:** complete Sodabase onboarding and fix data quality issues: no stale, empty or wrong data.
+2. **Built to scale:** could it scale to millions of users? Judges look at schema, indexes, row-level security and edge functions, not real traffic.
+3. **Execution:** the demo or live URL works end to end.
+4. **Craft:** polish, originality and a clear problem being solved.
+
+Every lane checks its work against these. Fixing a finding means fixing the data or the pipeline, never muting a monitor or hiding a result.
+
 ## One production board (owner, 2026-11-04)
 - **The only evidence board is https://company-memory-zacc-r.vercel.app**, built from `app/` on `main`, reading hosted Supabase `dgqcanfiapxztmqqlqnh`. Port 4971 is a local view of the same app and the same data.
 - No other evidence board, mock or deployment. Other packages feed this one; they do not run beside it.

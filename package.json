@@ -4,8 +4,9 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
-  "dependencies": { "@anthropic-ai/sdk": "1.4.0", "@modelcontextprotocol/sdk": "1.32.2", "ajv": "8.17.1", "pg": "8.13.1" },
+  "dependencies": { "@modelcontextprotocol/sdk": "1.32.2", "ajv": "8.17.1", "pg": "8.13.1" },
   "devDependencies": {
+    "@anthropic-ai/sdk": "1.4.0",
     "@electric-sql/pglite": "0.2.17",
     "@types/node": "22.10.2",
     "@types/pg": "8.11.10",

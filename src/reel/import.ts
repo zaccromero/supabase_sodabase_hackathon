@@ -5,8 +5,7 @@ import { createReadStream } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { extname } from 'node:path';
 import type { Queryable } from '../data/mirror-core';
-import { DEFAULT_MODEL, normalizeExtraction, promptSha256, REEL_PROMPT, type Extraction } from './extract';
-import type { Extractor } from './gemini';
+import { normalizeExtraction, promptSha256, REEL_PROMPT, type Extraction, type Extractor } from './extract';
 
 const MIME: Record<string, string> = { '.mp4': 'video/mp4', '.m4v': 'video/mp4', '.mov': 'video/quicktime', '.webm': 'video/webm', '.mpeg': 'video/mpeg', '.mpg': 'video/mpeg', '.avi': 'video/x-msvideo' };
 const MAX_BYTES = 2 * 1024 * 1024 * 1024;
@@ -53,10 +52,10 @@ async function asGateService<T>(db: Queryable, fn: () => Promise<T>): Promise<T>
   }
 }
 
-export async function importReel(input: { filePath: string; db: Queryable; extractor: Extractor; model?: string }): Promise<ImportResult> {
+export async function importReel(input: { filePath: string; db: Queryable; extractor: Extractor; model: string }): Promise<ImportResult> {
   const { mimeType, sizeBytes } = await assertLocalMedia(input.filePath);
   const db = guarded(input.db);
-  const model = input.model ?? DEFAULT_MODEL;
+  const { model } = input;
   const media_sha256 = await hashFile(input.filePath);
   const prompt_sha256 = promptSha256();
 
