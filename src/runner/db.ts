@@ -39,11 +39,27 @@ export function pgliteDb(instance: PGlite): Db {
   };
 }
 
-/** Connects with SUPABASE_DB_URL (Doppler hackathon/dev). TLS settings come from the URL, plus SUPABASE_DB_CA if set. */
-export function pgDb(url = process.env.SUPABASE_DB_URL): Db {
+/**
+ * pg settings for a connection string. A remote database needs TLS: either SUPABASE_DB_CA (the project's CA, which
+ * is verified) or an sslmode in the URL. Without one, pg would send the password in the clear. The error never
+ * includes the URL. pg lets sslmode in the URL override the ssl option, so it comes out when a CA is given.
+ */
+export function pgConfig(url = process.env.SUPABASE_DB_URL, ca = process.env.SUPABASE_DB_CA): pg.ClientConfig {
   if (!url) throw new Error('SUPABASE_DB_URL is not set. Run under: doppler run --project hackathon --config dev --');
-  const ca = process.env.SUPABASE_DB_CA;
-  const pool = new pg.Pool({ connectionString: url, max: 5, ...(ca ? { ssl: { ca } } : {}) });
+  const parsed = new URL(url);
+  const sslmode = parsed.searchParams.get('sslmode');
+  if (ca) {
+    parsed.searchParams.delete('sslmode');
+    return { connectionString: parsed.toString(), ssl: { ca } };
+  }
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+  if (!local && (!sslmode || sslmode === 'disable')) throw new Error('TLS_REQUIRED: set SUPABASE_DB_CA, or add sslmode=verify-full to SUPABASE_DB_URL');
+  return { connectionString: url };
+}
+
+/** Connects with SUPABASE_DB_URL (Doppler hackathon/dev). */
+export function pgDb(url = process.env.SUPABASE_DB_URL): Db {
+  const pool = new pg.Pool({ ...pgConfig(url), max: 5 });
   return {
     withRole: async <T>(role: DbRole, fn: (tx: Tx) => Promise<T>) => {
       const sql = setLocalRole(role);
