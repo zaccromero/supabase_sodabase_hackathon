@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: 1.4.0
-        version: 1.4.0(zod@4.6.7)
       '@modelcontextprotocol/sdk':
         specifier: 1.32.2
         version: 1.32.2(zod@4.6.7)
@@ -21,6 +18,9 @@ importers:
         specifier: 8.13.1
         version: 8.13.1
     devDependencies:
+      '@anthropic-ai/sdk':
+        specifier: 1.4.0
+        version: 1.4.0(zod@4.6.7)
       '@electric-sql/pglite':
         specifier: 0.2.17
         version: 0.2.17

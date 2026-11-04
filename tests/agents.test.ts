@@ -6,13 +6,12 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PinnedDecision } from '../src/contract/types.js';
-import { CliTransportError, cliModelClient, type CliRunner, renderConversation } from '../src/agents/cliModel.js';
 import { createHandlers, driftReviewTask, handlers, modelClientFromEnv } from '../src/agents/index.js';
 import { createDriftReviewer, textLeaves } from '../src/agents/driftReviewer.js';
 import { ageInDays, createGymOperator } from '../src/agents/gymOperator.js';
 import { type GymReader, readerFromExecutor, validateGymSql } from '../src/agents/gymReader.js';
 import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, DEFAULT_SLIDE_PACKET, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
-import { AgentOutputError, AgentRefusalError, type ModelClient, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
+import { AgentOutputError, AgentRefusalError, type ModelClient, ModelClientRequiredError, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
 import { buildSystemPrompt, withTechnique } from '../src/agents/prompt.js';
 
 type Block = Record<string, unknown>;
@@ -463,92 +462,35 @@ describe('drift reviewer', () => {
   });
 });
 
-describe('claude cli transport', () => {
-  const secretPrompt = 'SECRET_TASK_TEXT';
-  const systemPrompt = 'SECRET_SYSTEM_TEXT';
-  const result = (fields: Block) => JSON.stringify({ type: 'result', subtype: 'success', is_error: false, session_id: 's1', usage: { input_tokens: 7, output_tokens: 3 }, modelUsage: { 'claude-sonnet-5-5': {} }, ...fields });
-  function fakeRunner(stdout: string, code = 0, stderr = '') {
-    const calls: Array<{ args: string[]; stdin: string; env: NodeJS.ProcessEnv; cwd: string; systemFile: string }> = [];
-    const run: CliRunner = async (args, stdin, options) => {
-      const file = args[args.indexOf('--system-prompt-file') + 1]!;
-      calls.push({ args, stdin, env: options.env, cwd: options.cwd, systemFile: readFileSync(file, 'utf8') });
-      return { code, stdout, stderr };
-    };
-    return { run, calls };
-  }
-  const env = { PATH: '/bin', HOME: '/h', ANTHROPIC_API_KEY: 'should-not-pass', ANTHROPIC_AUTH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'https://elsewhere.test', CLAUDE_CODE_SIMPLE: '1', DATABASE_URL: 'postgres://nope' };
-  const structured = { system: systemPrompt, messages: [{ role: 'user' as const, content: secretPrompt }], output_config: { effort: 'medium' as const, format: { type: 'json_schema' as const, schema: { type: 'object' } } } };
-
-  it('sends content on stdin and in a file, never in argv, with tools and customizations off', async () => {
-    const { run, calls } = fakeRunner(result({ structured_output: { ok: true } }));
-    await cliModelClient({ run, env }).create(structured);
-    const { args, stdin, systemFile } = calls[0]!;
-    expect(stdin).toBe(secretPrompt);
-    expect(systemFile).toBe(systemPrompt);
-    expect(args.join(' ')).not.toMatch(/SECRET_/);
-    expect(args.slice(args.indexOf('--tools'), args.indexOf('--tools') + 2)).toEqual(['--tools', '']);
-    for (const flag of ['-p', '--safe-mode', '--strict-mcp-config', '--no-session-persistence']) expect(args).toContain(flag);
-    expect(args.slice(args.indexOf('--model'), args.indexOf('--model') + 2)).toEqual(['--model', 'claude-sonnet-5-5']);
-  });
-
-  it('gives the child only a minimal environment, so no key can override the login', async () => {
-    const { run, calls } = fakeRunner(result({ result: 'hi' }));
-    await cliModelClient({ run, env }).create(structured);
-    expect(calls[0]!.env).toEqual({ PATH: '/bin', HOME: '/h' });
-    expect(calls[0]!.cwd).not.toContain('worktrees');
-  });
-
-  it('maps structured output and reports the model that actually served it', async () => {
-    const { run } = fakeRunner(result({ structured_output: { ok: true } }));
-    const response = await cliModelClient({ run, env }).create(structured);
-    expect(response.content).toEqual([{ type: 'text', text: '{"ok":true}' }]);
-    expect(response.model).toBe('claude-sonnet-5-5');
-    expect(response.usage.output_tokens).toBe(3);
-    const cached = fakeRunner(result({ structured_output: {}, usage: { input_tokens: 2, cache_creation_input_tokens: 785, cache_read_input_tokens: 10, output_tokens: 1 } }));
-    expect((await cliModelClient({ run: cached.run, env }).create(structured)).usage.input_tokens).toBe(797);
-  });
-
-  it('turns structured calls into tool_use blocks for the gym loop', async () => {
-    const { run, calls } = fakeRunner(result({ structured_output: { text: '', calls: [{ name: 'run_sql', input: { sql: 'select 1' } }] } }));
-    const tools = [{ name: 'run_sql', description: 'Run SQL', input_schema: { type: 'object' as const, properties: {} } }];
-    const response = await cliModelClient({ run, env }).create({ system: 's', messages: [{ role: 'user', content: 'q' }], tools });
-    expect(response.stop_reason).toBe('tool_use');
-    expect(response.content[0]).toMatchObject({ type: 'tool_use', name: 'run_sql', input: { sql: 'select 1' } });
-    expect(calls[0]!.systemFile).toContain('run_sql');
-  });
-
-  it('replays tool history as text', () => {
-    const rendered = renderConversation([
-      { role: 'user', content: 'q' },
-      { role: 'assistant', content: [{ type: 'tool_use', id: 'c1', name: 'run_sql', input: { sql: 'select 1' } }] },
-      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'c1', content: 'bad', is_error: true }] },
-    ]);
-    expect(rendered).toContain('name="run_sql"');
-    expect(rendered).toContain('is_error="true"');
-  });
-
-  it('surfaces the exact CLI failure and does not fall back', async () => {
-    const { run, calls } = fakeRunner(result({ is_error: true, subtype: 'error_during_execution', result: 'Not logged in' }), 1);
-    await expect(cliModelClient({ run, env }).create(structured)).rejects.toThrow(/Not logged in/);
-    expect(calls).toHaveLength(1);
-    const garbled = fakeRunner('not json', 1, 'permission denied');
-    await expect(cliModelClient({ run: garbled.run, env }).create(structured)).rejects.toBeInstanceOf(CliTransportError);
-  });
-
-  it('maps a refusal so the handler raises its typed error', async () => {
-    const { run } = fakeRunner(result({ stop_reason: 'refusal' }));
-    expect((await cliModelClient({ run, env }).create(structured)).stop_reason).toBe('refusal');
-  });
-
-  it('selects by MODEL_TRANSPORT and rejects unknown values', () => {
-    expect(modelClientFromEnv('cli').transport).toBe('claude_cli');
-    expect(modelClientFromEnv('api').transport).toBe('anthropic_api');
-    expect(modelClientFromEnv('').transport).toBe('anthropic_api');
-    expect(() => modelClientFromEnv('other')).toThrow(/Unknown MODEL_TRANSPORT/);
-  });
-});
-
 describe('createHandlers', () => {
+  it('fails closed with a fixed code when no client is injected, whatever the environment says', async () => {
+    const saved = { key: process.env.ANTHROPIC_API_KEY, transport: process.env.MODEL_TRANSPORT };
+    process.env.ANTHROPIC_API_KEY = 'must-not-be-used';
+    process.env.MODEL_TRANSPORT = 'cli';
+    try {
+      expect(() => modelClientFromEnv()).toThrow(ModelClientRequiredError);
+      const call = { ...base, task: driftReviewTask('o', { a: 'b' }), decisions: [decision] };
+      await expect(createHandlers().drift_reviewer(call)).rejects.toMatchObject({ code: 'MODEL_CLIENT_NOT_INJECTED', message: 'MODEL_CLIENT_NOT_INJECTED' });
+      await expect(handlers.drift_reviewer(call)).rejects.toBeInstanceOf(ModelClientRequiredError);
+    } finally {
+      if (saved.key === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved.key;
+      if (saved.transport === undefined) delete process.env.MODEL_TRANSPORT; else process.env.MODEL_TRANSPORT = saved.transport;
+    }
+  });
+
+  it('agent source has no provider route of its own', () => {
+    const dir = new URL('../src/agents/', import.meta.url);
+    for (const file of readdirSync(dir)) {
+      const source = readFileSync(new URL(file, dir), 'utf8');
+      expect(source, file).not.toMatch(/node:child_process|new Anthropic\b|process\.env\.(MODEL_TRANSPORT|ANTHROPIC)|^import Anthropic/m);
+    }
+  });
+
+  it('returns an injected client unchanged', () => {
+    const model = new ScriptedModelClientForTests([]);
+    expect(modelClientFromEnv(model)).toBe(model);
+  });
+
   it('routes each profile through the injected model', async () => {
     const model = new ScriptedModelClientForTests([json({ findings: [] })]);
     const injected = createHandlers({ model: () => model });
