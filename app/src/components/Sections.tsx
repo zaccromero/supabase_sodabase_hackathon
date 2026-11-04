@@ -4,7 +4,7 @@ import { acceptDecision, approveEvaluation } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
 import { founderWritesAllowed } from '@/lib/db';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
-import { countedEvaluationIds, historicalInput, newest, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow } from '@/lib/records';
+import { countedEvaluationIds, historicalLabel, newest, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow } from '@/lib/records';
 
 function Head({ id, question, age, now, tag }: { id: string; question: string; age: Date | null; now: Date; tag: ReactNode }) {
   return (
@@ -107,12 +107,13 @@ function SlideRevision({ r, run }: { r: Records; run: RunRow }) {
   const before = text(body.before);
   const after = text(body.after);
   const claims = Array.isArray(body.claims) ? (body.claims as Array<Record<string, unknown>>) : [];
+  const history = historicalLabel(r, run.output_id);
   return (
     <div className="agent-body">
       <p className="agent-task">{run.task}</p>
       {before ? (
         <>
-          {historicalInput(run, body) ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a current output.</p> : null}
+          {history ? <p className="flag-line"><span className="flag">historical</span> {history}</p> : null}
           <p className="slide-before"><del>{before}</del></p>
         </>
       ) : null}
@@ -159,18 +160,30 @@ export function Agents({ r, tag }: { r: Records; tag: ReactNode }) {
         <AgentCard r={r} profile="gym_operator">{(run) => <GymAnswer r={r} run={run} />}</AgentCard>
         <AgentCard r={r} profile="milo_pitch">{(run) => <SlideRevision r={r} run={run} />}</AgentCard>
         <AgentCard r={r} profile="drift_reviewer">{(run) => {
-          const found = latestOutput(r, run)?.body?.findings;
+          // The runner stores this agent's task as JSON holding the whole target output, so it is not displayed.
+          const body = latestOutput(r, run)?.body;
+          const found = body?.findings;
+          const target = text(body?.target_output_id);
+          const reviewed = body?.decisions_reviewed;
           return (
             <div className="agent-body">
-              <p className="agent-task">{run.task}</p>
-              {Array.isArray(found) || typeof found === 'number' ? (
-                <div className="figures">
+              <p className="agent-task">
+                {target ? `Reviewed output ${short(target, 8)} against accepted decisions.` : 'Reviews outputs against accepted decisions.'}
+              </p>
+              <div className="figures">
+                {Array.isArray(found) ? (
                   <div className="figure">
-                    <span className="figure-n">{Array.isArray(found) ? found.length : found}</span>
+                    <span className="figure-n">{found.length}</span>
                     <span className="figure-label">findings in this review</span>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+                {Array.isArray(reviewed) || typeof reviewed === 'number' ? (
+                  <div className="figure">
+                    <span className="figure-n">{Array.isArray(reviewed) ? reviewed.length : reviewed}</span>
+                    <span className="figure-label">decisions reviewed</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
           );
         }}</AgentCard>
