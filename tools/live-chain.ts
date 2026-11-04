@@ -4,9 +4,11 @@
 //
 // doppler run -p hackathon -c dev -- tsx tools/live-chain.ts          (steps 1 to 5)
 // doppler run -p hackathon -c dev -- tsx tools/live-chain.ts --gym    (step 6)
+// doppler run -p hackathon -c dev -- tsx tools/live-chain.ts --historical-replay   (steps 1 to 5, labeled replay at step 1)
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import type { Profile } from '../src/contract/types';
+import type { Handler, Profile } from '../src/contract/types';
 import { retrieveAccepted } from '../src/memory/index';
 import { linkAcceptedCorrection, pgDb, runAgent, verifyFresh, type RunReport } from '../src/runner/index';
 import { liveBinding, reviewOutput } from '../src/runner/live';
@@ -17,6 +19,28 @@ const PARTNER_DECISION = '0cb43524-2f09-5427-89cb-67614535bee0'; // milo.gym_nyc
 const MILO_TASK = 'Revise this slide excerpt for the current pitch. Return only the title and body. No financial figures or usage claims.';
 const GYM_TASK = 'How many active individual members does each location have right now, and how current is that data?';
 const GYM_TIMEBOX_MS = 8 * 60_000;
+const REPLAY_TASK = 'HISTORICAL REPLAY, not a model output: the historical slide line from the source packet, put through the normal checks.';
+
+/**
+ * Returns the packet's real historical line unchanged, and makes no model call. The body says what it is. The packet's
+ * label calling the claim superseded stays in evidence, because the reviewer reads the body and must judge it unprompted.
+ */
+const replayHandler: Handler = async () => {
+  const raw = readFileSync(`${root}data/curated/milo-slide-text.json`);
+  const packet = JSON.parse(raw.toString('utf8'));
+  const text: string = packet.historical_input.text;
+  return {
+    body: {
+      slide_id: packet.id, before: text, after: text,
+      claims: [{ text, source: packet.historical_input.source_id }],
+      provenance: { kind: 'historical_replay', model_generated: false, source_id: packet.historical_input.source_id },
+    },
+    evidence: [{
+      kind: 'slide_source', uri: 'data/curated/milo-slide-text.json', sha256: createHash('sha256').update(raw).digest('hex'),
+      payload: { packet_id: packet.id, distribution: packet.distribution, source_id: packet.historical_input.source_id, historical_label: packet.historical_input.label, historical: true, model_generated: false },
+    }],
+  };
+};
 const sourceHead = execSync('git rev-parse HEAD', { cwd: root }).toString().trim();
 const clean = execSync('git status --porcelain -- src tools supabase', { cwd: root }).toString().trim() === '';
 
@@ -64,12 +88,17 @@ const now = () => new Date().toISOString();
 const stop = async (message: string): Promise<never> => { console.log(`STOP: ${message}`); await db.close(); process.exit(0); };
 
 async function miloChain() {
-  // Step 1: no memory, same checks.
+  // Step 1: no memory, same checks. With --historical-replay the output is the real historical line, not a generation.
   let started = now();
-  const baseline = await runAgent(db, { profile: 'milo_pitch', task: MILO_TASK, memoryMode: 'baseline', binding: liveBinding(db, 'milo_pitch') });
+  const replay = process.argv.includes('--historical-replay');
+  const baseline = await runAgent(db, replay
+    ? { profile: 'milo_pitch', task: REPLAY_TASK, memoryMode: 'baseline', binding: { ...liveBinding(db, 'milo_pitch'), handler: replayHandler } }
+    : { profile: 'milo_pitch', task: MILO_TASK, memoryMode: 'baseline', binding: liveBinding(db, 'milo_pitch') });
   const output = baseline.attempts[0]?.output_id;
   const body = output ? (await read(`select body from cm.outputs where id = $1`, [output]))[0].body : null;
-  await writeReceipt('1-baseline', started, 'milo_pitch', baseline, { label: 'memory_mode=baseline: no decisions given to the handler; evaluators judge against accepted memory' });
+  await writeReceipt(replay ? '1-historical-replay' : '1-baseline', started, 'milo_pitch', baseline, replay
+    ? { label: 'HISTORICAL REPLAY: the output is a real historical slide line, not a model generation. Approved by the owner. Only the critic used a model in this step.', transport: 'none for the replayed output; hermes_oauth for the critic' }
+    : { label: 'memory_mode=baseline: no decisions given to the handler; evaluators judge against accepted memory' });
   say({ ...brief(baseline), output: body });
   if (!output) return stop('baseline produced no output; evidence kept');
 
