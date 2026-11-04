@@ -1,0 +1,362 @@
+{
+  "environment": "hosted Supabase, project dgqcanfiapxztmqqlqnh",
+  "transport": "hermes_oauth",
+  "source_head": "e97ebc28d64ba2c4f25404658d3c595473e2494c",
+  "started": "2026-11-04T22:26:39.782Z",
+  "finished": "2026-11-04T22:27:00.078Z",
+  "accepted_for_profile": [
+    "milo.alpha_not_usage@1",
+    "milo.current_positioning@1",
+    "milo.fee_not_collected@1",
+    "milo.gym_nyc_partner@1"
+  ],
+  "run_id": "e481647e-25e2-4e8d-8b74-6b33cbb9acbe",
+  "status": "completed",
+  "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7",
+  "pinned": [
+    {
+      "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+      "decision_key": "milo.alpha_not_usage",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:26:40.201Z"
+    },
+    {
+      "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+      "decision_key": "milo.current_positioning",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:26:40.201Z"
+    },
+    {
+      "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+      "decision_key": "milo.fee_not_collected",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:26:40.201Z"
+    },
+    {
+      "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "decision_key": "milo.gym_nyc_partner",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:26:40.201Z"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "attempt_no": 1,
+      "kind": "initial",
+      "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+      "body": {
+        "after": "Gym NYC: a partner\nBuilding organization agents for athletics operators.",
+        "before": "The founder’s own gym: the first operations fee",
+        "claims": [
+          {
+            "text": "Gym NYC is a partner.",
+            "source": "repo://context/projects/milo/STARTUP.md?revision=ceef9e9691b959aab682fdf2717f238bc85ebfd5#L1-L8"
+          },
+          {
+            "text": "Organization agents for athletics operators are being built.",
+            "source": "repo://milo/COMPANY.md?revision=dbc1e7e2dca7d19da2c5e66d7736eca6939ea0db#L18-L24"
+          }
+        ],
+        "slide_id": "milo-one-slide-text"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "3eea7a3b-c9e1-424f-9c4b-797bc0776173",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "slide_source",
+      "sha256": "4f0832025ced06b7bb2b45d8798cb879c06d3974c7e4ca051e7c2e85094cee71",
+      "payload": {
+        "packet_id": "milo-one-slide-text",
+        "source_id": "milo-historical-slide",
+        "historical": true,
+        "distribution": "sanitized_text_only",
+        "before_sha256": "9b998ec27f01c49e4c918c9e7a5107fbf4c3aa287aede1ca4980c23439e7df87",
+        "packet_sha256": "4f0832025ced06b7bb2b45d8798cb879c06d3974c7e4ca051e7c2e85094cee71",
+        "technique_used": false,
+        "historical_label": "Historical draft excerpt, 2026-10-30; contains a superseded relationship claim. Not a new incident or current output."
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "705a60e2-0913-4c8f-80d3-1a6cab3e7ccb",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "model_run",
+      "sha256": "72f5ffc1cede56fe00ea191950b0e14a0748cfdd2784c26d857a32b46c9f55e6",
+      "payload": {
+        "calls": 1,
+        "served_by": [
+          "gpt-6.1-sol"
+        ],
+        "transport": "hermes_oauth",
+        "input_tokens": 21462,
+        "output_tokens": 247,
+        "requested_model": "gpt-6.1-sol",
+        "pinned_decision_ids": [
+          "62485fdb-c225-50cb-8bc7-c7976717d72c",
+          "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+          "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+          "0cb43524-2f09-5427-89cb-67614535bee0"
+        ],
+        "declared_agent_model": "claude-sonnet-5-5",
+        "system_prompt_sha256": "e50b5bcd469a5d59dbdccb11408d10553224e302e577c8093392cfb6160a5940",
+        "requested_model_source": "hermes_transport"
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "d79b8173-b30e-4064-8cf7-efae690ff29d",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "hermes_transport",
+      "sha256": "ed29f77f121bd38c8000961aff569be49e3c52c357c8628c6b61ac8434cf9933",
+      "payload": {
+        "purpose": "generation",
+        "receipt": {
+          "state": "RECEIVED",
+          "profile": "existing Hermes profile; fresh task only",
+          "turn_id": "01a1a8ab-f2f5-7520-9843-00c5c39f63cf",
+          "api_mode": "codex_app_server",
+          "provider": "openai-codex",
+          "isolation": {
+            "use_memories": false,
+            "generate_memories": false,
+            "thread_memory_mode": "disabled"
+          },
+          "thread_id": "01a1a8ab-ef2a-7942-aed0-8c8b0ab010bf",
+          "transport": "hermes_codex_app_server",
+          "started_at": "2026-11-04T22:26:40.974006+00:00",
+          "finished_at": "2026-11-04T22:26:52.502192+00:00",
+          "model_turns": 1,
+          "soul_loaded": false,
+          "token_usage": {
+            "inputTokens": 21462,
+            "totalTokens": 21709,
+            "outputTokens": 247,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "reasoningOutputTokens": 114
+          },
+          "guard_bypass": false,
+          "input_sha256": "4daf1fada301e2e1c9ac095f3183d50d7cec1aeb145fdb59b301396fdbd7d5f9",
+          "served_model": "gpt-6.1-sol",
+          "tools_policy": "none",
+          "fallback_used": false,
+          "memory_loaded": false,
+          "model_provider": "openai",
+          "no_tools_scope": {
+            "profile_id": "hermes-no-tools-fc41333eab644f40af9ff81b04f98fd8",
+            "tool_policy": "none",
+            "max_authorized_actions": 0
+          },
+          "requested_model": "gpt-6.1-sol",
+          "tool_iterations": 0,
+          "background_review": false,
+          "credential_exported": false,
+          "private_history_loaded": false
+        }
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "1d847cf1-e91e-4b06-9f20-66a5bc512e8e",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "behavioral_evaluation",
+      "sha256": "de2f4cffd8d825c11513021d4b48ce8730f0317eb47b59fb8a84ab1f313ed321",
+      "payload": {
+        "reason": "No forbidden claim found against milo.gym_nyc_partner, milo.fee_not_collected, milo.alpha_not_usage, milo.current_positioning",
+        "verdict": "pass",
+        "check_id": "milo.no_forbidden_claim",
+        "evaluator": "det.milo_forbidden",
+        "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+        "rules_checked": [
+          {
+            "rule_id": "gym_nyc_not_founders_gym",
+            "decision_id": "0cb43524-2f09-5427-89cb-67614535bee0"
+          },
+          {
+            "rule_id": "fee_not_collected_revenue",
+            "decision_id": "af7dccea-f9da-5b03-beb1-e947cffa4a74"
+          },
+          {
+            "rule_id": "alpha_not_usage",
+            "decision_id": "62485fdb-c225-50cb-8bc7-c7976717d72c"
+          },
+          {
+            "rule_id": "unshipped_agents_not_live",
+            "decision_id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931"
+          }
+        ],
+        "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7",
+        "negated_mentions": [],
+        "evaluator_version": "1"
+      },
+      "created_by": "det.milo_forbidden"
+    },
+    {
+      "id": "cf91df4c-d789-48c7-aa06-9c30c9812d16",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "behavioral_evaluation",
+      "sha256": "208759c0c5fa9c89a3b04c0e608d3d95156974ead18426b5ab4702b7b8c6ff81",
+      "payload": {
+        "doubts": [],
+        "reason": "2 claim(s) resolve to pinned or allowed sources",
+        "verdict": "pass",
+        "check_id": "milo.claims_sourced",
+        "failures": [],
+        "resolved": [
+          {
+            "claim": 0,
+            "source": "repo://context/projects/milo/STARTUP.md?revision=ceef9e9691b959aab682fdf2717f238bc85ebfd5#L1-L8",
+            "decision_id": "0cb43524-2f09-5427-89cb-67614535bee0",
+            "decision_key": "milo.gym_nyc_partner"
+          },
+          {
+            "claim": 1,
+            "source": "repo://milo/COMPANY.md?revision=dbc1e7e2dca7d19da2c5e66d7736eca6939ea0db#L18-L24",
+            "decision_id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+            "decision_key": "milo.current_positioning"
+          }
+        ],
+        "evaluator": "det.milo_claims",
+        "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+        "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7",
+        "figures_checked": 0,
+        "evaluator_version": "1"
+      },
+      "created_by": "det.milo_claims"
+    },
+    {
+      "id": "0dd60b3c-140f-41dc-840c-c64fce99a0c1",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "kind": "hermes_critic_evaluation",
+      "sha256": "dc877d0838e970f8ab6d9bae17e7f84fa780645b1252062dc094ab2d8da72676",
+      "payload": {
+        "model": "gpt-6.1-sol",
+        "reason": "Critic: output honors milo.gym_nyc_partner v1: The output identifies Gym NYC as a partner and makes no claim about founder or equity ownership.",
+        "excerpt": "Gym NYC is a partner.",
+        "purpose": "critic",
+        "verdict": "pass",
+        "check_id": "critic.meaning",
+        "evaluator": "critic.meaning",
+        "transport": "hermes_oauth",
+        "confidence": 1,
+        "decision_id": "0cb43524-2f09-5427-89cb-67614535bee0",
+        "decision_key": "milo.gym_nyc_partner",
+        "critic_reason": "The output identifies Gym NYC as a partner and makes no claim about founder or equity ownership.",
+        "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+        "prompt_sha256": "81a585ae5112f6577d2b62ee7d69b36e2325f59bf3102dd2fd4bcd245cc79ee2",
+        "critic_verdict": "honors",
+        "min_confidence": 0.75,
+        "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7",
+        "hermes_receipts": [
+          {
+            "state": "RECEIVED",
+            "profile": "existing Hermes profile; fresh task only",
+            "turn_id": "01a1a8ac-1dda-7330-9d96-52a48b5f04e6",
+            "api_mode": "codex_app_server",
+            "provider": "openai-codex",
+            "isolation": {
+              "use_memories": false,
+              "generate_memories": false,
+              "thread_memory_mode": "disabled"
+            },
+            "thread_id": "01a1a8ac-1cc7-7bf0-a178-e0a05e1deb2e",
+            "transport": "hermes_codex_app_server",
+            "started_at": "2026-11-04T22:26:53.101617+00:00",
+            "finished_at": "2026-11-04T22:26:59.247573+00:00",
+            "model_turns": 1,
+            "soul_loaded": false,
+            "token_usage": {
+              "inputTokens": 20871,
+              "totalTokens": 20915,
+              "outputTokens": 44,
+              "cachedInputTokens": 0,
+              "cacheWriteInputTokens": 0,
+              "reasoningOutputTokens": 0
+            },
+            "guard_bypass": false,
+            "input_sha256": "81a585ae5112f6577d2b62ee7d69b36e2325f59bf3102dd2fd4bcd245cc79ee2",
+            "served_model": "gpt-6.1-sol",
+            "tools_policy": "none",
+            "fallback_used": false,
+            "memory_loaded": false,
+            "model_provider": "openai",
+            "no_tools_scope": {
+              "profile_id": "hermes-no-tools-1975b492f4c14185a90631b1bf5094f4",
+              "tool_policy": "none",
+              "max_authorized_actions": 0
+            },
+            "requested_model": "gpt-6.1-sol",
+            "tool_iterations": 0,
+            "background_review": false,
+            "credential_exported": false,
+            "private_history_loaded": false
+          }
+        ],
+        "requested_model": "gpt-6.1-sol",
+        "decision_version": 1,
+        "evaluator_version": "1"
+      },
+      "created_by": "critic.meaning"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "10df56f2-f925-44fa-87c7-793e2efa7a16",
+      "attempt_id": "2be1a6e4-f720-4857-8478-1740a595f320",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "check_id": "milo.no_forbidden_claim",
+      "verdict": "pass",
+      "reason": "No forbidden claim found against milo.gym_nyc_partner, milo.fee_not_collected, milo.alpha_not_usage, milo.current_positioning",
+      "evaluator": "det.milo_forbidden",
+      "evaluator_version": "1",
+      "evidence_id": "1d847cf1-e91e-4b06-9f20-66a5bc512e8e",
+      "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+      "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7"
+    },
+    {
+      "id": "86a12646-d5bf-4b29-8970-5059727c3c5d",
+      "attempt_id": "2be1a6e4-f720-4857-8478-1740a595f320",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "check_id": "milo.claims_sourced",
+      "verdict": "pass",
+      "reason": "2 claim(s) resolve to pinned or allowed sources",
+      "evaluator": "det.milo_claims",
+      "evaluator_version": "1",
+      "evidence_id": "cf91df4c-d789-48c7-aa06-9c30c9812d16",
+      "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+      "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7"
+    },
+    {
+      "id": "49548872-f79b-40d7-94d1-2b699061ae3f",
+      "attempt_id": "2be1a6e4-f720-4857-8478-1740a595f320",
+      "output_id": "f4ec9edf-47b5-465a-bcdc-9b8c37b068e1",
+      "check_id": "critic.meaning",
+      "verdict": "pass",
+      "reason": "Critic: output honors milo.gym_nyc_partner v1: The output identifies Gym NYC as a partner and makes no claim about founder or equity ownership.",
+      "evaluator": "critic.meaning",
+      "evaluator_version": "1",
+      "evidence_id": "0dd60b3c-140f-41dc-840c-c64fce99a0c1",
+      "output_sha256": "26b65f41f2945c7be093f20c8ab5c90ca80f2d3fd969d4b5a088b96b83135351",
+      "contract_sha256": "14ed6c67942da57b1db15af388b7e45c87cf9eb58206e37636a7d2d04e1ec5a7"
+    }
+  ],
+  "gate_decisions": [
+    {
+      "verdict": "completed",
+      "missing": [],
+      "attempt_id": "2be1a6e4-f720-4857-8478-1740a595f320",
+      "created_at": "2026-11-04T22:26:59.887Z"
+    }
+  ]
+}
