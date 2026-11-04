@@ -360,7 +360,8 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     // The endpoint is fixed by design, so requests are redirected to the local server at the fetch layer.
     globalThis.fetch = ((input: any, init: any) => realFetch(String(input).replace('https://sodabase.io/mcp', `http://127.0.0.1:${port}/mcp`), init)) as typeof fetch;
   });
-  afterEach(async () => { globalThis.fetch = realFetch; await new Promise((done) => http.close(done)); });
+// close() waits for open connections, and a client's stream can outlive its request, so end them first.
+  afterEach(async () => { globalThis.fetch = realFetch; http.closeAllConnections(); await new Promise((done) => http.close(done)); });
 
   it('sends the bearer token, discovers tools, and hides data_trust_sample', async () => {
     const client = new SodabaseClient(TOKEN);
@@ -404,5 +405,5 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     // Only ever lists projects. Passing project_ref would provision a role and start watching.
     expect(seen.tools.filter((t) => t.name === 'connect_project')).toEqual([{ name: 'connect_project', args: {} }]);
     expect(existsSync(result.receipt_path!)).toBe(true);
-  }, 30_000);
+  });
 });
