@@ -1,0 +1,47 @@
+{
+  "ok": true,
+  "text": "{\"ok\":true}",
+  "receipt": {
+    "started_at": "2026-11-04T22:05:27.610106+00:00",
+    "transport": "hermes_codex_app_server",
+    "model_turns": 1,
+    "credential_exported": false,
+    "private_history_loaded": false,
+    "fallback_used": false,
+    "soul_loaded": false,
+    "memory_loaded": false,
+    "background_review": false,
+    "tools_policy": "none",
+    "guard_bypass": false,
+    "state": "PASS_SMOKE",
+    "provider": "openai-codex",
+    "api_mode": "codex_app_server",
+    "requested_model": "gpt-6.1-sol",
+    "profile": "existing Hermes profile; fresh task only",
+    "input_sha256": "e2c9a9971ac5ba3aa8bb2d086941aabc18fdcf1cc46b0e4ef44bffba68596b7d",
+    "served_model": "gpt-6.1-sol",
+    "model_provider": "openai",
+    "thread_id": "01a1a898-86d5-7b12-b482-65bd3a2b596a",
+    "turn_id": "01a1a898-8f39-7720-9789-f3bc72e63ef6",
+    "tool_iterations": 0,
+    "isolation": {
+      "use_memories": false,
+      "generate_memories": false,
+      "thread_memory_mode": "disabled"
+    },
+    "no_tools_scope": {
+      "tool_policy": "none",
+      "max_authorized_actions": 0,
+      "profile_id": "hermes-no-tools-23675051aaaa402c8f6fb8710411cf03"
+    },
+    "token_usage": {
+      "totalTokens": 26361,
+      "inputTokens": 26352,
+      "cachedInputTokens": 0,
+      "cacheWriteInputTokens": 0,
+      "outputTokens": 9,
+      "reasoningOutputTokens": 0
+    },
+    "finished_at": "2026-11-04T22:05:38.060376+00:00"
+  }
+}

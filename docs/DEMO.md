@@ -16,6 +16,8 @@ doppler run -p hackathon -c dev -- pnpm --ignore-workspace start
 
 Open `http://127.0.0.1:4971` in the browser used for the demo.
 
+`SUPABASE_DB_URL` is the only switch: set means live, unset means the local test database. Accept and Approve on this local page write to the real record, so click them only when you mean it.
+
 Check these three things on screen:
 
 1. The masthead says **Live, Supabase**. If a white band says **Local test database**, those are test rows. Say so out loud, or do not show them as the product working.
@@ -54,23 +56,25 @@ Timings are cumulative. Twenty seconds a beat leaves no spare time, so cut words
 *If it has not run:* "This run has not happened. The excerpt is historical input and nothing has revised it yet."
 
 ### 1:05 Beat 4: reviewer conflict
-**Show:** "Where did it drift?", then click the finding. Step 2 of the chain shows the quoted excerpt next to the decision it conflicts with.
+**Show:** "Where did it drift?", then click the finding. Step 2 of the chain shows the quoted excerpt, the decision it conflicts with, and whether the run had memory off.
 
-**Say:** "An independent reviewer reads the output against what I decided. It has to quote the exact words, and it names the decision they conflict with. It cannot fix or accept anything."
+**Say:** "Run it with memory off and see what the agent does on its own. An independent reviewer reads that output against what I decided. It has to quote the exact words, and it names the decision they conflict with. It cannot fix or accept anything."
 
 *If the output did not drift:* say that. "This run did not drift, so there is no finding to show, and I am not going to stage one." Then go to beat 8.
 
 ### 1:25 Beat 5: completion rejected
-**Show:** step 3 of the chain, **Rejected**, with the failed check. Point to the evidence list for the failed evaluation.
+**Show:** step 3 of the chain, **Rejected**, with each check and why it stopped the run. Point to the evidence list for the failed evaluation.
 
 **Say:** "The agent does not get to say it is done. Completion goes through a gate in the database. It reads the latest attempt, its evaluations and its evidence, and it rejected this one. Every verdict is recorded."
 
 *If it has not run:* "The chain shows no rejection for this output, so I cannot claim one."
 
 ### 1:45 Beat 6: repair and correction
-**Show:** step 4. The repair attempt, then the corrected decision and its version. If it is still proposed, click **Accept this correction** on stage.
+**Show:** step 4, the corrected decision and its version. If it is still proposed, click **Accept this correction** on stage. That button is only on the local dashboard, because the hosted page is read-only.
 
-**Say:** "The repair is a new attempt, so every earlier pass stops counting. The reviewer proposes a correction, a new version of the decision. It waits for me. I accept it, and now it is company memory instead of something I have to say again tomorrow."
+**Say:** "The reviewer proposes a correction, a new version of the decision. It waits for me. I accept it, and now it is company memory instead of something I have to say again tomorrow."
+
+**If step 4 shows a repair attempt, add:** "A repair is a new attempt, so every earlier pass stops counting." A memory-off baseline gets no repairs, because repair notes would hand it the decision. Step 4 says so, and that is correct.
 
 *If it has not run:* "No repair or correction is recorded yet."
 
