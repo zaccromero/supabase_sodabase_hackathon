@@ -1,0 +1,82 @@
+{
+  "step": "6-gym-comparison-attempt-1",
+  "corrects": "docs/receipts/live-chain-6-gym-operator-2026-11-04T22-46-29-623Z.json",
+  "why": "The comparison in the run receipt read the last attempt, which had no output, so it shows answered:null. This one compares the attempt that answered, using the stored output.",
+  "run_id": "37b1ce48-d8a7-4fb6-9222-b36840400a6c",
+  "run_status": "failed",
+  "output_id": "a416f708-401c-4f8c-b424-bbc3322e7239",
+  "output_sha256": "e4b30e479f4bc6487e4889c44a8c3201433f34304e8f1824448c86235014cfe4",
+  "attempt_no": 1,
+  "compared_with": "docs/receipts/gym-active-members-2026-11-04T22-22-50-393Z.json",
+  "comparison": [
+    {
+      "location_id": "bk",
+      "recorded_state": "STALE",
+      "recorded": 704,
+      "answered": 704,
+      "match": true,
+      "recorded_report_as_of": "2026-10-05",
+      "answered_report_as_of": "2026-10-05"
+    },
+    {
+      "location_id": "east3",
+      "recorded_state": "PARTIAL",
+      "recorded": null,
+      "answered": null,
+      "match": true,
+      "recorded_report_as_of": null,
+      "answered_report_as_of": null
+    },
+    {
+      "location_id": "lex",
+      "recorded_state": "STALE",
+      "recorded": 367,
+      "answered": 367,
+      "match": true,
+      "recorded_report_as_of": "2026-10-05",
+      "answered_report_as_of": "2026-10-05"
+    },
+    {
+      "location_id": "mul",
+      "recorded_state": "STALE",
+      "recorded": 439,
+      "answered": 439,
+      "match": true,
+      "recorded_report_as_of": "2026-10-05",
+      "answered_report_as_of": "2026-10-05"
+    }
+  ],
+  "recorded_oldest_report_as_of": "2026-10-05",
+  "answered_data_as_of": "2026-10-01",
+  "data_as_of_matches": false,
+  "gate_on_this_attempt": "blocked",
+  "evaluations": [
+    {
+      "check_id": "gym.canonical_definition",
+      "verdict": "pass",
+      "reason": "SQL reads ezf_active_memberships with MATCHED_INDIVIDUAL on the latest complete projection and counts match an independent recount"
+    },
+    {
+      "check_id": "gym.data_age_reported",
+      "verdict": "fail",
+      "reason": "Reported data_as_of 2026-10-01 does not match source 2026-10-05"
+    },
+    {
+      "check_id": "critic.meaning",
+      "verdict": "pass",
+      "reason": "Critic: output honors gym.active_individual_definition v1: The output uses the latest complete official projection, counts distinct client-backed individuals, includes PIF, excludes business classes and duplicate memberships, and does not substitute churned_at IS NULL."
+    }
+  ],
+  "repair_attempts": [
+    {
+      "attempt_no": 2,
+      "handler_error": "Hermes response was not a valid transport envelope",
+      "evaluator_errors": []
+    },
+    {
+      "attempt_no": 3,
+      "handler_error": "Hermes response was not a valid transport envelope",
+      "evaluator_errors": []
+    }
+  ]
+}
