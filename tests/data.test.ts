@@ -7,7 +7,7 @@ import {
 } from '../src/data/mirror-core';
 
 const core = readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8');
-const gym = readFileSync(new URL('../docs/migration-requests/002_gym.sql', import.meta.url), 'utf8');
+const gym = readFileSync(new URL('../supabase/migrations/002_gym.sql', import.meta.url), 'utf8');
 const m = loadManifest();
 const spec = (t: string) => m.tables.find((x) => x.table === t) as TableSpec;
 const P = 'test-pepper';

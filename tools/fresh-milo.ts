@@ -30,8 +30,8 @@ const accepted = await retrieveAccepted(db, 'milo_pitch');
 const started = new Date().toISOString();
 const report: RunReport = await runAgent(db, { profile: 'milo_pitch', task, binding });
 const q = (sql: string, p: unknown[]) => db.withRole('dashboard_reader', (tx: any) => tx.query(sql, p));
-const pins = await q(`select d.decision_key, d.version, d.status from cm.run_decisions rd join cm.decisions d on d.id = rd.decision_id where rd.run_id = $1 order by 1`, [report.run_id]);
-const gates = await q(`select verdict, missing, created_at from cm.gate_decisions where run_id = $1 order by created_at`, [report.run_id]);
+const pins: any = await q(`select d.decision_key, d.version, d.status from cm.run_decisions rd join cm.decisions d on d.id = rd.decision_id where rd.run_id = $1 order by 1`, [report.run_id]);
+const gates: any = await q(`select verdict, missing, created_at from cm.gate_decisions where run_id = $1 order by created_at`, [report.run_id]);
 const receipt = {
   environment: live ? 'SUPABASE_DB_URL' : 'local PGlite test database, not hosted Supabase',
   model_transport: process.env.MODEL_TRANSPORT ?? 'api',

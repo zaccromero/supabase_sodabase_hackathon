@@ -89,7 +89,7 @@ async function pgliteTarget(): Promise<Queryable & { exec(s: string): Promise<un
   const { PGlite } = await import('@electric-sql/pglite');
   const db = new PGlite();
   await db.exec(readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8'));
-  await db.exec(readFileSync(new URL('../docs/migration-requests/002_gym.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../supabase/migrations/002_gym.sql', import.meta.url), 'utf8'));
   return db as any;
 }
 
