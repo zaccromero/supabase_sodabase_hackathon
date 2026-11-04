@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { PinnedDecision } from '../src/contract/types.js';
 import { createHandlers, driftReviewTask, handlers, modelClientFromEnv } from '../src/agents/index.js';
 import { createDriftReviewer, textLeaves } from '../src/agents/driftReviewer.js';
-import { ageInDays, createGymOperator } from '../src/agents/gymOperator.js';
+import { ageInDays, createGymOperator, resultText } from '../src/agents/gymOperator.js';
 import { type GymReader, readerFromExecutor, validateGymSql } from '../src/agents/gymReader.js';
 import { withHermesGeneration } from '../src/governance-demo/hermes-transport.js';
 import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, DEFAULT_SLIDE_PACKET, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
@@ -178,7 +178,7 @@ describe('gym read-only reader', () => {
     const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
     const sent = JSON.stringify(model.requests[0]);
-    for (const hint of ['MATCHED_INDIVIDUAL', 'bridge_class', 'ezf_active_memberships', 'churned_at', 'projection', 'pinned_decisions']) {
+    for (const hint of ['MATCHED_INDIVIDUAL', 'bridge_class', 'ezf_active_memberships', 'churned_at', 'projection', 'latest complete', 'sync_runs', 'pinned_decisions']) {
       expect(sent).not.toContain(hint);
     }
   });
@@ -229,8 +229,81 @@ describe('gym read-only reader', () => {
     const model = new ScriptedModelClientForTests(Array.from({ length: 8 }, prose));
     const failure = await gym(model)({ ...base, task: 'q', decisions: [] }).catch((error: Error) => error);
     expect(failure).toBeInstanceOf(AgentOutputError);
-    expect((failure as Error).message).toMatch(/within 8 turns \(queries_run=0, queries_rejected=0, unusable_replies=8\)/);
+    expect((failure as Error).message).toMatch(/within 8 turns \(queries_run=0, queries_rejected=0, unusable_replies=8, largest_request_bytes=\d+\)/);
     expect((failure as Error).message).not.toContain('500');
+  });
+
+  it('ties freshness to the counted rows without naming a definition', async () => {
+    const model = new ScriptedModelClientForTests([submit({ sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
+    await gym(model)({ ...base, task: 'q', decisions: [] });
+    const system = String(model.requests[0]!.system);
+    expect(system).toContain('rows your sql counted');
+    expect(system).toContain('not the whole table');
+    expect(system).toContain('leave out locations whose count is NULL');
+  });
+
+  it('caps rows and cell length shown to the model, and says so', () => {
+    const rows = Array.from({ length: 40 }, (_, n) => ({ a: n, b: 'x'.repeat(500), c: null }));
+    const text = resultText('select 1', { columns: ['a', 'b', 'c'], rows, truncated: false });
+    expect(text).toContain('(showing 25 of 40 rows; aggregate or filter to see the rest)');
+    expect(text).toContain('NULL');
+    expect(text).not.toContain('x'.repeat(201));
+    expect(text).not.toContain('"');
+  });
+
+  describe('request size through the real Hermes adapter', () => {
+    const LIMIT = 65_536;
+    const envelope = (text: string) => ({
+      ok: true,
+      text,
+      receipt: {
+        state: 'RECEIVED', provider: 'openai-codex', served_model: 'fixture-model', model_provider: 'openai', requested_model: 'fixture-model', model_turns: 1, tool_iterations: 0, guard_bypass: false, credential_exported: false,
+        isolation: { use_memories: false, generate_memories: false, thread_memory_mode: 'disabled' },
+        no_tools_scope: { tool_policy: 'none', max_authorized_actions: 0 },
+        token_usage: { inputTokens: 7, outputTokens: 3 },
+      },
+    });
+    const wide = "select g as location_id, repeat('\"quoted\" ', 40) as note from generate_series(1, 200) g";
+
+    it('stays under the input limit on the worst repair: long notes, wide results on every turn', async () => {
+      const sizes: number[] = [];
+      const replies = [...Array.from({ length: 7 }, () => JSON.stringify({ explore: [wide, wide, wide, wide, wide], final: null })), JSON.stringify({ explore: [], final: { sql: answerSql, definition: 'd', freshness_sql: freshnessSql } })];
+      const run = async (payload: { system: string; user: string }) => {
+        sizes.push(Buffer.byteLength(JSON.stringify(payload)));
+        return envelope(replies[sizes.length - 1]!);
+      };
+      const handler = withHermesGeneration((client) => gym(client), { run });
+      const { body, evidence } = await handler({ ...base, attemptNo: 3, task: 'q', decisions: [decision], repairNotes: ['Repair note. '.repeat(200)] });
+      expect(body.sql).toBe(answerSql);
+      expect(sizes).toHaveLength(8);
+      expect(Math.max(...sizes)).toBeLessThan(LIMIT);
+      const trace = evidence.find((item) => item.kind === 'sql_trace')!.payload as { largest_request_bytes: number };
+      expect(trace.largest_request_bytes).toBeGreaterThanOrEqual(Math.max(...sizes));
+      expect(trace.largest_request_bytes).toBeLessThanOrEqual(60_000);
+    });
+
+    it('tells the model when results were left out', async () => {
+      const seen: string[] = [];
+      const replies = [JSON.stringify({ explore: [wide, wide, wide, wide, wide], final: null }), JSON.stringify({ explore: [wide, wide, wide, wide, wide], final: null }), JSON.stringify({ explore: [], final: { sql: answerSql, definition: 'd', freshness_sql: freshnessSql } })];
+      const run = async (payload: { system: string; user: string }) => { seen.push(payload.user); return envelope(replies[seen.length - 1]!); };
+      await withHermesGeneration((client) => gym(client), { run })({ ...base, task: 'q', decisions: [] });
+      expect(seen.at(-1)).toContain('exploration budget is used');
+    });
+
+    it('fails before calling when the request alone is over the limit, naming the size and no provider text', async () => {
+      let calls = 0;
+      const run = async () => { calls += 1; return envelope('{}'); };
+      const failure = await withHermesGeneration((client) => gym(client), { run })({ ...base, task: 'q', decisions: [], repairNotes: ['y'.repeat(70_000)] }).catch((error: Error) => error);
+      expect(failure).toBeInstanceOf(AgentOutputError);
+      expect((failure as Error).message).toMatch(/request too large before turn 1 \(request_bytes=\d+, limit=60000\)/);
+      expect(calls).toBe(0);
+    });
+
+    it('puts the request size in a transport failure', async () => {
+      const run = async () => { throw new Error('Hermes response was not a valid transport envelope'); };
+      const failure = await withHermesGeneration((client) => gym(client), { run })({ ...base, task: 'q', decisions: [] }).catch((error: Error) => error);
+      expect((failure as Error).message).toMatch(/Gym model call failed on turn 1 \(request_bytes=\d+\): Hermes response was not a valid transport envelope/);
+    });
   });
 
   it('runs end to end through the real Hermes adapter envelope, with no application tools', async () => {
