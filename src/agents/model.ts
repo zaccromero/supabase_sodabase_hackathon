@@ -42,6 +42,12 @@ export function assertUsable(response: ModelResponse): void {
 export const responseText = (response: ModelResponse): string =>
   response.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('');
 
+/** Parses a JSON reply. Some transports do not enforce the schema, so a surrounding code fence is tolerated. */
+export function parseJsonReply<T>(text: string): T {
+  const fenced = text.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  return JSON.parse(fenced ? fenced[1]! : text) as T;
+}
+
 /** Records what actually served each attempt, including any server-side fallback. */
 export class ModelTrace {
   private readonly servedBy = new Set<string>();
@@ -100,7 +106,7 @@ export async function structuredCall<T>(opts: {
     });
     let value: T;
     try {
-      value = JSON.parse(responseText(response)) as T;
+      value = parseJsonReply<T>(responseText(response));
     } catch {
       throw new AgentOutputError('Model output was not the requested JSON');
     }
