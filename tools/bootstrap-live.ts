@@ -24,7 +24,8 @@ const LOCK_ID = 7204311; // Serializes two bootstraps against the same database.
 export interface Check { name: string; ok: boolean; detail?: unknown; }
 export interface BootstrapReport {
   dry_run: boolean;
-  server: { version: string; user: string; superuser: boolean; tls: boolean | null };
+  /** backend_tls is the database's own link, which reads false behind a pooler. client_tls is this connection's. */
+  server: { version: string; user: string; superuser: boolean; backend_tls: boolean | null; client_tls?: boolean };
   migrations: { applied: string[]; skipped: string[]; pending: string[] };
   decisions_imported: number | null;
   counts: Record<string, number | null>;
@@ -151,7 +152,7 @@ export async function bootstrap(conn: Conn, opts: { root: string; dryRun?: boole
   const dryRun = opts.dryRun ?? false;
   const { rows: [s] } = await conn.query(`select current_setting('server_version') as version, current_user as usr, (select rolsuper from pg_roles where rolname = current_user) as superuser`);
   const { rows: [tls] } = await conn.query(`select ssl from pg_stat_ssl where pid = pg_backend_pid()`);
-  const server = { version: s.version, user: s.usr, superuser: s.superuser, tls: tls?.ssl ?? null };
+  const server = { version: s.version, user: s.usr, superuser: s.superuser, backend_tls: tls?.ssl ?? null };
 
   // The approved packet is checked before anything is written, so a tampered bundle stops the run.
   const packet = loadApprovedPacket(opts.root);
@@ -169,6 +170,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     await client.connect();
     const conn: Conn = { exec: (sql) => client.query(sql), query: (sql, params) => client.query(sql, params as any[]) };
     const report = await bootstrap(conn, { root: new URL('..', import.meta.url).pathname, dryRun: process.argv.includes('--dry-run') });
+    report.server.client_tls = Boolean((client as unknown as { connection: { stream: { encrypted?: boolean } } }).connection.stream.encrypted);
     console.log(JSON.stringify(report, null, 2));
     if (!report.ok) process.exitCode = 1;
   } catch (err) {
