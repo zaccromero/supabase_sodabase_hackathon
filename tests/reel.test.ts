@@ -1,10 +1,10 @@
-import { mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EXTRACTION_SCHEMA, normalizeExtraction, promptSha256, REEL_PROMPT } from '../src/reel/extract';
-import { geminiExtractor, type Extractor } from '../src/reel/gemini';
+import { EXTRACTION_SCHEMA, normalizeExtraction, promptSha256, REEL_PROMPT, type Extractor } from '../src/reel/extract';
+import { buildPrompt, hermesExtractor, hermesModelId, parseJsonReply, planFrames, type Exec } from '../src/reel/hermes';
 import { assertLocalMedia, hashFile, importReel } from '../src/reel/import';
 
 const core = readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8');
@@ -21,7 +21,7 @@ describe('reel cache', () => {
   let db: PGlite;
   let extractor: ReturnType<typeof vi.fn>;
   beforeEach(async () => { db = new PGlite(); await db.exec(core); extractor = vi.fn(async () => GOOD); });
-  const run = (filePath: string, model?: string) => importReel({ filePath, db, extractor: extractor as unknown as Extractor, ...(model ? { model } : {}) });
+  const run = (filePath: string, model = 'test-model') => importReel({ filePath, db, extractor: extractor as unknown as Extractor, model });
 
   it('stores a miss as a proposed technique with a reel source', async () => {
     const p = file('a.mp4');
@@ -90,7 +90,7 @@ describe('reel cache', () => {
     it('refuses any statement that references decisions', async () => {
       const seen: string[] = [];
       const spy = { query: async (sql: string, params?: unknown[]) => { seen.push(sql); return db.query(sql, params as any[]) as any; } };
-      await importReel({ filePath: file('s.mp4', 's'), db: spy, extractor: extractor as unknown as Extractor });
+      await importReel({ filePath: file('s.mp4', 's'), db: spy, extractor: extractor as unknown as Extractor, model: 'test-model' });
       expect(seen.length).toBeGreaterThan(0);
       expect(seen.filter((s) => /decisions/i.test(s))).toEqual([]);
     });
@@ -128,66 +128,94 @@ describe('normalizeExtraction', () => {
   });
 });
 
-describe('gemini client', () => {
-  const KEY = 'test-key-not-real';
-  const media = { path: '/x.mp4', mimeType: 'video/mp4', sizeBytes: 4, sha256: 'f'.repeat(64) };
-  const json = (b: unknown, init?: ResponseInit) => new Response(JSON.stringify(b), init);
-  const script = (over: { gen?: () => Response } = {}) => {
-    const calls: Array<{ url: string; init: RequestInit }> = [];
-    let polls = 0;
-    const impl = (async (url: string, init: RequestInit = {}) => {
-      calls.push({ url, init });
-      if (url.endsWith('/upload/v1beta/files')) return new Response('', { headers: { 'x-goog-upload-url': 'https://upload.example/session' } });
-      if (url === 'https://upload.example/session') return json({ file: { name: 'files/abc', uri: 'https://files/abc' } });
-      if (url.endsWith(':generateContent')) return over.gen?.() ?? json({ candidates: [{ content: { parts: [{ text: JSON.stringify(GOOD) }] } }] });
-      if (init.method === 'DELETE') return new Response('{}');
-      polls += 1;
-      return json({ state: polls < 2 ? 'PROCESSING' : 'ACTIVE' });
-    }) as unknown as typeof fetch;
-    return { calls, impl };
+describe('hermes extractor', () => {
+  const media = { path: '/Users/x/owner-private-name.mp4', mimeType: 'video/mp4', sizeBytes: 4, sha256: 'f'.repeat(64) };
+  const PY = '/hermes/.venv/bin/python';
+  const script = (over: { audio?: boolean; whisperFails?: boolean; reply?: string; hermesFails?: boolean } = {}) => {
+    const calls: Array<{ cmd: string; args: string[]; env?: NodeJS.ProcessEnv }> = [];
+    let sheetDir = '';
+    const exec: Exec = async (cmd, args, opts) => {
+      calls.push({ cmd, args, ...(opts?.env ? { env: opts.env } : {}) });
+      if (cmd === 'ffprobe') return JSON.stringify({ format: { duration: '32.0' }, streams: [{ codec_type: 'video' }, ...(over.audio === false ? [] : [{ codec_type: 'audio' }])] });
+      if (cmd === 'ffmpeg') {
+        const out = args.at(-1)!;
+        if (out.includes('sheet-')) { sheetDir = out.replace(/\/sheet-.*$/, ''); writeFileSync(join(sheetDir, 'sheet-002.jpg'), 'b'); writeFileSync(join(sheetDir, 'sheet-001.jpg'), 'a'); }
+        return '';
+      }
+      if (cmd === PY) { if (over.whisperFails) throw new Error('REEL_TOOL_FAILED'); return JSON.stringify([{ start_s: 1, end_s: 2, text: 'Hinge at the hips' }]); }
+      if (over.hermesFails) throw new Error('REEL_TOOL_FAILED: hermes 1');
+      return over.reply ?? JSON.stringify(GOOD);
+    };
+    return { calls, exec, dir: () => sheetDir };
   };
-  const make = (impl: typeof fetch) => geminiExtractor({ apiKey: KEY, fetchImpl: impl, sleep: async () => {}, body: async () => new Blob(['data']) });
+  const make = (exec: Exec) => hermesExtractor({ exec, python: () => PY });
+  const hermesCall = (calls: ReturnType<typeof script>['calls']) => calls.find((c) => c.cmd.endsWith('/hermes'))!;
 
-  it('uploads, waits for ACTIVE, generates with a schema, then deletes the file', async () => {
-    const { calls, impl } = script();
-    expect(await make(impl)(media, 'prompt', 'model-x')).toEqual(GOOD);
-    const gen = calls.find((c) => c.url.includes('model-x:generateContent'))!;
-    const body = JSON.parse(gen.init.body as string);
-    expect(body.generationConfig.responseJsonSchema).toEqual(EXTRACTION_SCHEMA);
-    expect(body.contents[0].parts[0].fileData).toEqual({ mimeType: 'video/mp4', fileUri: 'https://files/abc' });
-    expect(calls.filter((c) => c.url.endsWith('/v1beta/files/abc') && !c.init.method).length).toBe(2);
-    expect(calls.at(-1)!.init.method).toBe('DELETE');
+  it('sends sheets in order and the transcript, keeps memory out, and limits Hermes to vision', async () => {
+    const s = script();
+    expect(await make(s.exec)(media, 'REEL PROMPT', 'm')).toEqual(GOOD);
+    const { args } = hermesCall(s.calls);
+    expect(args).toEqual(expect.arrayContaining(['-t', 'vision', '--ignore-rules']));
+    expect(args).not.toContain('--yolo');
+    const prompt = args[1]!;
+    expect(prompt.startsWith('REEL PROMPT')).toBe(true);
+    expect(prompt.indexOf('sheet-001.jpg')).toBeLessThan(prompt.indexOf('sheet-002.jpg'));
+    expect(prompt).toContain('Hinge at the hips');
+    expect(prompt).toContain('untrusted');
   });
-  it('never puts the key in a URL, and sends no owner filename', async () => {
-    const { calls, impl } = script();
-    await make(impl)({ ...media, path: '/Users/x/owner-private-name.mp4' }, 'prompt', 'model-x');
-    for (const c of calls) {
-      expect(c.url).not.toContain(KEY);
-      if (typeof c.init.body === 'string') expect(c.init.body).not.toContain('owner-private-name');
-    }
+  it('never passes the owner filename or any model API key', async () => {
+    const s = script();
+    await make(s.exec)(media, 'p', 'm');
+    expect(hermesCall(s.calls).args.join(' ')).not.toContain('owner-private-name');
+    expect(hermesCall(s.calls).env).toBeUndefined();
+    const src = readFileSync(new URL('../src/reel/hermes.ts', import.meta.url), 'utf8') + readFileSync(new URL('../src/reel/cli.ts', import.meta.url), 'utf8');
+    expect(src).not.toMatch(/GEMINI|GOOGLE_|generativelanguage|OPENAI_API_KEY/);
   });
-  it('retries overload a bounded number of times, then succeeds or stops', async () => {
-    let n = 0;
-    const ok = script({ gen: () => (++n < 3 ? new Response('', { status: 503 }) : json({ candidates: [{ content: { parts: [{ text: JSON.stringify(GOOD) }] } }] })) });
-    expect(await make(ok.impl)(media, 'prompt', 'model-x')).toEqual(GOOD);
-    expect(n).toBe(3);
-    let m = 0;
-    const down = script({ gen: () => { m++; return new Response('', { status: 503 }); } });
-    await expect(make(down.impl)(media, 'prompt', 'model-x')).rejects.toThrow('GEMINI_GENERATE_FAILED: HTTP 503');
-    expect(m).toBe(4);
-    expect(down.calls.at(-1)!.init.method).toBe('DELETE');
+  it('transcribes offline with the local model', async () => {
+    const s = script();
+    await make(s.exec)(media, 'p', 'm');
+    const py = s.calls.find((c) => c.cmd === PY)!;
+    expect(py.env?.HF_HUB_OFFLINE).toBe('1');
+    expect(py.args.join(' ')).toContain('local_files_only=True');
   });
-  it('does not retry a request the provider rejected', async () => {
-    let n = 0;
-    const { impl } = script({ gen: () => { n++; return new Response('', { status: 400 }); } });
-    await expect(make(impl)(media, 'prompt', 'model-x')).rejects.toThrow('HTTP 400');
-    expect(n).toBe(1);
+  it('removes its temporary frames, including after a failure', async () => {
+    const ok = script();
+    await make(ok.exec)(media, 'p', 'm');
+    expect(existsSync(ok.dir())).toBe(false);
+    const bad = script({ hermesFails: true });
+    await expect(make(bad.exec)(media, 'p', 'm')).rejects.toThrow('REEL_TOOL_FAILED');
+    expect(existsSync(bad.dir())).toBe(false);
   });
-  it('reports the status only, and still deletes the file', async () => {
-    const { calls, impl } = script({ gen: () => new Response(`echo ${KEY}`, { status: 400 }) });
-    const err = await make(impl)(media, 'prompt', 'model-x').catch((e) => String(e));
-    expect(err).toContain('GEMINI_GENERATE_FAILED: HTTP 400');
-    expect(err).not.toContain(KEY);
-    expect(calls.at(-1)!.init.method).toBe('DELETE');
+  it('says so when speech could not be transcribed, instead of hiding it', async () => {
+    const out = normalizeExtraction(await make(script({ whisperFails: true }).exec)(media, 'p', 'm'));
+    expect(out.unclear_steps.at(-1)!.reason).toContain('could not be transcribed');
+  });
+  it('skips transcription when the video has no audio', async () => {
+    const s = script({ audio: false });
+    await make(s.exec)(media, 'p', 'm');
+    expect(s.calls.some((c) => c.cmd === PY)).toBe(false);
+  });
+  it('rejects a reply that is not usable, so nothing can be stored', async () => {
+    await expect(make(script({ reply: 'I could not view the images.' }).exec)(media, 'p', 'm')).rejects.toThrow(/REEL_EXTRACTION_INVALID/);
+    const empty = await make(script({ reply: '{"technique":"","steps":[],"unclear_steps":[]}' }).exec)(media, 'p', 'm');
+    expect(() => normalizeExtraction(empty)).toThrow(/REEL_EXTRACTION_INVALID/);
+    const emptyNoSpeech = await make(script({ whisperFails: true, reply: '{"technique":"x","steps":[],"unclear_steps":[]}' }).exec)(media, 'p', 'm');
+    expect(() => normalizeExtraction(emptyNoSpeech)).toThrow(/REEL_EXTRACTION_INVALID/);
+  });
+  it('parses JSON with surrounding text and rejects anything else', () => {
+    expect(parseJsonReply('Here it is:\n{"a":1}\n')).toEqual({ a: 1 });
+    expect(() => parseJsonReply('no json')).toThrow(/REEL_EXTRACTION_INVALID/);
+  });
+  it('samples one frame a second and caps long videos', () => {
+    expect(planFrames(30)).toEqual({ fps: 1, secondsPerFrame: 1 });
+    expect(planFrames(640).secondsPerFrame).toBe(10);
+    expect(() => planFrames(NaN)).toThrow('REEL_BAD_DURATION');
+  });
+  it('names the real Hermes model in the cache key', () => {
+    expect(hermesModelId('model:\n  provider: openai-codex\n  default: gpt-6.1-sol\nother: 1\n')).toBe('hermes:gpt-6.1-sol:frames-v1');
+    expect(() => hermesModelId('other: 1\n')).toThrow('REEL_HERMES_MODEL_UNKNOWN');
+  });
+  it('puts the schema in the prompt', () => {
+    expect(buildPrompt({ reelPrompt: 'x', sheets: ['/a.jpg'], secondsPerFrame: 1, transcript: [] })).toContain(JSON.stringify(EXTRACTION_SCHEMA));
   });
 });
