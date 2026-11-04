@@ -13,12 +13,13 @@ export type ModelRequest = Pick<
 >;
 export type ModelResponse = Anthropic.Beta.Messages.BetaMessage;
 export type ModelMessage = Anthropic.Beta.Messages.BetaMessageParam;
-export interface ModelClient { create(request: ModelRequest): Promise<ModelResponse>; }
+export interface ModelClient { readonly transport: string; create(request: ModelRequest): Promise<ModelResponse>; }
 
 /** Reads ANTHROPIC_API_KEY when first called, so importing the registry needs no secret. */
 export function anthropicModelClient(): ModelClient {
   let client: Anthropic | undefined;
   return {
+    transport: 'anthropic_api',
     create(request) {
       client ??= new Anthropic();
       return client.beta.messages.create({
@@ -75,6 +76,7 @@ export class ModelTrace {
 
   evidence(systemPrompt: string, decisionIds: string[]): EvidenceInput {
     const payload = {
+      transport: this.client.transport,
       requested_model: AGENT_MODEL,
       served_by: [...this.servedBy],
       calls: this.calls,

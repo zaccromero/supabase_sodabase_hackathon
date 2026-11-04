@@ -2,27 +2,26 @@
 // Writes what happened to AGENTS_LIVE_RECORD. Gym uses the real mirror through GYM_DATABASE_URL.
 // Without it, gym runs against an empty copy of the real table shapes: this proves the model and
 // tool loop only, returns no member numbers, and is recorded as schema_only_no_data.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { describe, expect, it } from 'vitest';
 import type { HandlerResult, PinnedDecision } from '../src/contract/types.js';
 import { createHandlers, driftReviewTask } from '../src/agents/index.js';
 import { gymReaderFromEnv, readerFromExecutor } from '../src/agents/gymReader.js';
 
-const live = process.env.AGENTS_LIVE === '1' && !!process.env.ANTHROPIC_API_KEY;
+const live = process.env.AGENTS_LIVE === '1' && (process.env.MODEL_TRANSPORT === 'cli' || !!process.env.ANTHROPIC_API_KEY);
 const record: Record<string, unknown> = {};
 const save = () => { if (process.env.AGENTS_LIVE_RECORD) writeFileSync(process.env.AGENTS_LIVE_RECORD, JSON.stringify(record, null, 2)); };
 const base = { runId: 'live-check', attemptNo: 1 };
 
-// Statement quoted from the finding example in docs/CONTRACT.md. Not a founder acceptance.
-const contractExampleDecision: PinnedDecision = {
-  id: '00000000-0000-4000-8000-000000000001',
-  decision_key: 'milo.gym_nyc_partner',
-  version: 1,
-  statement: 'Describe Gym NYC as a partner.',
-  source_uri: 'docs/CONTRACT.md#finding-example',
-  source_historical: false,
-};
+// Real statement from the source packet. Its status there is `proposed`: this exercises the
+// reviewer, and is not a founder acceptance. Only the runner pins accepted decisions.
+const PACKET_DECISIONS = '/Users/zaccromero/Documents/Codex/2026-11-04/hackathon-sources/outputs/source-packet/data/curated/decisions.proposed.json';
+function proposedMiloPartner(): PinnedDecision {
+  const all = JSON.parse(readFileSync(PACKET_DECISIONS, 'utf8')) as Array<{ id: string; version: number; statement: string; status: string; source_id: string }>;
+  const found = all.find((d) => d.id === 'milo-partner')!;
+  return { id: found.id, decision_key: found.id, version: found.version, statement: found.statement, source_uri: found.source_id, source_historical: false };
+}
 
 async function emptyGymShapes() {
   const db = new PGlite();
@@ -37,6 +36,26 @@ async function emptyGymShapes() {
 }
 
 describe.runIf(live)('live model calls', () => {
+  let miloResult: HandlerResult | undefined;
+  it('milo_pitch', async () => {
+    miloResult = await createHandlers().milo_pitch({ ...base, task: 'Revise this slide excerpt so a first-time investor reader understands how Milo reaches its first customer.', decisions: [] });
+    record.milo_pitch = miloResult;
+    save();
+    expect(String(miloResult.body.after).length).toBeGreaterThan(0);
+    expect(String(miloResult.body.after)).not.toMatch(/\$\s?\d/);
+  }, 240_000);
+
+  it('drift_reviewer', async () => {
+    const target = miloResult?.body ?? {};
+    const result = await createHandlers().drift_reviewer({ ...base, task: driftReviewTask('live-check-milo-output', target), decisions: [proposedMiloPartner()] });
+    record.drift_decision_status = 'proposed, not accepted';
+    record.drift_reviewer = result;
+    save();
+    const { before: _input, ...asserted } = target as Record<string, unknown>;
+    const leaves = JSON.stringify(asserted);
+    for (const finding of result.body.findings as Array<{ excerpt: string }>) expect(leaves).toContain(JSON.stringify(finding.excerpt).slice(1, -1));
+  }, 240_000);
+
   it('gym_operator', async () => {
     const realMirror = !!process.env.GYM_DATABASE_URL;
     const reader = realMirror ? gymReaderFromEnv() : await emptyGymShapes();
@@ -47,23 +66,5 @@ describe.runIf(live)('live model calls', () => {
     expect(result.body).toHaveProperty('definition');
     expect(result.body).toHaveProperty('sql');
     expect(result.body).toHaveProperty('data_age_days');
-  }, 240_000);
-
-  let miloResult: HandlerResult | undefined;
-  it('milo_pitch', async () => {
-    miloResult = await createHandlers().milo_pitch({ ...base, task: 'Tighten slide 07 so a first-time reader understands the go-to-market order. Keep the same steps.', decisions: [] });
-    record.milo_pitch = miloResult;
-    save();
-    expect(String(miloResult.body.after).length).toBeGreaterThan(0);
-    expect(String(miloResult.body.after)).not.toMatch(/\$\s?\d/);
-  }, 240_000);
-
-  it('drift_reviewer', async () => {
-    const target = miloResult?.body ?? {};
-    const result = await createHandlers().drift_reviewer({ ...base, task: driftReviewTask('live-check-milo-output', target), decisions: [contractExampleDecision] });
-    record.drift_reviewer = result;
-    save();
-    const leaves = JSON.stringify(target);
-    for (const finding of result.body.findings as Array<{ excerpt: string }>) expect(leaves).toContain(JSON.stringify(finding.excerpt).slice(1, -1));
   }, 240_000);
 });

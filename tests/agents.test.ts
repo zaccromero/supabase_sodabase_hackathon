@@ -6,11 +6,12 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PinnedDecision } from '../src/contract/types.js';
-import { createHandlers, driftReviewTask, handlers } from '../src/agents/index.js';
+import { CliTransportError, cliModelClient, type CliRunner, renderConversation } from '../src/agents/cliModel.js';
+import { createHandlers, driftReviewTask, handlers, modelClientFromEnv } from '../src/agents/index.js';
 import { createDriftReviewer, textLeaves } from '../src/agents/driftReviewer.js';
 import { ageInDays, createGymOperator } from '../src/agents/gymOperator.js';
 import { type GymReader, readerFromExecutor, validateGymSql } from '../src/agents/gymReader.js';
-import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
+import { assertNoFinancialFigures, createMiloPitch, DEFAULT_INVESTORS_DIR, DEFAULT_SLIDE_ID, DEFAULT_SLIDE_PACKET, loadCurrentDeck, slideText } from '../src/agents/miloPitch.js';
 import { AgentOutputError, AgentRefusalError, type ModelClient, type ModelRequest, type ModelResponse } from '../src/agents/model.js';
 import { buildSystemPrompt, withTechnique } from '../src/agents/prompt.js';
 
@@ -21,6 +22,7 @@ const toolCall = (name: string, input: Block, id = `tool_${name}`) => reply([{ t
 const json = (value: unknown) => reply([{ type: 'text', text: JSON.stringify(value) }], 'end_turn');
 
 class ScriptedModelClientForTests implements ModelClient {
+  readonly transport = 'scripted_test_double';
   readonly requests: ModelRequest[] = [];
   constructor(private readonly script: ModelResponse[]) {}
   async create(request: ModelRequest) {
@@ -160,7 +162,7 @@ describe('gym read-only reader', () => {
     expect(sqlEvidence.sha256).toMatch(/^[0-9a-f]{64}$/);
     expect(evidence.find((item) => item.kind === 'data_freshness')!.payload.sql).toBe(freshnessSql);
     expect((evidence.find((item) => item.kind === 'sql_trace')!.payload.queries as unknown[]).length).toBe(3);
-    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 3 });
+    expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 3 });
   });
 
   it('gives the baseline no definition hint', async () => {
@@ -291,6 +293,59 @@ describe('milo pitch', () => {
     expect(JSON.stringify(model.requests[1]!.messages.at(-1))).toContain('not an allowed source');
   });
 
+  describe('curated slide packet', () => {
+    const packet = {
+      id: 'test-packet',
+      status: 'proposed',
+      distribution: 'sanitized_text_only',
+      historical_input: { source_id: 'test-historical', label: 'Contains a SUPERSEDED_MARKER claim.', text: SLIDE_TEXT },
+      task: 'Revise this excerpt.',
+      suggested_revision: { label: 'Authored candidate', title: 'AUTHORED_TITLE here', body: 'AUTHORED_BODY goes here.' },
+    };
+    function packetFile(value: unknown = packet) {
+      const path = join(mkdtempSync(join(tmpdir(), 'milo-packet-')), 'milo-slide-text.json');
+      writeFileSync(path, JSON.stringify(value));
+      return path;
+    }
+    const fromPacket = (model: ModelClient, path = packetFile()) => createMiloPitch({ model: () => model, slidePacketPath: path, investorsDir: '/nonexistent' });
+    const good = json({ after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [{ text: 'x', source: 'test-historical' }] });
+
+    it('is the default source and shapes the contract body', async () => {
+      const { body, evidence } = await fromPacket(new ScriptedModelClientForTests([good]))({ ...base, task: 'Revise the slide.', decisions: [] });
+      expect(body).toEqual({ slide_id: 'test-packet', before: SLIDE_TEXT, after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [{ text: 'x', source: 'test-historical' }] });
+      const source = evidence.find((item) => item.kind === 'slide_source')!;
+      expect(source.payload).toMatchObject({ historical: true, historical_label: packet.historical_input.label, packet_id: 'test-packet' });
+    });
+
+    it('never shows the model the authored revision or the superseded label', async () => {
+      const model = new ScriptedModelClientForTests([good]);
+      await fromPacket(model)({ ...base, task: 'Revise the slide.', decisions: [] });
+      const sent = JSON.stringify(model.requests);
+      expect(sent).toContain('own gym');
+      for (const hidden of ['AUTHORED_TITLE', 'AUTHORED_BODY', 'SUPERSEDED_MARKER', 'suggested_revision']) expect(sent).not.toContain(hidden);
+    });
+
+    it('rejects output that copies the authored revision, whatever its case or spacing', async () => {
+      const copied = json({ after: 'authored_title   HERE\nsomething', claims: [] });
+      const model = new ScriptedModelClientForTests([copied, copied]);
+      await expect(fromPacket(model)({ ...base, task: 'Revise the slide.', decisions: [] })).rejects.toThrow(/copies authored text/);
+    });
+
+    it('refuses a packet excerpt with a financial figure before calling the model', async () => {
+      const model = new ScriptedModelClientForTests([]);
+      const path = packetFile({ ...packet, historical_input: { ...packet.historical_input, text: 'A $2,000/mo fee' } });
+      await expect(fromPacket(model, path)({ ...base, task: 'Revise.', decisions: [] })).rejects.toThrow(/financial figure/);
+      expect(model.requests).toHaveLength(0);
+    });
+  });
+
+  it.runIf(existsSync(DEFAULT_SLIDE_PACKET))('real packet has no figure in its excerpt', async () => {
+    const model = new ScriptedModelClientForTests([json({ after: 'Own words.', claims: [] })]);
+    const { body } = await createMiloPitch({ model: () => model })({ ...base, task: 'Revise the slide.', decisions: [] });
+    expect(body.slide_id).toBe('milo-one-slide-text');
+    expect(JSON.stringify(model.requests)).not.toMatch(/superseded|Authored candidate|Start with a partner/);
+  });
+
   it.runIf(existsSync(join(DEFAULT_INVESTORS_DIR, 'ROOM.md')))('finds the real deck through ROOM.md and its default slide has no figures', () => {
     const deck = loadCurrentDeck(DEFAULT_INVESTORS_DIR);
     expect(deck.path).toContain(deck.version);
@@ -342,6 +397,15 @@ describe('drift reviewer', () => {
     expect((evidence.find((item) => item.kind === 'drift_review')!.payload.rejected_findings as unknown[])).toHaveLength(2);
   });
 
+  it('does not review the input text a repaired revision replaced', async () => {
+    const repaired = { slide_id: '07', before: `Gym NYC is ${excerpt}.`, after: 'Gym NYC is a partner.', claims: [] };
+    const model = new ScriptedModelClientForTests([json({ findings: [finding()] }), json({ findings: [finding()] })]);
+    const { body, evidence } = await review(model)({ ...base, task: driftReviewTask('output-2', repaired), decisions: [decision] });
+    expect(body.findings).toEqual([]);
+    expect(JSON.stringify(model.requests[0]!.messages[0])).not.toContain('own gym');
+    expect((evidence.find((item) => item.kind === 'drift_review')!.payload.rejected_findings as unknown[])).toHaveLength(1);
+  });
+
   it('reports no drift honestly', async () => {
     const model = new ScriptedModelClientForTests([json({ findings: [] })]);
     const { body } = await review(model)({ ...base, task, decisions: [decision] });
@@ -362,6 +426,89 @@ describe('drift reviewer', () => {
 
   it('collects every string in nested output', () => {
     expect(textLeaves({ a: 'x', b: [{ c: 'y' }, 2, null] })).toEqual(['x', 'y']);
+  });
+});
+
+describe('claude cli transport', () => {
+  const secretPrompt = 'SECRET_TASK_TEXT';
+  const systemPrompt = 'SECRET_SYSTEM_TEXT';
+  const result = (fields: Block) => JSON.stringify({ type: 'result', subtype: 'success', is_error: false, session_id: 's1', usage: { input_tokens: 7, output_tokens: 3 }, modelUsage: { 'claude-sonnet-5-5': {} }, ...fields });
+  function fakeRunner(stdout: string, code = 0, stderr = '') {
+    const calls: Array<{ args: string[]; stdin: string; env: NodeJS.ProcessEnv; cwd: string; systemFile: string }> = [];
+    const run: CliRunner = async (args, stdin, options) => {
+      const file = args[args.indexOf('--system-prompt-file') + 1]!;
+      calls.push({ args, stdin, env: options.env, cwd: options.cwd, systemFile: readFileSync(file, 'utf8') });
+      return { code, stdout, stderr };
+    };
+    return { run, calls };
+  }
+  const env = { PATH: '/bin', HOME: '/h', ANTHROPIC_API_KEY: 'should-not-pass', ANTHROPIC_AUTH_TOKEN: 'x', ANTHROPIC_BASE_URL: 'https://elsewhere.test', CLAUDE_CODE_SIMPLE: '1', DATABASE_URL: 'postgres://nope' };
+  const structured = { system: systemPrompt, messages: [{ role: 'user' as const, content: secretPrompt }], output_config: { effort: 'medium' as const, format: { type: 'json_schema' as const, schema: { type: 'object' } } } };
+
+  it('sends content on stdin and in a file, never in argv, with tools and customizations off', async () => {
+    const { run, calls } = fakeRunner(result({ structured_output: { ok: true } }));
+    await cliModelClient({ run, env }).create(structured);
+    const { args, stdin, systemFile } = calls[0]!;
+    expect(stdin).toBe(secretPrompt);
+    expect(systemFile).toBe(systemPrompt);
+    expect(args.join(' ')).not.toMatch(/SECRET_/);
+    expect(args.slice(args.indexOf('--tools'), args.indexOf('--tools') + 2)).toEqual(['--tools', '']);
+    for (const flag of ['-p', '--safe-mode', '--strict-mcp-config', '--no-session-persistence']) expect(args).toContain(flag);
+    expect(args.slice(args.indexOf('--model'), args.indexOf('--model') + 2)).toEqual(['--model', 'claude-sonnet-5-5']);
+  });
+
+  it('gives the child only a minimal environment, so no key can override the login', async () => {
+    const { run, calls } = fakeRunner(result({ result: 'hi' }));
+    await cliModelClient({ run, env }).create(structured);
+    expect(calls[0]!.env).toEqual({ PATH: '/bin', HOME: '/h' });
+    expect(calls[0]!.cwd).not.toContain('worktrees');
+  });
+
+  it('maps structured output and reports the model that actually served it', async () => {
+    const { run } = fakeRunner(result({ structured_output: { ok: true } }));
+    const response = await cliModelClient({ run, env }).create(structured);
+    expect(response.content).toEqual([{ type: 'text', text: '{"ok":true}' }]);
+    expect(response.model).toBe('claude-sonnet-5-5');
+    expect(response.usage.output_tokens).toBe(3);
+  });
+
+  it('turns structured calls into tool_use blocks for the gym loop', async () => {
+    const { run, calls } = fakeRunner(result({ structured_output: { text: '', calls: [{ name: 'run_sql', input: { sql: 'select 1' } }] } }));
+    const tools = [{ name: 'run_sql', description: 'Run SQL', input_schema: { type: 'object' as const, properties: {} } }];
+    const response = await cliModelClient({ run, env }).create({ system: 's', messages: [{ role: 'user', content: 'q' }], tools });
+    expect(response.stop_reason).toBe('tool_use');
+    expect(response.content[0]).toMatchObject({ type: 'tool_use', name: 'run_sql', input: { sql: 'select 1' } });
+    expect(calls[0]!.systemFile).toContain('run_sql');
+  });
+
+  it('replays tool history as text', () => {
+    const rendered = renderConversation([
+      { role: 'user', content: 'q' },
+      { role: 'assistant', content: [{ type: 'tool_use', id: 'c1', name: 'run_sql', input: { sql: 'select 1' } }] },
+      { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'c1', content: 'bad', is_error: true }] },
+    ]);
+    expect(rendered).toContain('name="run_sql"');
+    expect(rendered).toContain('is_error="true"');
+  });
+
+  it('surfaces the exact CLI failure and does not fall back', async () => {
+    const { run, calls } = fakeRunner(result({ is_error: true, subtype: 'error_during_execution', result: 'Not logged in' }), 1);
+    await expect(cliModelClient({ run, env }).create(structured)).rejects.toThrow(/Not logged in/);
+    expect(calls).toHaveLength(1);
+    const garbled = fakeRunner('not json', 1, 'permission denied');
+    await expect(cliModelClient({ run: garbled.run, env }).create(structured)).rejects.toBeInstanceOf(CliTransportError);
+  });
+
+  it('maps a refusal so the handler raises its typed error', async () => {
+    const { run } = fakeRunner(result({ stop_reason: 'refusal' }));
+    expect((await cliModelClient({ run, env }).create(structured)).stop_reason).toBe('refusal');
+  });
+
+  it('selects by MODEL_TRANSPORT and rejects unknown values', () => {
+    expect(modelClientFromEnv('cli').transport).toBe('claude_cli');
+    expect(modelClientFromEnv('api').transport).toBe('anthropic_api');
+    expect(modelClientFromEnv('').transport).toBe('anthropic_api');
+    expect(() => modelClientFromEnv('other')).toThrow(/Unknown MODEL_TRANSPORT/);
   });
 });
 

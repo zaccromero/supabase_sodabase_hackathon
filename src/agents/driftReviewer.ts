@@ -64,6 +64,15 @@ export function parseDriftTask(task: string): DriftTask {
   return parsed as DriftTask;
 }
 
+/**
+ * A revision's `before` is the input it was given, not something it asserts. Reviewing it would
+ * flag every correctly repaired output for the text it just replaced, so it is left out.
+ */
+export function reviewableTarget(target: Record<string, unknown>): Record<string, unknown> {
+  const { before: _input, ...asserted } = target;
+  return asserted;
+}
+
 /** Every string in the output. An excerpt must sit inside one of them, so it cannot span JSON structure. */
 export function textLeaves(value: unknown): string[] {
   if (typeof value === 'string') return [value];
@@ -81,12 +90,13 @@ function findingProblem(finding: RawFinding, leaves: string[], decisions: Pinned
 
 export function createDriftReviewer(deps: { model: () => ModelClient }): Handler {
   return async ({ task, decisions, repairNotes, technique }) => {
-    const { target_output_id, target } = parseDriftTask(task);
+    const { target_output_id, target: stored } = parseDriftTask(task);
+    const target = reviewableTarget(stored);
     const decisionsReviewed = decisions.map((d) => ({ id: d.id, decision_key: d.decision_key, version: d.version }));
     const summary = (findings: unknown[]) => ({ target_output_id, findings, decisions_reviewed: decisionsReviewed, proposed_only: true as const });
 
     if (decisions.length === 0) {
-      const payload = { target_output_sha256: sha256(target), reason: 'No pinned decisions, so there is nothing to review against. No model call made.' };
+      const payload = { target_output_sha256: sha256(stored), reason: 'No pinned decisions, so there is nothing to review against. No model call made.' };
       return { body: summary([]), evidence: [{ kind: 'drift_review', sha256: sha256(payload), payload }] };
     }
 
@@ -122,7 +132,7 @@ export function createDriftReviewer(deps: { model: () => ModelClient }): Handler
         };
       });
 
-    const payload = { target_output_sha256: sha256(target), candidate_count: findings.length, rejected_findings: rejected };
+    const payload = { target_output_sha256: sha256(stored), candidate_count: findings.length, rejected_findings: rejected };
     const evidence: EvidenceInput[] = [
       { kind: 'drift_review', sha256: sha256(payload), payload },
       trace.evidence(system, decisions.map((d) => d.id)),
