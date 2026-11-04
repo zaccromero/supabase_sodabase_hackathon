@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { acceptDecision, approveEvaluation } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
+import { founderWritesAllowed } from '@/lib/db';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
 import { countedEvaluationIds, historicalInput, newest, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow } from '@/lib/records';
 
@@ -48,7 +49,7 @@ export function Decisions({ r, tag }: { r: Records; tag: ReactNode }) {
                     {s?.historical ? <span className="flag">historical</span> : null}
                     {s ? <span>captured {ago(s.captured_at, r.readAt)}</span> : null}
                   </p>
-                  {d.status === 'proposed' ? <FounderButton action={acceptDecision} id={d.id} label="Accept this decision" /> : null}
+                  {d.status === 'proposed' ? <FounderButton action={acceptDecision} id={d.id} label="Accept this decision" readOnly={!founderWritesAllowed()} /> : null}
                 </li>
               );
             })}
@@ -244,7 +245,7 @@ export function Evidence({ r, tag }: { r: Records; tag: ReactNode }) {
                   <div className="eval-main">
                     <p className="eval-check">{e.check_id}</p>
                     <p className="eval-reason">{e.reason}</p>
-                    {waitsOnFounder(e) ? <FounderButton action={approveEvaluation} id={e.id} label="Approve this evaluation" /> : null}
+                    {waitsOnFounder(e) ? <FounderButton action={approveEvaluation} id={e.id} label="Approve this evaluation" readOnly={!founderWritesAllowed()} /> : null}
                     {approval ? <p className="meta"><span>{approval.decision} by {approval.approver}, {ago(approval.created_at, r.readAt)}{run?.status === 'awaiting_approval' ? '. Waiting for the runner to call the gate again.' : '.'}</span></p> : null}
                   </div>
                   <p className="meta eval-binding">

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { acceptDecision } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
+import { founderWritesAllowed } from '@/lib/db';
 import type { Chain, EvaluationRow, Records } from '@/lib/records';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
 
@@ -100,7 +101,7 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
                     : 'no repair attempt recorded'],
                   ['output', short(chain.repairAttempt?.output_sha256)],
                 ]} />
-                {chain.correction?.status === 'proposed' ? <FounderButton action={acceptDecision} id={chain.correction.id} label="Accept this correction" /> : null}
+                {chain.correction?.status === 'proposed' ? <FounderButton action={acceptDecision} id={chain.correction.id} label="Accept this correction" readOnly={!founderWritesAllowed()} /> : null}
               </>
             ) : <NotYet>Proposed repair: {chain.row.proposed_repair}. Nothing has acted on it yet.</NotYet>}
           </Step>
