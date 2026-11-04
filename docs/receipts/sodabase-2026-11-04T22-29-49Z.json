@@ -1,0 +1,2600 @@
+{
+  "provider": "sodabase",
+  "provenance": "live",
+  "endpoint": "https://sodabase.io/mcp",
+  "project_ref": "dgqcanfiapxztmqqlqnh",
+  "observed_at": "2026-11-04T22:29:49.534Z",
+  "scope": "Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run. An empty result is a dated observation, not a healthy verdict.",
+  "quality_evidence": "RECEIVED",
+  "tools_discovered": [
+    "list_inbox",
+    "list_datasets",
+    "explain",
+    "connect_project",
+    "data_trust",
+    "data_trust_scan",
+    "data_trust_health",
+    "check_rule"
+  ],
+  "server_catalog": [
+    "add_monitor",
+    "check_rule",
+    "check_trust",
+    "confirm_demote",
+    "confirm_proposals",
+    "connect_project",
+    "data_trust",
+    "data_trust_health",
+    "data_trust_sample",
+    "data_trust_scan",
+    "decline_proposals",
+    "explain",
+    "get_usage",
+    "give_feedback",
+    "investigate",
+    "list_datasets",
+    "list_inbox",
+    "list_proposals",
+    "list_removal_suggestions",
+    "mute",
+    "reclassify_manual_disables",
+    "reconcile_removals",
+    "remove_monitor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "data_trust_health",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "tables": [
+                {
+                  "table": "gym.finance_snapshots",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                      "family": "referential",
+                      "label": "Broken references",
+                      "column": "location_id",
+                      "rule": "every value must exist in locations.id",
+                      "failing_count": 28,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "flagged",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 217,
+                      "pct": 96.0176991150443,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "cm.decisions",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "created_at must be on or before accepted_at",
+                      "failing_count": 6,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "supersedes_id",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 6,
+                      "pct": 100,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.members",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "joined_at must be on or before expiration_date",
+                      "failing_count": 91,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "joined_at must be on or before churned_at",
+                      "failing_count": 52,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                      "family": "missing",
+                      "label": "Missing values",
+                      "column": "ezf_membership_number",
+                      "rule": "should not be missing (null)",
+                      "failing_count": 64,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "churned_at",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 34330,
+                      "pct": 96.5872323664294,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.ezf_active_memberships",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.checkin_sync_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "error_code",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 6100,
+                      "pct": 95.881798176674,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.locations",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "lat",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 4,
+                      "pct": 100,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "lng",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 4,
+                      "pct": 100,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "cm.approvals",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.attempts",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.check_contracts",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.contract_checks",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.evaluations",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.evidence",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.findings",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.gate_decisions",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.outputs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.quality_findings",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.run_decisions",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.sources",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.techniques",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.checkins",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.ezf_active_membership_sync_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.mirror_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                }
+              ],
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it."
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "tables": [
+              {
+                "table": "gym.finance_snapshots",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                    "family": "referential",
+                    "label": "Broken references",
+                    "column": "location_id",
+                    "rule": "every value must exist in locations.id",
+                    "failing_count": 28,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "flagged",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 217,
+                    "pct": 96.0176991150443,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "cm.decisions",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "created_at must be on or before accepted_at",
+                    "failing_count": 6,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "supersedes_id",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 6,
+                    "pct": 100,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.members",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "joined_at must be on or before expiration_date",
+                    "failing_count": 91,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "joined_at must be on or before churned_at",
+                    "failing_count": 52,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                    "family": "missing",
+                    "label": "Missing values",
+                    "column": "ezf_membership_number",
+                    "rule": "should not be missing (null)",
+                    "failing_count": 64,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "churned_at",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 34330,
+                    "pct": 96.5872323664294,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.ezf_active_memberships",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.checkin_sync_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "error_code",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 6100,
+                    "pct": 95.881798176674,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.locations",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "lat",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 4,
+                    "pct": 100,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "lng",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 4,
+                    "pct": 100,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "cm.approvals",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.attempts",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.check_contracts",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.contract_checks",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.evaluations",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.evidence",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.findings",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.gate_decisions",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.outputs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.quality_findings",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.run_decisions",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.sources",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.techniques",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.checkins",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.ezf_active_membership_sync_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.mirror_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              }
+            ],
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it."
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "list_inbox",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "inbox": [
+                {
+                  "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+                  "dimension": "content_checks.reference",
+                  "kind": "issue",
+                  "status": "open",
+                  "score": "0.900",
+                  "title": "gym.finance_snapshots — broken references",
+                  "important": false,
+                  "explain_state": "done"
+                },
+                {
+                  "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+                  "dimension": "content_checks.rule",
+                  "kind": "issue",
+                  "status": "open",
+                  "score": "0.900",
+                  "title": "cm.decisions — rule broken",
+                  "important": false,
+                  "explain_state": "done"
+                },
+                {
+                  "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+                  "dimension": "content_checks.rule",
+                  "kind": "issue",
+                  "status": "open",
+                  "score": "0.900",
+                  "title": "gym.members — rule broken",
+                  "important": false,
+                  "explain_state": "done"
+                },
+                {
+                  "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+                  "dimension": "content_checks.duplicate",
+                  "kind": "issue",
+                  "status": "open",
+                  "score": "0.900",
+                  "title": "gym.ezf_active_memberships — duplicates",
+                  "important": false,
+                  "explain_state": "done"
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "inbox": [
+              {
+                "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+                "dimension": "content_checks.reference",
+                "kind": "issue",
+                "status": "open",
+                "score": "0.900",
+                "title": "gym.finance_snapshots — broken references",
+                "important": false,
+                "explain_state": "done"
+              },
+              {
+                "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+                "dimension": "content_checks.rule",
+                "kind": "issue",
+                "status": "open",
+                "score": "0.900",
+                "title": "cm.decisions — rule broken",
+                "important": false,
+                "explain_state": "done"
+              },
+              {
+                "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+                "dimension": "content_checks.rule",
+                "kind": "issue",
+                "status": "open",
+                "score": "0.900",
+                "title": "gym.members — rule broken",
+                "important": false,
+                "explain_state": "done"
+              },
+              {
+                "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+                "dimension": "content_checks.duplicate",
+                "kind": "issue",
+                "status": "open",
+                "score": "0.900",
+                "title": "gym.ezf_active_memberships — duplicates",
+                "important": false,
+                "explain_state": "done"
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "explain",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+              "dimension": "content_checks.reference",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.finance_snapshots — broken references",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding f6672df4-d93f-4d2c-abb0-42e7485471a0 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "Location IDs in the table likely point to records that were deleted or never existed in the locations table. The fact that this is the first time we checked suggests these invalid references may have accumulated over time.",
+                "findings": [
+                  {
+                    "id": "f6672df4-d93f-4d2c-abb0-42e7485471a0",
+                    "pct": null,
+                    "cols": [
+                      "location_id"
+                    ],
+                    "family": "referential",
+                    "failing_count": 28,
+                    "constraint_kind": "foreign_key"
+                  }
+                ],
+                "dimension": "content_checks.reference",
+                "fingerprint": [
+                  "location_id|validity"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+            "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+            "dimension": "content_checks.reference",
+            "kind": "issue",
+            "status": "open",
+            "title": "gym.finance_snapshots — broken references",
+            "explanation": {
+              "next": "Ask your agent to run data_trust_sample on finding f6672df4-d93f-4d2c-abb0-42e7485471a0 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+              "facts": null,
+              "onset": null,
+              "method": "llm-v1",
+              "summary": "Location IDs in the table likely point to records that were deleted or never existed in the locations table. The fact that this is the first time we checked suggests these invalid references may have accumulated over time.",
+              "findings": [
+                {
+                  "id": "f6672df4-d93f-4d2c-abb0-42e7485471a0",
+                  "pct": null,
+                  "cols": [
+                    "location_id"
+                  ],
+                  "family": "referential",
+                  "failing_count": 28,
+                  "constraint_kind": "foreign_key"
+                }
+              ],
+              "dimension": "content_checks.reference",
+              "fingerprint": [
+                "location_id|validity"
+              ],
+              "notify_suppressed": true
+            },
+            "explain_state": "done",
+            "score": "0.900"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "explain",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+              "dimension": "content_checks.rule",
+              "kind": "issue",
+              "status": "open",
+              "title": "cm.decisions — rule broken",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding beeef2aa-55e7-4cee-a502-a7f6191d7136 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "The accepted_at date is likely being set before the created_at date by a process that backdates approvals. Records show both timestamps out of order, suggesting they're entered in the wrong sequence or calculated incorrectly.",
+                "findings": [
+                  {
+                    "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                    "pct": null,
+                    "cols": [
+                      "accepted_at",
+                      "created_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 6,
+                    "constraint_kind": "date_order"
+                  }
+                ],
+                "dimension": "content_checks.rule",
+                "fingerprint": [
+                  "accepted_at,created_at|consistency"
+                ]
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+            "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+            "dimension": "content_checks.rule",
+            "kind": "issue",
+            "status": "open",
+            "title": "cm.decisions — rule broken",
+            "explanation": {
+              "next": "Ask your agent to run data_trust_sample on finding beeef2aa-55e7-4cee-a502-a7f6191d7136 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+              "facts": null,
+              "onset": null,
+              "method": "llm-v1",
+              "summary": "The accepted_at date is likely being set before the created_at date by a process that backdates approvals. Records show both timestamps out of order, suggesting they're entered in the wrong sequence or calculated incorrectly.",
+              "findings": [
+                {
+                  "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                  "pct": null,
+                  "cols": [
+                    "accepted_at",
+                    "created_at"
+                  ],
+                  "family": "business_rule",
+                  "failing_count": 6,
+                  "constraint_kind": "date_order"
+                }
+              ],
+              "dimension": "content_checks.rule",
+              "fingerprint": [
+                "accepted_at,created_at|consistency"
+              ]
+            },
+            "explain_state": "done",
+            "score": "0.900"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "explain",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+              "dimension": "content_checks.rule",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.members — rule broken",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding 8806f2bb-a4cc-4f2b-ba55-151962c06b24 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "Members likely signed up or churned before their memberships were set to expire, suggesting dates were typed in by hand or loaded from an incomplete source. The pattern affects multiple date pairs, pointing to a single data-entry or import problem rather than separate issues.",
+                "findings": [
+                  {
+                    "id": "8806f2bb-a4cc-4f2b-ba55-151962c06b24",
+                    "pct": null,
+                    "cols": [
+                      "expiration_date",
+                      "joined_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 91,
+                    "constraint_kind": "date_order"
+                  },
+                  {
+                    "id": "bdc24c5d-ce55-4515-b2f0-dacc45eaf8c8",
+                    "pct": null,
+                    "cols": [
+                      "churned_at",
+                      "joined_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 52,
+                    "constraint_kind": "date_order"
+                  }
+                ],
+                "dimension": "content_checks.rule",
+                "fingerprint": [
+                  "churned_at,joined_at|consistency",
+                  "expiration_date,joined_at|consistency"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+            "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+            "dimension": "content_checks.rule",
+            "kind": "issue",
+            "status": "open",
+            "title": "gym.members — rule broken",
+            "explanation": {
+              "next": "Ask your agent to run data_trust_sample on finding 8806f2bb-a4cc-4f2b-ba55-151962c06b24 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+              "facts": null,
+              "onset": null,
+              "method": "llm-v1",
+              "summary": "Members likely signed up or churned before their memberships were set to expire, suggesting dates were typed in by hand or loaded from an incomplete source. The pattern affects multiple date pairs, pointing to a single data-entry or import problem rather than separate issues.",
+              "findings": [
+                {
+                  "id": "8806f2bb-a4cc-4f2b-ba55-151962c06b24",
+                  "pct": null,
+                  "cols": [
+                    "expiration_date",
+                    "joined_at"
+                  ],
+                  "family": "business_rule",
+                  "failing_count": 91,
+                  "constraint_kind": "date_order"
+                },
+                {
+                  "id": "bdc24c5d-ce55-4515-b2f0-dacc45eaf8c8",
+                  "pct": null,
+                  "cols": [
+                    "churned_at",
+                    "joined_at"
+                  ],
+                  "family": "business_rule",
+                  "failing_count": 52,
+                  "constraint_kind": "date_order"
+                }
+              ],
+              "dimension": "content_checks.rule",
+              "fingerprint": [
+                "churned_at,joined_at|consistency",
+                "expiration_date,joined_at|consistency"
+              ],
+              "notify_suppressed": true
+            },
+            "explain_state": "done",
+            "score": "0.900"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "explain",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+              "dimension": "content_checks.duplicate",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.ezf_active_memberships — duplicates",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding bbee4bad-6a19-4ae3-917b-a320b997da95 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "A membership record was likely copied twice in the table. Since we haven't seen this table before, it may have always had this duplicate.",
+                "findings": [
+                  {
+                    "id": "bbee4bad-6a19-4ae3-917b-a320b997da95",
+                    "pct": null,
+                    "cols": [
+                      "ezf_membership_number",
+                      "location_id"
+                    ],
+                    "family": "composite_duplicate",
+                    "failing_count": 1,
+                    "constraint_kind": "unique_together"
+                  }
+                ],
+                "dimension": "content_checks.duplicate",
+                "fingerprint": [
+                  "ezf_membership_number,location_id|uniqueness"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+            "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+            "dimension": "content_checks.duplicate",
+            "kind": "issue",
+            "status": "open",
+            "title": "gym.ezf_active_memberships — duplicates",
+            "explanation": {
+              "next": "Ask your agent to run data_trust_sample on finding bbee4bad-6a19-4ae3-917b-a320b997da95 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+              "facts": null,
+              "onset": null,
+              "method": "llm-v1",
+              "summary": "A membership record was likely copied twice in the table. Since we haven't seen this table before, it may have always had this duplicate.",
+              "findings": [
+                {
+                  "id": "bbee4bad-6a19-4ae3-917b-a320b997da95",
+                  "pct": null,
+                  "cols": [
+                    "ezf_membership_number",
+                    "location_id"
+                  ],
+                  "family": "composite_duplicate",
+                  "failing_count": 1,
+                  "constraint_kind": "unique_together"
+                }
+              ],
+              "dimension": "content_checks.duplicate",
+              "fingerprint": [
+                "ezf_membership_number,location_id|uniqueness"
+              ],
+              "notify_suppressed": true
+            },
+            "explain_state": "done",
+            "score": "0.900"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "pass",
+              "rule": "values must be one of the allowed set",
+              "column": "bridge_class",
+              "family": "invalid",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "gym.ezf_active_memberships",
+            "status": "pass",
+            "rule": "values must be one of the allowed set",
+            "column": "bridge_class",
+            "family": "invalid",
+            "failing_count": 0,
+            "precise": true,
+            "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+            "next_step": {
+              "recommended": "track",
+              "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            }
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "pass",
+              "rule": "location_id, source_membership_key should be unique together",
+              "column": "location_id, source_membership_key",
+              "family": "composite_duplicate",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "gym.ezf_active_memberships",
+            "status": "pass",
+            "rule": "location_id, source_membership_key should be unique together",
+            "column": "location_id, source_membership_key",
+            "family": "composite_duplicate",
+            "failing_count": 0,
+            "precise": true,
+            "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+            "next_step": {
+              "recommended": "track",
+              "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            }
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "gym.finance_snapshots",
+              "status": "pass",
+              "rule": "values must be one of the allowed set",
+              "column": "location_id",
+              "family": "invalid",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "gym.finance_snapshots",
+            "status": "pass",
+            "rule": "values must be one of the allowed set",
+            "column": "location_id",
+            "family": "invalid",
+            "failing_count": 0,
+            "precise": true,
+            "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+            "next_step": {
+              "recommended": "track",
+              "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            }
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "cm.decisions",
+              "status": "unknown",
+              "rule": "decision_key, version should be unique together",
+              "column": "decision_key, version",
+              "family": "composite_duplicate",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "cm.decisions",
+            "status": "unknown",
+            "rule": "decision_key, version should be unique together",
+            "column": "decision_key, version",
+            "family": "composite_duplicate",
+            "failing_count": null,
+            "precise": true,
+            "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "cm.evaluations",
+              "status": "unknown",
+              "rule": "values must be one of the allowed set",
+              "column": "verdict",
+              "family": "invalid",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "cm.evaluations",
+            "status": "unknown",
+            "rule": "values must be one of the allowed set",
+            "column": "verdict",
+            "family": "invalid",
+            "failing_count": null,
+            "precise": true,
+            "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "dataset": "cm.runs",
+              "status": "unknown",
+              "rule": "should not be missing (null)",
+              "column": "memory_mode",
+              "family": "missing",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "dataset": "cm.runs",
+            "status": "unknown",
+            "rule": "should not be missing (null)",
+            "column": "memory_mode",
+            "family": "missing",
+            "failing_count": null,
+            "precise": true,
+            "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+          }
+        },
+        "isError": false
+      }
+    }
+  ],
+  "counts": {
+    "actionable": 8,
+    "expected_by_definition": 7,
+    "exploratory": 0,
+    "clean": 3,
+    "undetermined": 21,
+    "unparsed": 0,
+    "errors": 0
+  },
+  "inserted_into_quality_findings": 39,
+  "database_error": null,
+  "findings": [
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+      "table_name": "gym.finance_snapshots",
+      "verdict": "untrusted",
+      "problem": "Broken references: location_id: every value must exist in locations.id",
+      "finding_count": 28,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "finance-all-rollup",
+        "response": {
+          "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+          "family": "referential",
+          "label": "Broken references",
+          "column": "location_id",
+          "rule": "every value must exist in locations.id",
+          "failing_count": 28,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "e61776c4-fb60-46bc-b064-1825849b1855",
+      "table_name": "gym.finance_snapshots",
+      "verdict": "untrusted",
+      "problem": "Unused column: flagged: effectively unused (>= 90% empty)",
+      "finding_count": 217,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "flagged",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 217,
+          "pct": 96.0176991150443,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+      "table_name": "cm.decisions",
+      "verdict": "untrusted",
+      "problem": "Rule broken: created_at must be on or before accepted_at",
+      "finding_count": 6,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "created_at must be on or before accepted_at",
+          "failing_count": 6,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+      "table_name": "cm.decisions",
+      "verdict": "untrusted",
+      "problem": "Unused column: supersedes_id: effectively unused (>= 90% empty)",
+      "finding_count": 6,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "supersedes_id",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 6,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Rule broken: joined_at must be on or before expiration_date",
+      "finding_count": 91,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "joined_at must be on or before expiration_date",
+          "failing_count": 91,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Rule broken: joined_at must be on or before churned_at",
+      "finding_count": 52,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "joined_at must be on or before churned_at",
+          "failing_count": 52,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Missing values: ezf_membership_number: should not be missing (null)",
+      "finding_count": 64,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+          "family": "missing",
+          "label": "Missing values",
+          "column": "ezf_membership_number",
+          "rule": "should not be missing (null)",
+          "failing_count": 64,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Unused column: churned_at: effectively unused (>= 90% empty)",
+      "finding_count": 34330,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "churned_at",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 34330,
+          "pct": 96.5872323664294,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "untrusted",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+      "table_name": "gym.checkin_sync_runs",
+      "verdict": "unknown",
+      "problem": "Unused column: error_code: effectively unused (>= 90% empty)",
+      "finding_count": 6100,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "error_code",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 6100,
+          "pct": 95.881798176674,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+      "table_name": "gym.locations",
+      "verdict": "unknown",
+      "problem": "Unused column: lat: effectively unused (>= 90% empty)",
+      "finding_count": 4,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "lat",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 4,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+      "table_name": "gym.locations",
+      "verdict": "unknown",
+      "problem": "Unused column: lng: effectively unused (>= 90% empty)",
+      "finding_count": 4,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "lng",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 4,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.approvals",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.attempts",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.check_contracts",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.contract_checks",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evaluations",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evidence",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.findings",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.gate_decisions",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.outputs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.quality_findings",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.run_decisions",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.sources",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.techniques",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.checkins",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_membership_sync_runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.mirror_runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+      "table_name": "gym.finance_snapshots",
+      "verdict": "open",
+      "problem": "gym.finance_snapshots — broken references",
+      "finding_count": 28,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "list_inbox",
+        "disposition": "expected_by_definition",
+        "response": {
+          "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+          "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+          "dimension": "content_checks.reference",
+          "kind": "issue",
+          "status": "open",
+          "score": "0.900",
+          "title": "gym.finance_snapshots — broken references",
+          "important": false,
+          "explain_state": "done"
+        },
+        "explanation": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+                "dimension": "content_checks.reference",
+                "kind": "issue",
+                "status": "open",
+                "title": "gym.finance_snapshots — broken references",
+                "explanation": {
+                  "next": "Ask your agent to run data_trust_sample on finding f6672df4-d93f-4d2c-abb0-42e7485471a0 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                  "facts": null,
+                  "onset": null,
+                  "method": "llm-v1",
+                  "summary": "Location IDs in the table likely point to records that were deleted or never existed in the locations table. The fact that this is the first time we checked suggests these invalid references may have accumulated over time.",
+                  "findings": [
+                    {
+                      "id": "f6672df4-d93f-4d2c-abb0-42e7485471a0",
+                      "pct": null,
+                      "cols": [
+                        "location_id"
+                      ],
+                      "family": "referential",
+                      "failing_count": 28,
+                      "constraint_kind": "foreign_key"
+                    }
+                  ],
+                  "dimension": "content_checks.reference",
+                  "fingerprint": [
+                    "location_id|validity"
+                  ],
+                  "notify_suppressed": true
+                },
+                "explain_state": "done",
+                "score": "0.900"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "id": "a0916704-dd17-4cd7-a6e8-808176ea4f8f",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+              "dimension": "content_checks.reference",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.finance_snapshots — broken references",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding f6672df4-d93f-4d2c-abb0-42e7485471a0 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "Location IDs in the table likely point to records that were deleted or never existed in the locations table. The fact that this is the first time we checked suggests these invalid references may have accumulated over time.",
+                "findings": [
+                  {
+                    "id": "f6672df4-d93f-4d2c-abb0-42e7485471a0",
+                    "pct": null,
+                    "cols": [
+                      "location_id"
+                    ],
+                    "family": "referential",
+                    "failing_count": 28,
+                    "constraint_kind": "foreign_key"
+                  }
+                ],
+                "dimension": "content_checks.reference",
+                "fingerprint": [
+                  "location_id|validity"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          },
+          "isError": false
+        },
+        "never_flag_id": "finance-all-rollup"
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "33917cef-7044-4f18-aab3-214560a02c9a",
+      "table_name": "cm.decisions",
+      "verdict": "open",
+      "problem": "cm.decisions — rule broken",
+      "finding_count": 6,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "list_inbox",
+        "disposition": "actionable",
+        "response": {
+          "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+          "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+          "dimension": "content_checks.rule",
+          "kind": "issue",
+          "status": "open",
+          "score": "0.900",
+          "title": "cm.decisions — rule broken",
+          "important": false,
+          "explain_state": "done"
+        },
+        "explanation": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+                "dimension": "content_checks.rule",
+                "kind": "issue",
+                "status": "open",
+                "title": "cm.decisions — rule broken",
+                "explanation": {
+                  "next": "Ask your agent to run data_trust_sample on finding beeef2aa-55e7-4cee-a502-a7f6191d7136 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                  "facts": null,
+                  "onset": null,
+                  "method": "llm-v1",
+                  "summary": "The accepted_at date is likely being set before the created_at date by a process that backdates approvals. Records show both timestamps out of order, suggesting they're entered in the wrong sequence or calculated incorrectly.",
+                  "findings": [
+                    {
+                      "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                      "pct": null,
+                      "cols": [
+                        "accepted_at",
+                        "created_at"
+                      ],
+                      "family": "business_rule",
+                      "failing_count": 6,
+                      "constraint_kind": "date_order"
+                    }
+                  ],
+                  "dimension": "content_checks.rule",
+                  "fingerprint": [
+                    "accepted_at,created_at|consistency"
+                  ]
+                },
+                "explain_state": "done",
+                "score": "0.900"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "id": "33917cef-7044-4f18-aab3-214560a02c9a",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+              "dimension": "content_checks.rule",
+              "kind": "issue",
+              "status": "open",
+              "title": "cm.decisions — rule broken",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding beeef2aa-55e7-4cee-a502-a7f6191d7136 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "The accepted_at date is likely being set before the created_at date by a process that backdates approvals. Records show both timestamps out of order, suggesting they're entered in the wrong sequence or calculated incorrectly.",
+                "findings": [
+                  {
+                    "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                    "pct": null,
+                    "cols": [
+                      "accepted_at",
+                      "created_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 6,
+                    "constraint_kind": "date_order"
+                  }
+                ],
+                "dimension": "content_checks.rule",
+                "fingerprint": [
+                  "accepted_at,created_at|consistency"
+                ]
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+      "table_name": "gym.members",
+      "verdict": "open",
+      "problem": "gym.members — rule broken",
+      "finding_count": 143,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "list_inbox",
+        "disposition": "actionable",
+        "response": {
+          "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+          "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+          "dimension": "content_checks.rule",
+          "kind": "issue",
+          "status": "open",
+          "score": "0.900",
+          "title": "gym.members — rule broken",
+          "important": false,
+          "explain_state": "done"
+        },
+        "explanation": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+                "dimension": "content_checks.rule",
+                "kind": "issue",
+                "status": "open",
+                "title": "gym.members — rule broken",
+                "explanation": {
+                  "next": "Ask your agent to run data_trust_sample on finding 8806f2bb-a4cc-4f2b-ba55-151962c06b24 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                  "facts": null,
+                  "onset": null,
+                  "method": "llm-v1",
+                  "summary": "Members likely signed up or churned before their memberships were set to expire, suggesting dates were typed in by hand or loaded from an incomplete source. The pattern affects multiple date pairs, pointing to a single data-entry or import problem rather than separate issues.",
+                  "findings": [
+                    {
+                      "id": "8806f2bb-a4cc-4f2b-ba55-151962c06b24",
+                      "pct": null,
+                      "cols": [
+                        "expiration_date",
+                        "joined_at"
+                      ],
+                      "family": "business_rule",
+                      "failing_count": 91,
+                      "constraint_kind": "date_order"
+                    },
+                    {
+                      "id": "bdc24c5d-ce55-4515-b2f0-dacc45eaf8c8",
+                      "pct": null,
+                      "cols": [
+                        "churned_at",
+                        "joined_at"
+                      ],
+                      "family": "business_rule",
+                      "failing_count": 52,
+                      "constraint_kind": "date_order"
+                    }
+                  ],
+                  "dimension": "content_checks.rule",
+                  "fingerprint": [
+                    "churned_at,joined_at|consistency",
+                    "expiration_date,joined_at|consistency"
+                  ],
+                  "notify_suppressed": true
+                },
+                "explain_state": "done",
+                "score": "0.900"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "id": "5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+              "dimension": "content_checks.rule",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.members — rule broken",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding 8806f2bb-a4cc-4f2b-ba55-151962c06b24 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "Members likely signed up or churned before their memberships were set to expire, suggesting dates were typed in by hand or loaded from an incomplete source. The pattern affects multiple date pairs, pointing to a single data-entry or import problem rather than separate issues.",
+                "findings": [
+                  {
+                    "id": "8806f2bb-a4cc-4f2b-ba55-151962c06b24",
+                    "pct": null,
+                    "cols": [
+                      "expiration_date",
+                      "joined_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 91,
+                    "constraint_kind": "date_order"
+                  },
+                  {
+                    "id": "bdc24c5d-ce55-4515-b2f0-dacc45eaf8c8",
+                    "pct": null,
+                    "cols": [
+                      "churned_at",
+                      "joined_at"
+                    ],
+                    "family": "business_rule",
+                    "failing_count": 52,
+                    "constraint_kind": "date_order"
+                  }
+                ],
+                "dimension": "content_checks.rule",
+                "fingerprint": [
+                  "churned_at,joined_at|consistency",
+                  "expiration_date,joined_at|consistency"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "open",
+      "problem": "gym.ezf_active_memberships — duplicates",
+      "finding_count": 1,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "list_inbox",
+        "disposition": "expected_by_definition",
+        "response": {
+          "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+          "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+          "dimension": "content_checks.duplicate",
+          "kind": "issue",
+          "status": "open",
+          "score": "0.900",
+          "title": "gym.ezf_active_memberships — duplicates",
+          "important": false,
+          "explain_state": "done"
+        },
+        "explanation": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+                "dimension": "content_checks.duplicate",
+                "kind": "issue",
+                "status": "open",
+                "title": "gym.ezf_active_memberships — duplicates",
+                "explanation": {
+                  "next": "Ask your agent to run data_trust_sample on finding bbee4bad-6a19-4ae3-917b-a320b997da95 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                  "facts": null,
+                  "onset": null,
+                  "method": "llm-v1",
+                  "summary": "A membership record was likely copied twice in the table. Since we haven't seen this table before, it may have always had this duplicate.",
+                  "findings": [
+                    {
+                      "id": "bbee4bad-6a19-4ae3-917b-a320b997da95",
+                      "pct": null,
+                      "cols": [
+                        "ezf_membership_number",
+                        "location_id"
+                      ],
+                      "family": "composite_duplicate",
+                      "failing_count": 1,
+                      "constraint_kind": "unique_together"
+                    }
+                  ],
+                  "dimension": "content_checks.duplicate",
+                  "fingerprint": [
+                    "ezf_membership_number,location_id|uniqueness"
+                  ],
+                  "notify_suppressed": true
+                },
+                "explain_state": "done",
+                "score": "0.900"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "id": "6ac59cf6-da38-4ed3-a83a-db79b026b1ff",
+              "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+              "dimension": "content_checks.duplicate",
+              "kind": "issue",
+              "status": "open",
+              "title": "gym.ezf_active_memberships — duplicates",
+              "explanation": {
+                "next": "Ask your agent to run data_trust_sample on finding bbee4bad-6a19-4ae3-917b-a320b997da95 to see the failing rows, or open the table's issues: https://sodabase.io/projects/dgqcanfiapxztmqqlqnh?[query string removed]",
+                "facts": null,
+                "onset": null,
+                "method": "llm-v1",
+                "summary": "A membership record was likely copied twice in the table. Since we haven't seen this table before, it may have always had this duplicate.",
+                "findings": [
+                  {
+                    "id": "bbee4bad-6a19-4ae3-917b-a320b997da95",
+                    "pct": null,
+                    "cols": [
+                      "ezf_membership_number",
+                      "location_id"
+                    ],
+                    "family": "composite_duplicate",
+                    "failing_count": 1,
+                    "constraint_kind": "unique_together"
+                  }
+                ],
+                "dimension": "content_checks.duplicate",
+                "fingerprint": [
+                  "ezf_membership_number,location_id|uniqueness"
+                ],
+                "notify_suppressed": true
+              },
+              "explain_state": "done",
+              "score": "0.900"
+            }
+          },
+          "isError": false
+        },
+        "never_flag_id": "repeat-membership-number"
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "rule_held",
+      "problem": "bridge_class must be one of MATCHED_INDIVIDUAL, EXCLUDED_INDEPENDENT_TRAINING_MEMBER, EXCLUDED_INDEPENDENT_TRAINER, EXCLUDED_CORPORATE, EXCLUDED_EMPLOYEE, EXCLUDED_NON_MEMBER, EXCLUDED_HOTEL or MULTIPLE_ACTIVE_MEMBERSHIPS_ONE_CLIENT.",
+      "finding_count": 0,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "membership-bridge-class-domain",
+        "rule_status": "active",
+        "provider_status": "pass",
+        "basis": "CHECK am_bridge_class",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_memberships",
+                "status": "pass",
+                "rule": "values must be one of the allowed set",
+                "column": "bridge_class",
+                "family": "invalid",
+                "failing_count": 0,
+                "precise": true,
+                "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+                "next_step": {
+                  "recommended": "track",
+                  "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                  "inspect": "Run the query against your database to see the offending rows.",
+                  "fix_at_source": "Correct the data in your own app or a migration.",
+                  "remediation_sql": "last_resort"
+                }
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "pass",
+              "rule": "values must be one of the allowed set",
+              "column": "bridge_class",
+              "family": "invalid",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "rule_held",
+      "problem": "Each combination of location_id and source_membership_key must be unique.",
+      "finding_count": 0,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "membership-source-key-unique",
+        "rule_status": "active",
+        "provider_status": "pass",
+        "basis": "unique (location_id, source_membership_key). This is the real key; a repeated membership number is legitimate.",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_memberships",
+                "status": "pass",
+                "rule": "location_id, source_membership_key should be unique together",
+                "column": "location_id, source_membership_key",
+                "family": "composite_duplicate",
+                "failing_count": 0,
+                "precise": true,
+                "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+                "next_step": {
+                  "recommended": "track",
+                  "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                  "inspect": "Run the query against your database to see the offending rows.",
+                  "fix_at_source": "Correct the data in your own app or a migration.",
+                  "remediation_sql": "last_resort"
+                }
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "pass",
+              "rule": "location_id, source_membership_key should be unique together",
+              "column": "location_id, source_membership_key",
+              "family": "composite_duplicate",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.finance_snapshots",
+      "verdict": "rule_held",
+      "problem": "location_id must be 'all' or one of lex, bk, east3, mul.",
+      "finding_count": 0,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "finance-location-known-or-all",
+        "rule_status": "active",
+        "provider_status": "pass",
+        "basis": "schema.ts: location_id has no FK because of the 'all' rollup. Keeps a real broken reference visible.",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.finance_snapshots",
+                "status": "pass",
+                "rule": "values must be one of the allowed set",
+                "column": "location_id",
+                "family": "invalid",
+                "failing_count": 0,
+                "precise": true,
+                "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+                "next_step": {
+                  "recommended": "track",
+                  "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                  "inspect": "Run the query against your database to see the offending rows.",
+                  "fix_at_source": "Correct the data in your own app or a migration.",
+                  "remediation_sql": "last_resort"
+                }
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.finance_snapshots",
+              "status": "pass",
+              "rule": "values must be one of the allowed set",
+              "column": "location_id",
+              "family": "invalid",
+              "failing_count": 0,
+              "precise": true,
+              "note": "No rows break this rule. The query is here if you want to confirm it yourself: Want me to watch this and tell you when it breaks? Re-run with persist.",
+              "next_step": {
+                "recommended": "track",
+                "track": "Re-run this with persist and I'll keep an eye on the rule — you'll get an Issue if it starts breaking.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              }
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.decisions",
+      "verdict": "rule_unknown",
+      "problem": "Each combination of decision_key and version must be unique.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "decision-version-unique",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql unique (decision_key, version)",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.decisions",
+                "status": "unknown",
+                "rule": "decision_key, version should be unique together",
+                "column": "decision_key, version",
+                "family": "composite_duplicate",
+                "failing_count": null,
+                "precise": true,
+                "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.decisions",
+              "status": "unknown",
+              "rule": "decision_key, version should be unique together",
+              "column": "decision_key, version",
+              "family": "composite_duplicate",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evaluations",
+      "verdict": "rule_unknown",
+      "problem": "verdict must be one of pass, fail or uncertain.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "evaluation-verdict-domain",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql evaluations verdict check",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.evaluations",
+                "status": "unknown",
+                "rule": "values must be one of the allowed set",
+                "column": "verdict",
+                "family": "invalid",
+                "failing_count": null,
+                "precise": true,
+                "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.evaluations",
+              "status": "unknown",
+              "rule": "values must be one of the allowed set",
+              "column": "verdict",
+              "family": "invalid",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.runs",
+      "verdict": "rule_unknown",
+      "problem": "memory_mode must not be null.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:29:49.534Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "run-memory-mode",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql runs memory_mode",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.runs",
+                "status": "unknown",
+                "rule": "should not be missing (null)",
+                "column": "memory_mode",
+                "family": "missing",
+                "failing_count": null,
+                "precise": true,
+                "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.runs",
+              "status": "unknown",
+              "rule": "should not be missing (null)",
+              "column": "memory_mode",
+              "family": "missing",
+              "failing_count": null,
+              "precise": true,
+              "note": "I couldn't run this check against your database right now — here's the query to run yourself:"
+            }
+          },
+          "isError": false
+        }
+      }
+    }
+  ]
+}

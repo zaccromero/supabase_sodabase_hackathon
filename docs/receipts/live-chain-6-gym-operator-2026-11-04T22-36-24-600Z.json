@@ -1,0 +1,122 @@
+{
+  "step": "6-gym-operator",
+  "environment": "hosted Supabase, project dgqcanfiapxztmqqlqnh",
+  "transport": "hermes_oauth",
+  "source_head": "91c8f81ea9c62ac49a9cb37ae9c3bff06c186c5e",
+  "source_clean": true,
+  "started": "2026-11-04T22:36:24.600Z",
+  "finished": "2026-11-04T22:37:44.929Z",
+  "accepted_for_profile": [
+    "gym.active_individual_definition@1",
+    "gym.freshness_completeness@1"
+  ],
+  "run_id": "8d536a05-5409-4783-8576-26af2c911bb7",
+  "memory_mode": "on",
+  "status": "failed",
+  "failure_reason": "REPAIR_BUDGET_EXHAUSTED",
+  "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26",
+  "pinned": [
+    {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:36:25.257Z"
+    },
+    {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:36:25.257Z"
+    }
+  ],
+  "outputs": [],
+  "evidence": [],
+  "evaluations": [],
+  "gate_decisions": [
+    {
+      "verdict": "blocked",
+      "missing": [
+        {
+          "reason": "NO_OUTPUT"
+        }
+      ],
+      "attempt_id": "7079f82a-2281-4b56-b82e-f1f9a004d1a4",
+      "created_at": "2026-11-04T22:36:56.005Z"
+    },
+    {
+      "verdict": "blocked",
+      "missing": [
+        {
+          "reason": "NO_OUTPUT"
+        }
+      ],
+      "attempt_id": "846cdf42-7410-4696-a6ee-392416ba3344",
+      "created_at": "2026-11-04T22:37:28.702Z"
+    },
+    {
+      "verdict": "blocked",
+      "missing": [
+        {
+          "reason": "NO_OUTPUT"
+        }
+      ],
+      "attempt_id": "1a780afe-58b5-40ba-84f5-85f21870d75f",
+      "created_at": "2026-11-04T22:37:44.589Z"
+    }
+  ],
+  "attempt_errors": [
+    {
+      "attempt_no": 1,
+      "handler_error": "Gym operator stopped without calling submit_answer",
+      "evaluator_errors": []
+    },
+    {
+      "attempt_no": 2,
+      "handler_error": "Gym operator stopped without calling submit_answer",
+      "evaluator_errors": []
+    },
+    {
+      "attempt_no": 3,
+      "handler_error": "Gym operator stopped without calling submit_answer",
+      "evaluator_errors": []
+    }
+  ],
+  "compared_with": "docs/receipts/gym-active-members-2026-11-04T22-22-50-393Z.json",
+  "comparison": [
+    {
+      "location_id": "bk",
+      "recorded_state": "STALE",
+      "recorded": 704,
+      "answered": null,
+      "match": false
+    },
+    {
+      "location_id": "east3",
+      "recorded_state": "PARTIAL",
+      "recorded": null,
+      "answered": null,
+      "match": null
+    },
+    {
+      "location_id": "lex",
+      "recorded_state": "STALE",
+      "recorded": 367,
+      "answered": null,
+      "match": false
+    },
+    {
+      "location_id": "mul",
+      "recorded_state": "STALE",
+      "recorded": 439,
+      "answered": null,
+      "match": false
+    }
+  ],
+  "answer_definition": null,
+  "data_as_of": null,
+  "data_age_days": null
+}

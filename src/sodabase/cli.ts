@@ -9,6 +9,7 @@ import { SodabaseClient, SODABASE_PROJECT_REF } from './client.js';
 import { pullFindings } from './pull.js';
 import { sanitize } from './sanitize.js';
 
+const PROBE_TABLES = ['locations', 'members', 'checkins', 'ezf_active_memberships', 'ezf_active_membership_sync_runs', 'checkin_sync_runs', 'finance_snapshots', 'mirror_runs'].map((t) => `gym.${t}`);
 const [command = 'status', ...flags] = process.argv.slice(2);
 const client = new SodabaseClient();
 
@@ -18,7 +19,7 @@ if (command === 'status') {
   await client.close();
 } else if (command === 'probe') {
   // Read-only: tool discovery and data_trust_health, bound to the event project. No database.
-  const result = await pullFindings(client, { healthOnly: true });
+  const result = await pullFindings(client, { healthOnly: true, probeTables: PROBE_TABLES });
   console.log(JSON.stringify({ state: result.status.state, reason: result.status.reason, provenance: result.provenance, project_ref: SODABASE_PROJECT_REF, tools: result.status.tools, catalog: result.status.catalog, quality_evidence: result.quality_evidence, counts: result.counts, receipt: result.receipt_path }, null, 2));
   if (result.status.state !== 'ready') process.exitCode = 3;
 } else if (command === 'scan') {

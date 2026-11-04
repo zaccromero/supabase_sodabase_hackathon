@@ -1,7 +1,7 @@
 // doppler run --project hackathon --config dev -- pnpm exec tsx src/runner/cli.ts <command> [flags]
 //
 // The real agents and evaluators run by default. --binding replaces them with a module whose default
-// export is an AgentBinding, or (profile) => AgentBinding. Set MODEL_TRANSPORT=cli to use the local login.
+// export is an AgentBinding, or (profile) => AgentBinding. Generation and the critic go through Hermes only.
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
