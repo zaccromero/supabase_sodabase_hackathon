@@ -1,7 +1,7 @@
 import { ChainHero } from '@/components/ChainHero';
 import { LiveRefresh } from '@/components/LiveRefresh';
 import { Agents, Decisions, Drift, Evidence, Sodabase } from '@/components/Sections';
-import { dbMode } from '@/lib/db';
+import { dbMode, type DbMode } from '@/lib/db';
 import { et, ago } from '@/lib/format';
 import { buildChain, newest, readRecords, type Records } from '@/lib/records';
 
@@ -14,6 +14,14 @@ function ReadFailure({ error }: { error: unknown }) {
   const missing = code === '3F000' || code === '42P01';
   const role = code === '42501' || code === '22023';
   const tls = code === 'SELF_SIGNED_CERT_IN_CHAIN' || code === 'DEPTH_ZERO_SELF_SIGNED_CERT' || code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE';
+  if (code === 'NO_DATABASE') {
+    return (
+      <section className="failure" role="status">
+        <h2 className="answer">No database connected yet.</h2>
+        <p className="section-note">This hosted page reads only the live Supabase record, and it has no connection to one yet. Nothing is shown, because nothing was read.</p>
+      </section>
+    );
+  }
   return (
     <section className="failure" role="alert">
       <h2 className="answer">Records could not be read.</h2>
@@ -31,7 +39,7 @@ function ReadFailure({ error }: { error: unknown }) {
   );
 }
 
-function Masthead({ mode, records }: { mode: 'live' | 'local'; records: Records | null }) {
+function Masthead({ mode, records }: { mode: DbMode; records: Records | null }) {
   const newestRecord = records
     ? newest([
         ...records.runs.map((x) => x.completed_at ?? x.created_at),
@@ -54,8 +62,8 @@ function Masthead({ mode, records }: { mode: 'live' | 'local'; records: Records 
           <p className="pitch">I can build faster than ever. Why am I still repeating myself to my agents?</p>
         </div>
         <dl className="freshness">
-          <div><dt>Records</dt><dd>{mode === 'local' ? 'Local test database' : 'Live, Supabase'}</dd></div>
-          <div><dt>Read</dt><dd>{records ? et(records.readAt) : 'failed'}</dd></div>
+          <div><dt>Records</dt><dd>{mode === 'local' ? 'Local test database' : mode === 'live' ? 'Live, Supabase' : 'Not connected'}</dd></div>
+          <div><dt>Read</dt><dd>{records ? et(records.readAt) : mode === 'none' ? 'not attempted' : 'failed'}</dd></div>
           <div><dt>Newest record</dt><dd>{records && newestRecord ? ago(newestRecord, records.readAt) : 'none yet'}</dd></div>
         </dl>
       </header>
