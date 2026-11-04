@@ -24,10 +24,10 @@ describe('integrity rules', () => {
     expect(classifyProblem('billed_items 412 rows have billed_at in the future').disposition).toBe('expected_by_definition');
     expect(classifyProblem('members monthly_fee_cents_real is null on 90% of rows').disposition).toBe('expected_by_definition');
     expect(classifyProblem('billed_items has duplicate invoice groups').disposition).toBe('expected_by_definition');
+    expect(classifyProblem('cm.decisions Unused column: supersedes_id: effectively unused').disposition).toBe('expected_by_definition');
   });
   it('keeps check-ins before joined_at exploratory', () => {
     expect(classifyProblem('checkins 31 rows have checked_in_at before joined_at').disposition).toBe('exploratory');
-    expect(INTEGRITY_RULES.find((r) => r.id === 'checkin-before-joined')!.status).toBe('exploratory');
   });
   it('treats an unrelated problem as actionable', () => {
     expect(classifyProblem('ezf_active_memberships has unknown bridge_class values').disposition).toBe('actionable');
@@ -52,6 +52,7 @@ describe('sanitize', () => {
     expect(out.problems[0].count).toBe(3);
     expect(JSON.stringify(out)).not.toMatch(/sb_pat_abc123|xyz\.123/);
     expect(out.when).toBe('2026-11-04T22:00:00Z');
+    expect(sanitize('open https://supabase.com/authorize?state=abc&code=xyz now')).toBe('open https://supabase.com/authorize?[query string removed] now');
   });
 });
 
@@ -84,7 +85,7 @@ describe('pullFindings with the test double', () => {
     expect(stored.map((r) => r.provider_finding_id)).toEqual([null, 'f1', 'f2', 'f3', 'i9']);
     expect(stored.find((r) => r.provider_finding_id === 'f2')).toMatchObject({ d: 'expected_by_definition', finding_count: 412 });
     expect(stored.find((r) => r.provider_finding_id === 'f3')!.d).toBe('exploratory');
-    expect(client.calls.filter((c) => c.tool === 'explain').map((c) => c.args.id)).toEqual(['f1', 'i9']);
+    expect(client.calls.filter((c) => c.tool === 'explain').map((c) => c.args.id)).toEqual(['i9']);
 
     expect(readdirSync(dir)).toEqual(['sodabase-2026-11-04T22-00-00Z.json']);
     const receipt = JSON.parse(readFileSync(result.receipt_path!, 'utf8'));
@@ -145,7 +146,7 @@ describe('pullFindings with the test double', () => {
       'accepted-decision-provenance': { content: [{ type: 'text', text: 'Looks fine to me' }] },
       'checkin-before-joined': asLiveEnvelope({ status: 'fail', count: 31 }),
     };
-    const rules = INTEGRITY_RULES.filter((r) => answers[r.id]);
+    const rules = Object.keys(answers).map((id) => ({ id, dataset: 'gym.fixture', rule: `fixture rule ${id}`, status: (id === 'checkin-before-joined' ? 'exploratory' : 'active') as 'active' | 'exploratory', basis: 'fixture' }));
     const client = new SodabaseTestDouble({ check_rule: (args: Record<string, unknown>) => answers[rules.find((r) => r.rule === args.rule)!.id] });
     const result = await pullFindings(client, { runRules: true, rules, receiptsDir: dir, now: NOW });
     expect(client.calls.every((c) => c.args.persist === false)).toBe(true);
@@ -226,6 +227,63 @@ describe('pullFindings with the test double', () => {
     expect(JSON.parse(receipt).tool_calls[0].response.structuredContent.result.tables).toEqual([]);
     expect(receipt).not.toContain('select *');
     expect(JSON.parse(receipt).scope).toMatch(/not a healthy verdict/);
+  });
+
+  it('the probe asks whether Sodabase can see named tables and records each answer', async () => {
+    const dir = tmp();
+    const client = new SodabaseTestDouble({
+      data_trust_health: asLiveEnvelope({ tables: [] }), list_datasets: asLiveEnvelope({ datasets: [] }), data_trust: asLiveEnvelope({ status: 'unknown' }),
+    });
+    const result = await pullFindings(client, { healthOnly: true, probeTables: ['gym.members', 'gym.checkins'], receiptsDir: dir, now: NOW });
+    expect(client.calls.map((c) => c.tool)).toEqual(['data_trust_health', 'list_datasets', 'data_trust', 'data_trust']);
+    const receipt = JSON.parse(readFileSync(result.receipt_path!, 'utf8'));
+    expect(receipt.tool_calls.filter((c: any) => c.tool === 'data_trust').map((c: any) => c.table)).toEqual(['gym.members', 'gym.checkins']);
+    expect(result.rows).toEqual([]);
+  });
+
+  it('classifies the real findings from the first scan of 4 Nov 2026, as validated against the mirror', async () => {
+    const dir = tmp();
+    const finding = (family: string, label: string, column: string | null, rule: string, failing_count: number, id: string) => ({ id, family, label, column, rule, failing_count, pct: null, low_confidence: false });
+    const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ note: 'Sodabase is read-only', tables: [
+      { table: 'gym.finance_snapshots', status: 'untrusted', as_of: '2026-11-04', findings: [
+        finding('referential', 'Broken references', 'location_id', 'every value must exist in locations.id', 28, 'a'),
+        finding('unused', 'Unused column', 'flagged', 'effectively unused (>= 90% empty)', 217, 'b')] },
+      { table: 'gym.members', status: 'untrusted', as_of: '2026-11-04', findings: [
+        finding('business_rule', 'Rule broken', null, 'joined_at must be on or before expiration_date', 91, 'c'),
+        finding('business_rule', 'Rule broken', null, 'joined_at must be on or before churned_at', 52, 'd'),
+        finding('missing', 'Missing values', 'ezf_membership_number', 'should not be missing (null)', 64, 'e'),
+        finding('unused', 'Unused column', 'churned_at', 'effectively unused (>= 90% empty)', 34330, 'f')] },
+      { table: 'gym.ezf_active_memberships', status: 'untrusted', as_of: '2026-11-04', findings: [finding('composite_duplicate', 'Duplicate rows', null, "['location_id', 'ezf_membership_number'] should be unique together", 1, 'g')] },
+      { table: 'gym.checkin_sync_runs', status: 'unknown', as_of: '2026-11-04', findings: [finding('unused', 'Unused column', 'error_code', 'effectively unused (>= 90% empty)', 6100, 'h')] },
+      { table: 'gym.checkins', status: 'unknown', as_of: '2026-11-04', findings: [] },
+    ] }) }), { db: asEvaluator, receiptsDir: dir, now: NOW });
+    const byId = Object.fromEntries(result.rows.filter((r) => r.provider_finding_id).map((r) => [r.provider_finding_id, r]));
+    for (const id of ['a', 'b', 'f', 'g', 'h']) expect(byId[id]!.raw.disposition).toBe('expected_by_definition');
+    for (const id of ['c', 'd', 'e']) expect(byId[id]!.raw.disposition).toBe('actionable');
+    expect(byId.c).toMatchObject({ finding_count: 91, verdict: 'untrusted', problem: 'Rule broken: joined_at must be on or before expiration_date' });
+    expect(byId.a!.problem).toBe('Broken references: location_id: every value must exist in locations.id');
+    expect(result.counts).toMatchObject({ actionable: 3, expected_by_definition: 5, undetermined: 1, clean: 0 });
+  });
+
+  it('judges an inbox issue by the findings it links to, not by its title or the provider summary', async () => {
+    const dir = tmp();
+    const issue = (id: string, table: string, title: string) => ({ id, dataset: `${SODABASE_PROJECT_REF}/postgres/gym/${table}`, kind: 'issue', status: 'open', title });
+    const explain = (args: Record<string, unknown>) => asLiveEnvelope({ id: args.id, explanation: {
+      method: 'llm-v1', summary: 'Records were likely deleted',
+      findings: args.id === 'i1' ? [{ id: 'x', cols: ['location_id'], family: 'referential', failing_count: 28 }]
+        : args.id === 'i2' ? [{ id: 'y', cols: ['ezf_membership_number', 'location_id'], family: 'composite_duplicate', failing_count: 1 }]
+        : [{ id: 'z', cols: ['expiration_date', 'joined_at'], family: 'business_rule', failing_count: 91 }],
+    } });
+    const result = await pullFindings(new SodabaseTestDouble({
+      list_inbox: asLiveEnvelope({ inbox: [issue('i1', 'finance_snapshots', 'gym.finance_snapshots \u2014 broken references'), issue('i2', 'ezf_active_memberships', 'gym.ezf_active_memberships \u2014 duplicates'), issue('i3', 'members', 'gym.members \u2014 rule broken')] }),
+      explain,
+    }), { receiptsDir: dir, now: NOW });
+    const byId = Object.fromEntries(result.rows.map((r) => [r.provider_finding_id, r]));
+    expect(byId.i1).toMatchObject({ table_name: 'gym.finance_snapshots', finding_count: 28 });
+    expect(byId.i1!.raw.disposition).toBe('expected_by_definition');
+    expect(byId.i2!.raw.disposition).toBe('expected_by_definition');
+    expect(byId.i3!.raw.disposition).toBe('actionable');
+    expect(result.counts).toMatchObject({ expected_by_definition: 2, actionable: 1 });
   });
 
   it('reports zero watched tables as no evidence, never as healthy', async () => {

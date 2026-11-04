@@ -24,7 +24,7 @@ export interface ProviderEvidence {
   // Server-side evidence only. Do not render arbitrary provider text as HTML.
   raw: unknown | null;
 }
-export type ReadTool = 'data_trust' | 'data_trust_health' | 'list_inbox' | 'explain' | 'check_rule';
+export type ReadTool = 'data_trust' | 'data_trust_health' | 'list_datasets' | 'list_inbox' | 'explain' | 'check_rule';
 export interface ReadToolClient {
   callReadTool(name: ReadTool, args: Record<string, unknown>): Promise<unknown>;
 }
