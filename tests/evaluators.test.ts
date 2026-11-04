@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { sha256 } from '../src/contract/hash';
 import type { CheckSpec, EvaluationBinding, EvaluationResult, PinnedDecision } from '../src/contract/types';
 import {
-  checksFor, createCriticEvaluator, createRegistry, createStoredRegistry, frozenChecksHash, guarded, recordEvaluation, selectTransport,
+  checksFor, createCriticEvaluator, createRegistry, createStoredRegistry, frozenChecksHash, guarded, recordEvaluation,
   type CriticTransport, type GymSource,
 } from '../src/evaluators/index';
 
@@ -269,6 +269,7 @@ describe('critic.meaning', () => {
   const output = miloBody("Gym NYC is the founder's own gym.");
   const double = (reply: string | Error, seen: string[] = []): CriticTransport => ({
     name: 'test_double',
+    model: 'test-double-model',
     complete: async ({ user }) => { seen.push(user); if (reply instanceof Error) throw reply; return reply; },
   });
   const say = (v: object) => JSON.stringify({ excerpt: '', reason: 'r', ...v });
@@ -277,7 +278,7 @@ describe('critic.meaning', () => {
   it('maps a confident verdict and records the transport in evidence', async () => {
     const pass = await judge(double(say({ verdict: 'honors', confidence: 0.95 })));
     expect(pass.verdict).toBe('pass');
-    expect(pass.evidence!.payload).toMatchObject({ transport: 'test_double', model: 'claude-sonnet-5-5', decision_key: 'milo.gym_nyc_partner' });
+    expect(pass.evidence!.payload).toMatchObject({ transport: 'test_double', model: 'test-double-model', decision_key: 'milo.gym_nyc_partner' });
     const fail = await judge(double(say({ verdict: 'violates', confidence: 0.95, excerpt: "the founder's own gym" })));
     expect(fail.verdict).toBe('fail');
   });
@@ -309,10 +310,22 @@ describe('critic.meaning', () => {
     const r = await createRegistry({ transport: double(say({ verdict: 'honors', confidence: 1 })) })[id]!({ binding: bindingFor(output), check: checkFor('milo_pitch', id), output, decisions: [] });
     expect(r.verdict).toBe('uncertain');
   });
-  it('selects the transport from the environment', () => {
-    expect(selectTransport({ MODEL_TRANSPORT: 'cli', ANTHROPIC_API_KEY: 'x' })!.name).toBe('cli');
-    expect(selectTransport({ ANTHROPIC_API_KEY: 'x' })!.name).toBe('api');
-    expect(selectTransport({})).toBeNull();
+  it('never reaches a model through a key or a local login: with nothing injected it is uncertain', async () => {
+    const saved = { key: process.env.ANTHROPIC_API_KEY, transport: process.env.MODEL_TRANSPORT };
+    process.env.ANTHROPIC_API_KEY = 'must-not-be-used';
+    process.env.MODEL_TRANSPORT = 'cli';
+    try {
+      const r = await run('milo_pitch', id, output);
+      expect(r.verdict).toBe('uncertain');
+      expect(r.evidence!.payload).toMatchObject({ failure: 'NO_TRANSPORT', transport: null, model: null });
+    } finally {
+      if (saved.key === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved.key;
+      if (saved.transport === undefined) delete process.env.MODEL_TRANSPORT; else process.env.MODEL_TRANSPORT = saved.transport;
+    }
+  });
+  it('has no API or CLI route in its source', () => {
+    const source = readFileSync(new URL('../src/evaluators/critic.ts', import.meta.url), 'utf8');
+    expect(source).not.toMatch(/from '@anthropic-ai\/sdk'|node:child_process|process\.env/);
   });
 });
 

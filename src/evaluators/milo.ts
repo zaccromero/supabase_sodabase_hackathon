@@ -1,3 +1,4 @@
+import { sha256 } from '../contract/hash';
 import type { Evaluator, PinnedDecision } from '../contract/types';
 import { isRecord, makeResult, nonEmptyString, normalizeText } from './common';
 
@@ -157,8 +158,37 @@ export function createForbiddenClaimEvaluator(): Evaluator {
 }
 
 const VAGUE_SOURCE = /^(?:n\/?a|none|tbd|todo|unknown|internal|internal knowledge|memory|common knowledge|general knowledge|agent|self|model|llm|see above|various)$/i;
-/** Source keys of the deck of record (v8). Key names only. The agent is offered these and the slide itself. */
-export const DECK_SOURCE_KEYS = ['a16z', 'app', 'aspen', 'axis', 'code', 'consolidation', 'deck', 'derived', 'founder', 'gymmc', 'hfa', 'hfa25', 'hfa_bench', 'hfa_global', 'ledger', 'memo', 'nfhs', 'owner', 'owner_plan', 'plan', 'sgb', 'sizing', 'vendors', 'vendors3', 'ycreview'];
+/**
+ * Source keys of the deck of record (v8), which the agent is offered along with the slide itself. Hashed because the
+ * deck is NOT_FOR_DISTRIBUTION, so this repo does not list its source names.
+ */
+export const DECK_SOURCE_KEY_HASHES = [
+  '1023efe3d4f2e056bbf77909e6b57695bacbe39850094acd9ecdcc46e817125c',
+  'a172cedcae47474b615c54d510a5d84a8dea3032e958587430b413538be3f333',
+  '24fa74107107be23919a666f108522cef177e886397714156dd0a36e6aef9f7a',
+  'd39c118729fe8767485afa7c88c47930e4e10cf80e4866287a501132d90a4427',
+  '5694d08a2e53ffcae0c3103e5ad6f6076abd960eb1f8a56577040bc1028f702b',
+  'ebc9b532930cb42777690502029973a8c907eeb54eb1943593d7ec131d0bc33f',
+  'd830325906c3d540ae219e6aba0f243d52cd708feea68355a3f63f76aff8da33',
+  '08f0be883564cbf2d0031e32d0b433425a4ca7b3bc87dbcd9b1b12571be9d663',
+  '59458508a0827cff5f80ed091ebd8808fbe67c97357b58ca00a278e7359dec20',
+  '1ec2b208a627026b576796c2559c012b782d5b3a44bee82cd7995b8c66026694',
+  'fc6ea7ea5e5ed099ee994df7ef9599b1499c7d4efa89ff6c1970e26c7a346c97',
+  'c187bca4590a86e5d23be1c64c7bda44eadaba48fa5b8bfaf4945322a4d7a6cb',
+  'd30a7454e62dd69c573d3a48770d4886bd8f8e97ca059f9e0bc64ac5919795f0',
+  '804f9ebf7e3a602a85263fb4c62a1d0b0475880e05d698dca383a58cb3f076cd',
+  'fe14010b4fe83303852f0467c919ef9a7ca089b91e96e3aad7d426dd87079297',
+  '9c225a950b92172f8c2afe8b682b7b86ce8f835578b546f9b8070cba309ad314',
+  '37974073e177fd5831e52f0ff83ca40af7e67fba7d85a89a0772b8a7194a9dbc',
+  '4c1029697ee358715d3a14a2add817c4b01651440de808371f78165ac90dc581',
+  '0fd2b2f3140ee0dad97232f14c08b70435adb74046685ced7bf2a7499a661454',
+  '64879f7d6b960a01909762d911a32d4582c20010c5641ee90278b644a9e3b525',
+  'e5ddd04020188fc5d21daaa1b550152e6bd2febe2ac7cce19479111a8a5a4c04',
+  'ca3eb1da136dc1f53766f30de8e639ff1624ab841eee1990c9498d75846cb0aa',
+  'e5812a10ae5b2cb03cd875c187e116bec38348c6687df3d7ae88736f8d9ad66a',
+  '86e28c687ecbf821f5dbe134d9a5b19131a47ddda560f2a15b4b41bc1d467665',
+  '008b97e478a0ea33caaee7e001331a07ea204a991b2f89f645fb511dcba56fc3',
+];
 export const DECK_SOURCE_PREFIXES = ['deck.json#slide-'];
 const FIGURE = /(?:[$€£]\s?\d|\b\d[\d,]*(?:\.\d+)?\s?(?:%|percent\b|k\b|m\b|million\b|billion\b|members?\b|locations?\b|customers?\b|users?\b|athletes?\b|gyms?\b|months?\b|years?\b|x\b))/gi;
 
@@ -170,7 +200,7 @@ export function createClaimsSourcedEvaluator(): Evaluator {
     if (!Array.isArray(output.claims) || output.claims.length === 0) return makeResult(input, name, 'fail', 'Output makes assertions with no sourced claims');
 
     const prefixes = (Array.isArray(check.spec.allowed_source_prefixes) ? check.spec.allowed_source_prefixes : []) as string[];
-    const allowedKeys = new Set((Array.isArray(check.spec.allowed_sources) ? check.spec.allowed_sources : []) as string[]);
+    const allowedKeyHashes = new Set((Array.isArray(check.spec.allowed_source_hashes) ? check.spec.allowed_source_hashes : []) as string[]);
     const decisionBySource = new Map(decisions.map((d) => [d.source_uri, d]));
     const failures: string[] = [];
     const doubts: string[] = [];
@@ -180,7 +210,7 @@ export function createClaimsSourcedEvaluator(): Evaluator {
       if (!isRecord(claim) || !nonEmptyString(claim.text)) { failures.push(`claim ${i} has no text`); return; }
       if (!nonEmptyString(claim.source)) { failures.push(`claim ${i} has no source`); return; }
       const source = claim.source.trim();
-      if (allowedKeys.has(source)) { resolved.push({ claim: i, source, allowed_key: true }); return; }
+      if (allowedKeyHashes.has(sha256(source))) { resolved.push({ claim: i, source, allowed_key: true }); return; }
       if (VAGUE_SOURCE.test(source)) { failures.push(`claim ${i} source "${source}" is not a real source`); return; }
       const decision = decisionBySource.get(source) ?? decisionBySource.get(source.split('#')[0]!);
       if (decision) {

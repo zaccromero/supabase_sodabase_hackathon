@@ -11,6 +11,7 @@ const founder = () => process.env.FOUNDER_NAME || 'Zacc Romero';
 
 function explain(error: unknown): string {
   const code = (error as { code?: string }).code;
+  if (code === 'HOSTED_READ_ONLY') return 'This hosted page is read-only.';
   if (code === '23505') return 'Another version of this decision is already accepted.';
   if (code === '42501') return 'The database refused this write for founder_approver.';
   return 'The write did not go through. Nothing changed.';

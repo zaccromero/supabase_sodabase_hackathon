@@ -6,7 +6,7 @@ import { createCriticEvaluator, type CriticDeps } from './critic';
 import { createDriftFindingsEvaluator, type DriftEvaluatorDeps } from './drift';
 import { createGymDataAgeEvaluator, createGymDefinitionEvaluator, DEFINITION_SPEC, type GymEvaluatorDeps } from './gym';
 import { createPgGymSource, type Queryable } from './gym-source';
-import { createClaimsSourcedEvaluator, createForbiddenClaimEvaluator, DECK_SOURCE_KEYS, DECK_SOURCE_PREFIXES, forbiddenRulesFor } from './milo';
+import { createClaimsSourcedEvaluator, createForbiddenClaimEvaluator, DECK_SOURCE_KEY_HASHES, DECK_SOURCE_PREFIXES, forbiddenRulesFor } from './milo';
 
 export * from './adapter';
 export * from './core';
@@ -62,7 +62,7 @@ export function checksFor(profile: Profile, decisions: PinnedDecision[], options
       const rules = forbiddenRulesFor(decisions);
       return [
         { check_id: 'milo.no_forbidden_claim', kind: 'deterministic', required: true, requires_evidence: true, ...(rules[0] ? { decision_id: rules[0].decision_id } : {}), spec: { rules } },
-        { check_id: 'milo.claims_sourced', kind: 'deterministic', required: true, requires_evidence: true, spec: { allowed_sources: DECK_SOURCE_KEYS, allowed_source_prefixes: DECK_SOURCE_PREFIXES } },
+        { check_id: 'milo.claims_sourced', kind: 'deterministic', required: true, requires_evidence: true, spec: { allowed_source_hashes: DECK_SOURCE_KEY_HASHES, allowed_source_prefixes: DECK_SOURCE_PREFIXES } },
         ...criticCheck(pick(DECISION_KEYS.miloPartner), true),
       ];
     }
