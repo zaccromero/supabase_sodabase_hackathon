@@ -10,8 +10,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { assertRuleAllowed, classifyProblem, INTEGRITY_RULES } from '../src/sodabase/rules';
 import { insertQualityRows, pullFindings } from '../src/sodabase/pull';
 import { sanitize } from '../src/sodabase/sanitize';
-import { SodabaseClient } from '../src/sodabase/client';
-import { asJsonText, asStructured, SodabaseTestDouble } from './sodabase-test-double';
+import { SodabaseClient, SODABASE_PROJECT_REF } from '../src/sodabase/client';
+import { asJsonText, asLiveEnvelope, asStructured, SodabaseTestDouble } from './sodabase-test-double';
 
 const migration = readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8');
 const NOW = () => new Date('2026-11-04T22:00:00.000Z');
@@ -134,13 +134,16 @@ describe('pullFindings with the test double', () => {
     expect(readFileSync(result.receipt_path!, 'utf8')).not.toContain('sb_pat_secret');
   });
 
-  it('runs rules with persist false, counts only explicit numbers, and keeps exploratory results exploratory', async () => {
+  it('runs rules with persist false, branches on status, and keeps exploratory results exploratory', async () => {
     const dir = tmp();
     const answers: Record<string, unknown> = {
-      'membership-bridge-class-domain': asStructured({ violations: 0 }),
-      'complete-run-nothing-unexplained': asStructured({ violations: 2, view_query: 'select *' }),
-      'complete-run-bridge-balance': { content: [{ type: 'text', text: 'Looks fine to me' }] },
-      'checkin-before-joined': asStructured({ violations: 31 }),
+      'membership-bridge-class-domain': asLiveEnvelope({ status: 'pass', count: 0, query: 'select 1 from gym.ezf_active_memberships' }),
+      'complete-run-nothing-unexplained': asLiveEnvelope({ status: 'fail', count: 2, query: 'select * from gym.ezf_active_membership_sync_runs' }),
+      'complete-run-bridge-balance': asLiveEnvelope({ status: 'ambiguous' }),
+      'complete-run-has-report-date': asLiveEnvelope({ status: 'unsupported' }),
+      'matched-individual-client-backed': asStructured({ violations: 0 }),
+      'accepted-decision-provenance': { content: [{ type: 'text', text: 'Looks fine to me' }] },
+      'checkin-before-joined': asLiveEnvelope({ status: 'fail', count: 31 }),
     };
     const rules = INTEGRITY_RULES.filter((r) => answers[r.id]);
     const client = new SodabaseTestDouble({ check_rule: (args: Record<string, unknown>) => answers[rules.find((r) => r.rule === args.rule)!.id] });
@@ -149,9 +152,54 @@ describe('pullFindings with the test double', () => {
     const byId = Object.fromEntries(result.rows.map((r) => [r.raw.rule_id, r]));
     expect(byId['membership-bridge-class-domain']).toMatchObject({ verdict: 'rule_held', finding_count: 0 });
     expect(byId['complete-run-nothing-unexplained']).toMatchObject({ verdict: 'rule_breached', finding_count: 2 });
-    expect(byId['complete-run-bridge-balance']).toMatchObject({ verdict: 'unknown', finding_count: null });
+    expect(byId['complete-run-bridge-balance']!.verdict).toBe('rule_ambiguous');
+    expect(byId['complete-run-has-report-date']!.verdict).toBe('rule_unsupported');
+    expect(byId['matched-individual-client-backed']).toMatchObject({ verdict: 'unknown', finding_count: 0 });
+    expect(byId['accepted-decision-provenance']).toMatchObject({ verdict: 'unknown', finding_count: null });
     expect(byId['checkin-before-joined']).toMatchObject({ verdict: 'exploratory', finding_count: 31 });
-    expect(JSON.stringify(result.rows)).not.toContain('select *');
+    expect(result.counts).toMatchObject({ clean: 1, actionable: 1, exploratory: 1, undetermined: 4 });
+    expect(JSON.stringify(result.rows) + readFileSync(result.receipt_path!, 'utf8')).not.toMatch(/select \*|select 1/);
+  });
+
+  it('reads the live envelope and branches on status', async () => {
+    const dir = tmp();
+    const result = await pullFindings(new SodabaseTestDouble({
+      data_trust_health: asLiveEnvelope({ tables: [
+        { table: 'gym.members', status: 'trusted', problems: [] },
+        { table: 'gym.checkins', status: 'scanning', problems: [] },
+        { table: 'gym.locations', status: 'untrusted', problems: [{ problem: 'duplicate ids', count: 2, finding_id: 'f1' }] },
+      ] }),
+    }), { db: asEvaluator, receiptsDir: dir, now: NOW });
+    expect(result.quality_evidence).toBe('RECEIVED');
+    expect(result.counts).toMatchObject({ clean: 1, undetermined: 1, actionable: 1 });
+    expect(result.rows.find((r) => r.table_name === 'gym.locations')).toMatchObject({ verdict: 'untrusted', finding_count: 2, provider_finding_id: 'f1' });
+  });
+
+  it('removes row data hidden inside the live JSON string', async () => {
+    const dir = tmp();
+    const raw = asLiveEnvelope({ tables: 'not a list', rows: [{ email: 'jane@example.com' }], query: "select * from gym.members where email = 'jane@example.com'" });
+    const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: raw }), { receiptsDir: dir, now: NOW });
+    expect(readFileSync(result.receipt_path!, 'utf8')).not.toMatch(/jane@example\.com|select \*/);
+  });
+
+  it('reports zero watched tables as no evidence, never as healthy', async () => {
+    const dir = tmp();
+    const result = await pullFindings(new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ tables: [] }) }), { db: asEvaluator, receiptsDir: dir, now: NOW });
+    expect(result.quality_evidence).toBe('NO_WATCHED_TABLES');
+    expect(result.counts.clean).toBe(0);
+    const receipt = JSON.parse(readFileSync(result.receipt_path!, 'utf8'));
+    expect(receipt).toMatchObject({ quality_evidence: 'NO_WATCHED_TABLES', project_ref: SODABASE_PROJECT_REF });
+  });
+
+  it('reads nothing and writes nothing if the workspace does not list the event project', async () => {
+    const dir = tmp();
+    const client = new SodabaseTestDouble({ data_trust_health: asLiveEnvelope({ tables: [] }) }, 'ready', 'some-other-project');
+    const result = await pullFindings(client, { db: asEvaluator, receiptsDir: dir, now: NOW });
+    expect(result.status.state).toBe('wrong_project');
+    expect(result.status.reason).toContain(SODABASE_PROJECT_REF);
+    expect(client.calls).toEqual([]);
+    expect(readdirSync(dir)).toEqual([]);
+    expect(client.closed).toBe(true);
   });
 
   it('refuses a rule that would flag legitimate data before sending it', async () => {
@@ -179,9 +227,11 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
   let seen: { auth: string[]; tools: Array<{ name: string; args: unknown }> };
   const realFetch = globalThis.fetch;
   const TOKEN = 'test-token-not-real';
+  let listedProject = SODABASE_PROJECT_REF;
 
   beforeEach(async () => {
     seen = { auth: [], tools: [] };
+    listedProject = SODABASE_PROJECT_REF;
     const schema = (properties: object = {}) => ({ type: 'object' as const, properties });
     const tool = (name: string, properties: object = {}) => ({ name, description: name, inputSchema: schema(properties) });
     http = createServer(async (req, res) => {
@@ -190,11 +240,12 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
       const server = new McpServer({ name: 'local-test-server', version: '1' }, { capabilities: { tools: {} } });
       server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [
         tool('data_trust', { table: { type: 'string' } }), tool('data_trust_health'), tool('list_inbox'), tool('explain', { id: { type: 'string' } }),
-        tool('check_rule', { dataset: { type: 'string' }, rule: { type: 'string' }, persist: { type: 'boolean' } }), tool('data_trust_scan'), tool('data_trust_sample', { finding_id: { type: 'string' } }),
+        tool('check_rule', { dataset: { type: 'string' }, rule: { type: 'string' }, persist: { type: 'boolean' } }), tool('data_trust_scan'), tool('data_trust_sample', { finding_id: { type: 'string' } }), tool('connect_project', { project_ref: { type: 'string' } }),
       ] }));
       server.setRequestHandler(CallToolRequestSchema, async (r) => {
         seen.tools.push({ name: r.params.name, args: r.params.arguments });
-        return { content: [{ type: 'text', text: JSON.stringify({ tables: [{ table: 'gym.members', verdict: 'trusted', problems: [] }], started: true }) }] };
+        if (r.params.name === 'connect_project') return { content: [{ type: 'text', text: JSON.stringify({ result: `Connected: Drako Agent Memory (${listedProject})` }) }] };
+        return { content: [{ type: 'text', text: JSON.stringify({ result: JSON.stringify({ tables: [{ table: 'gym.members', status: 'trusted', problems: [] }], started: true }) }) }] };
       });
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
       await server.connect(transport);
@@ -211,7 +262,7 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     const client = new SodabaseClient(TOKEN);
     const status = await client.connect();
     expect(status.state).toBe('ready');
-    expect(status.tools.sort()).toEqual(['check_rule', 'data_trust', 'data_trust_health', 'data_trust_scan', 'explain', 'list_inbox']);
+    expect(status.tools.sort()).toEqual(['check_rule', 'connect_project', 'data_trust', 'data_trust_health', 'data_trust_scan', 'explain', 'list_inbox']);
     expect(seen.auth.every((a) => a === `Bearer ${TOKEN}`)).toBe(true);
     await expect(client.callReadTool('data_trust_sample' as any, { finding_id: 'x' })).rejects.toThrow(/allowlist/);
     await expect(client.callReadTool('check_rule', { dataset: 'd', rule: 'r', persist: true })).rejects.toThrow(/non-persistent/);
@@ -229,12 +280,23 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     expect(readdirSync(dir)).toEqual([]);
   });
 
+  it('refuses over the wire when the workspace lists another project', async () => {
+    listedProject = 'another-project-ref';
+    const dir = tmp();
+    const result = await pullFindings(new SodabaseClient(TOKEN), { receiptsDir: dir, now: NOW });
+    expect(result.status.state).toBe('wrong_project');
+    expect(seen.tools.map((t) => t.name)).toEqual(['connect_project']);
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
   it('runs a full pull over the wire', async () => {
     const dir = tmp();
     const result = await pullFindings(new SodabaseClient(TOKEN), { receiptsDir: dir, now: NOW, runRules: true });
     expect(result.rows.some((r) => r.table_name === 'gym.members' && r.verdict === 'trusted')).toBe(true);
     expect(seen.tools.map((t) => t.name)).toEqual(expect.arrayContaining(['data_trust_health', 'list_inbox', 'check_rule']));
     expect(seen.tools.some((t) => t.name === 'data_trust_scan' || t.name === 'data_trust_sample')).toBe(false);
+    // Only ever lists projects. Passing project_ref would provision a role and start watching.
+    expect(seen.tools.filter((t) => t.name === 'connect_project')).toEqual([{ name: 'connect_project', args: {} }]);
     expect(existsSync(result.receipt_path!)).toBe(true);
   });
 });

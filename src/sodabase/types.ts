@@ -1,5 +1,5 @@
 export type TrustVerdict = 'trusted' | 'caveated' | 'untrusted' | 'unknown' | 'scanning';
-export type ConnectionState = 'ready' | 'missing_credentials' | 'authentication_required' | 'unavailable';
+export type ConnectionState = 'ready' | 'missing_credentials' | 'authentication_required' | 'unavailable' | 'wrong_project';
 export interface ConnectionStatus {
   state: ConnectionState;
   observed_at: string;

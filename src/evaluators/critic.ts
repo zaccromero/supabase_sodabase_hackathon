@@ -1,12 +1,8 @@
-import { spawn } from 'node:child_process';
-import { tmpdir } from 'node:os';
-import Anthropic from '@anthropic-ai/sdk';
 import { canonicalJson, sha256 } from '../contract/hash';
 import type { Evaluator, PinnedDecision } from '../contract/types';
 import { makeResult, normalizeText, textLeaves } from './common';
 import type { CriticRequest, ModelCritic } from './core';
 
-export const CRITIC_MODEL = 'claude-sonnet-5-5';
 export const DEFAULT_MIN_CONFIDENCE = 0.75;
 
 export const CRITIC_SYSTEM = `You check whether one piece of agent output honors one accepted company decision. You answer only that question.
@@ -23,23 +19,16 @@ Rules:
 Reply with only one JSON object and no other text:
 {"verdict": "honors" | "violates" | "unclear", "confidence": <your probability from 0 to 1 that the verdict is right>, "excerpt": "<verbatim quote from the output your verdict rests on, or an empty string>", "reason": "<one sentence>"}`;
 
-const VERDICT_SCHEMA = {
-  type: 'object',
-  properties: {
-    verdict: { type: 'string', enum: ['honors', 'violates', 'unclear'] },
-    confidence: { type: 'number' },
-    excerpt: { type: 'string' },
-    reason: { type: 'string' },
-  },
-  required: ['verdict', 'confidence', 'excerpt', 'reason'],
-  additionalProperties: false,
-} as const;
-
 export interface CriticVerdict { verdict: 'honors' | 'violates' | 'unclear'; confidence: number; excerpt: string; reason: string; }
 
-/** The name is written to evidence, so every critic verdict records how it reached a model. */
+/**
+ * The only way to reach a model. Owner direction, 4 Nov 2026: the critic runs on the owner's Hermes OAuth system, not
+ * an Anthropic API key and not the `claude -p` login. Nothing here reads a key or spawns a process, so a transport has
+ * to be injected. name and model are written to evidence, so every verdict records how it reached which model.
+ */
 export interface CriticTransport {
   name: string;
+  model: string;
   complete(request: { system: string; user: string; signal: AbortSignal }): Promise<string>;
 }
 
@@ -61,79 +50,6 @@ export function parseVerdict(raw: string): CriticVerdict | null {
   } catch {
     return null;
   }
-}
-
-/**
- * No refusal fallback on purpose: the evaluation records one named evaluator model, so a refusal becomes
- * `uncertain` and goes to the founder rather than being answered by a different model.
- */
-export function apiTransport(apiKey: string): CriticTransport {
-  const client = new Anthropic({ apiKey, timeout: 60_000, maxRetries: 1 });
-  return {
-    name: 'api',
-    async complete({ system, user, signal }) {
-      try {
-        const res = await client.messages.create({
-          model: CRITIC_MODEL,
-          max_tokens: 4096,
-          system,
-          output_config: { effort: 'medium', format: { type: 'json_schema', schema: VERDICT_SCHEMA as unknown as Record<string, unknown> } },
-          messages: [{ role: 'user', content: user }],
-        }, { signal });
-        if (res.stop_reason === 'refusal') throw new TransportFailure('MODEL_REFUSED');
-        if (res.stop_reason === 'max_tokens') throw new TransportFailure('MODEL_TRUNCATED');
-        return res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
-      } catch (e) {
-        if (e instanceof TransportFailure) throw e;
-        if (e instanceof Anthropic.AuthenticationError) throw new TransportFailure('API_AUTH_FAILED');
-        if (e instanceof Anthropic.RateLimitError) throw new TransportFailure('API_RATE_LIMITED');
-        if (e instanceof Anthropic.APIConnectionError) throw new TransportFailure('API_UNREACHABLE');
-        if (e instanceof Anthropic.APIError) throw new TransportFailure(`API_ERROR_${e.status}`);
-        throw e;
-      }
-    },
-  };
-}
-
-/**
- * Local `claude -p` login. Tools are off and it runs outside the repo with no project settings, so the critic
- * reads nothing but this prompt. The API key is removed from its environment so the login is what authenticates.
- */
-export function cliTransport(opts: { command?: string; timeoutMs?: number } = {}): CriticTransport {
-  return {
-    name: 'cli',
-    complete({ system, user, signal }) {
-      return new Promise<string>((resolve, reject) => {
-        const { ANTHROPIC_API_KEY: _key, ANTHROPIC_AUTH_TOKEN: _token, CLAUDECODE: _nested, ...env } = process.env;
-        const child = spawn(opts.command ?? 'claude', [
-          '-p', '--model', CRITIC_MODEL, '--output-format', 'json', '--tools', '',
-          '--system-prompt', system, '--setting-sources', '', '--strict-mcp-config', '--no-session-persistence',
-        ], { cwd: tmpdir(), env, stdio: ['pipe', 'pipe', 'ignore'], signal, timeout: opts.timeoutMs ?? 180_000 });
-        let stdout = '';
-        child.stdout.on('data', (d) => { stdout += d; });
-        child.on('error', (e) => reject(new TransportFailure((e as NodeJS.ErrnoException).code === 'ENOENT' ? 'CLI_NOT_FOUND' : 'CLI_FAILED')));
-        child.on('close', (code) => {
-          if (code !== 0) return reject(new TransportFailure(`CLI_EXIT_${code ?? 'SIGNAL'}`));
-          try {
-            const envelope = JSON.parse(stdout) as { is_error?: boolean; result?: unknown };
-            if (envelope.is_error || typeof envelope.result !== 'string') return reject(new TransportFailure('CLI_ERROR_RESULT'));
-            resolve(envelope.result);
-          } catch {
-            reject(new TransportFailure('CLI_OUTPUT_INVALID'));
-          }
-        });
-        child.stdin.on('error', () => {});
-        child.stdin.end(user);
-      });
-    },
-  };
-}
-
-/** MODEL_TRANSPORT=cli selects the local login. Otherwise an API key selects the API. Neither means no critic. */
-export function selectTransport(env: NodeJS.ProcessEnv = process.env): CriticTransport | null {
-  if (env.MODEL_TRANSPORT === 'cli') return cliTransport();
-  if (env.ANTHROPIC_API_KEY) return apiTransport(env.ANTHROPIC_API_KEY);
-  return null;
 }
 
 /** `before` is the wording being replaced, not something the output asserts. */
@@ -161,10 +77,10 @@ export function createCriticEvaluator(deps: CriticDeps = {}): Evaluator {
 
     const minConfidence = typeof check.spec.min_confidence === 'number' ? check.spec.min_confidence : DEFAULT_MIN_CONFIDENCE;
     const prompt = criticPrompt(decision, output);
-    const transport = deps.transport === undefined ? selectTransport() : deps.transport;
+    const transport = deps.transport ?? null;
     const base = {
       decision_id: decision.id, decision_key: decision.decision_key, decision_version: decision.version,
-      model: CRITIC_MODEL, transport: transport?.name ?? null, min_confidence: minConfidence, prompt_sha256: sha256(prompt),
+      transport: transport?.name ?? null, model: transport?.model ?? null, min_confidence: minConfidence, prompt_sha256: sha256(prompt),
     };
     if (!transport) return makeResult(input, name, 'uncertain', 'No critic transport is available, so nothing was judged', { ...base, failure: 'NO_TRANSPORT' });
 

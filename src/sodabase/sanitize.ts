@@ -10,6 +10,7 @@ const MAX_ITEMS = 200;
 export function scrubText(text: string): string {
   return text
     .replace(/```[\s\S]*?```/g, '[code removed]')
+    .replace(/\bselect\b[\s\S]{0,800}?\bfrom\b[^\n]*/gi, '[query removed]')
     .replace(/\bsb_pat_[\w-]+/g, '[token removed]')
     .replace(/\bBearer\s+[\w.~+/=-]+/gi, 'Bearer [token removed]')
     .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[email removed]')
@@ -19,7 +20,13 @@ export function scrubText(text: string): string {
 
 export function sanitize(value: unknown, depth = 0): unknown {
   if (depth > MAX_DEPTH) return '[too deep]';
-  if (typeof value === 'string') return scrubText(value);
+  if (typeof value === 'string') {
+    // Live responses wrap their data in a JSON string, so row-shaped keys inside it have to be seen too.
+    if (/^\s*[{[]/.test(value)) {
+      try { return sanitize(JSON.parse(value), depth + 1); } catch { /* plain text */ }
+    }
+    return scrubText(value);
+  }
   if (value === null || typeof value !== 'object') return value;
   if (Array.isArray(value)) return value.slice(0, MAX_ITEMS).map((v) => sanitize(v, depth + 1));
   const out: Record<string, unknown> = {};

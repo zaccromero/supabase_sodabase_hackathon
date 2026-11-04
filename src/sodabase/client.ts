@@ -6,6 +6,9 @@ import type { ConnectionStatus, ReadTool, ReadToolClient } from './types.js';
 export const SODABASE_ENDPOINT = 'https://sodabase.io/mcp' as const;
 const READ_TOOLS = new Set<string>(['data_trust', 'data_trust_health', 'list_inbox', 'explain', 'check_rule']);
 const SCAN_TOOL = 'data_trust_scan';
+const PROJECT_TOOL = 'connect_project';
+/** Owner-confirmed event project: Drako Agent Memory. */
+export const SODABASE_PROJECT_REF = 'dgqcanfiapxztmqqlqnh';
 const ajv = new Ajv({ strict: false, allErrors: false });
 
 /**
@@ -35,7 +38,7 @@ export class SodabaseClient implements ReadToolClient {
       // Bounded pagination; an incomplete catalog never authorizes an undiscovered tool.
       for (let page = 0; page < 10; page++) {
         const result = await client.listTools(cursor ? { cursor } : {}, { timeout: 15000 });
-        for (const tool of result.tools) if (READ_TOOLS.has(tool.name) || tool.name === SCAN_TOOL) this.schemas.set(tool.name, tool.inputSchema);
+        for (const tool of result.tools) if (READ_TOOLS.has(tool.name) || tool.name === SCAN_TOOL || tool.name === PROJECT_TOOL) this.schemas.set(tool.name, tool.inputSchema);
         cursor = result.nextCursor;
         if (!cursor) break;
       }
@@ -61,6 +64,20 @@ export class SodabaseClient implements ReadToolClient {
     if (!READ_TOOLS.has(name)) throw new Error('Tool is outside read allowlist');
     if (name === 'check_rule' && (args.persist !== false || 'new_rule' in args)) throw new Error('Only non-persistent rules are allowed');
     return this.invoke(name, args);
+  }
+  /**
+   * Sodabase tools take no project argument: a token reaches whatever its workspace has connected, so this checks that
+   * workspace lists the event project. Called with no arguments only, which lists projects. Passing project_ref
+   * would provision a role and start watching, and is never done here.
+   */
+  async verifyProject(ref: string = SODABASE_PROJECT_REF): Promise<boolean> {
+    if (!this.schemas.has(PROJECT_TOOL)) return false;
+    try {
+      const raw = await this.invoke(PROJECT_TOOL, {});
+      return !(raw as { isError?: boolean }).isError && JSON.stringify(raw).includes(ref);
+    } catch {
+      return false;
+    }
   }
   /** Starts a fresh profile of watched tables and returns at once. Separate from reads: it causes work at the provider. */
   async startScan(): Promise<unknown> {

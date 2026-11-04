@@ -3,21 +3,27 @@ const verdicts = new Set<TrustVerdict>(['trusted', 'caveated', 'untrusted', 'unk
 function object(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
-function payload(raw: unknown): Record<string, unknown> | null {
+/**
+ * The data inside an MCP response. Live Sodabase 0.2.0 declares outputSchema {result: string}, with structuredContent
+ * or a single text block holding it, and result usually a JSON string. Prose stays prose: it returns null, never a guess.
+ */
+export function structured(raw: unknown): unknown {
   const result = object(raw);
-  let data = object(result?.structuredContent);
-  if (!data && Array.isArray(result?.content)) {
+  if (!result || result.isError === true) return null;
+  let data: unknown = result.structuredContent ?? null;
+  if (data === null && Array.isArray(result.content)) {
     const texts = result.content.filter((c: unknown) => object(c)?.type === 'text');
     if (texts.length === 1) {
-      try { data = object(JSON.parse(String(object(texts[0])?.text))); } catch { return null; }
+      try { data = JSON.parse(String(object(texts[0])?.text)); } catch { return null; }
     }
   }
-  // Live Sodabase0.2.0 advertises outputSchema {result:string}.
-  if (typeof data?.result === 'string') {
-    try { return object(JSON.parse(data.result)); } catch { return null; }
+  const inner = object(data)?.result;
+  if (typeof inner === 'string') {
+    try { return JSON.parse(inner); } catch { return null; }
   }
   return data;
 }
+const payload = (raw: unknown) => object(structured(raw));
 /** No heuristic extraction from prose. Unknown response shapes stay unknown. */
 export function normalizeTrust(raw: unknown, table: string, observedAt = new Date().toISOString()): ProviderEvidence {
   const result = object(raw);

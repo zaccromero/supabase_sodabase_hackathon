@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { structured } from './adapters.js';
+import { SODABASE_PROJECT_REF } from './client.js';
 import { assertRuleAllowed, classifyProblem, INTEGRITY_RULES, type Disposition, type IntegrityRule } from './rules.js';
 import { sanitize, scrubText } from './sanitize.js';
 import type { ConnectionStatus, ReadToolClient } from './types.js';
@@ -8,6 +10,7 @@ export interface PullClient extends ReadToolClient {
   /** A test double must say so; its results can never become a committed receipt. */
   readonly provenance: 'live' | 'test_double';
   connect(): Promise<ConnectionStatus>;
+  verifyProject(ref?: string): Promise<boolean>;
   close(): Promise<void>;
 }
 export interface Queryable { query(text: string, params?: unknown[]): Promise<{ rows: any[] }>; }
@@ -17,7 +20,10 @@ export interface QualityRow {
 }
 export interface PullResult {
   status: ConnectionStatus; provenance: PullClient['provenance']; observed_at: string; rows: QualityRow[];
-  counts: Record<Disposition | 'clean' | 'unparsed' | 'errors', number>; receipt_path: string | null; inserted: number;
+  counts: Record<Disposition | 'clean' | 'undetermined' | 'unparsed' | 'errors', number>;
+  /** A table count of zero means nothing was checked. It is not a healthy result. */
+  quality_evidence: 'NOT_RUN' | 'RECEIVED' | 'NO_WATCHED_TABLES' | 'UNPARSED';
+  receipt_path: string | null; inserted: number;
 }
 
 export const DEFAULT_RECEIPTS_DIR = 'docs/receipts';
@@ -27,24 +33,14 @@ const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v =
 const firstString = (o: Record<string, unknown>, keys: string[]) => { for (const k of keys) if (typeof o[k] === 'string' && o[k]) return o[k] as string; return null; };
 const firstNumber = (o: Record<string, unknown>, keys: string[]) => { for (const k of keys) if (typeof o[k] === 'number' && Number.isFinite(o[k])) return o[k] as number; return null; };
 
-/** The MCP envelope's structured data, or a single JSON text block. Prose stays prose and yields no rows. */
-export function structured(raw: unknown): unknown {
-  if (!isObject(raw) || raw.isError === true) return null;
-  if (raw.structuredContent !== undefined) return raw.structuredContent;
-  if (Array.isArray(raw.content)) {
-    const texts = raw.content.filter((c) => isObject(c) && c.type === 'text');
-    if (texts.length === 1) { try { return JSON.parse(String((texts[0] as { text: unknown }).text)); } catch { return null; } }
-  }
-  return null;
-}
-
 function listOf(data: unknown, keys: string[]): Record<string, unknown>[] | null {
   if (Array.isArray(data)) return data.filter(isObject);
   if (isObject(data)) for (const k of keys) if (Array.isArray(data[k])) return (data[k] as unknown[]).filter(isObject);
   return null;
 }
 const TABLE_KEYS = ['table', 'table_name', 'dataset', 'name'];
-const PROBLEM_TEXT = ['problem', 'title', 'summary', 'description', 'message'];
+const PROBLEM_TEXT = ['problem', 'title', 'summary', 'description', 'message', 'kind'];
+const STATUS_KEYS = ['status', 'verdict'];
 const COUNT_KEYS = ['count', 'finding_count', 'violations', 'violation_count', 'breaking_rows', 'rows_breaking', 'failing_rows', 'rows'];
 const ID_KEYS = ['finding_id', 'id', 'issue_id'];
 
@@ -59,19 +55,19 @@ function toRow(tool: string, table: string, verdict: string, p: Record<string, u
   };
 }
 
-function healthRows(raw: unknown, observedAt: string): { rows: QualityRow[]; parsed: boolean } {
+function healthRows(raw: unknown, observedAt: string): { rows: QualityRow[]; parsed: boolean; tables: number } {
   const tables = listOf(structured(raw), ['tables', 'datasets', 'results', 'items', 'verdicts']);
-  if (!tables) return { rows: [], parsed: false };
+  if (!tables) return { rows: [], parsed: false, tables: 0 };
   const rows: QualityRow[] = [];
   for (const t of tables) {
     const table = firstString(t, TABLE_KEYS);
-    const verdict = firstString(t, ['verdict', 'status']);
+    const verdict = firstString(t, STATUS_KEYS);
     if (!table || !verdict) continue;
     const problems = listOf(t, ['problems', 'findings', 'issues']) ?? [];
     if (problems.length === 0) rows.push(toRow('data_trust_health', table, verdict, null, observedAt));
     for (const p of problems) rows.push(toRow('data_trust_health', table, verdict, p, observedAt));
   }
-  return { rows, parsed: true };
+  return { rows, parsed: true, tables: tables.length };
 }
 
 function inboxRows(raw: unknown, observedAt: string, known: Set<string>): { rows: QualityRow[]; parsed: boolean } {
@@ -81,19 +77,22 @@ function inboxRows(raw: unknown, observedAt: string, known: Set<string>): { rows
   for (const item of items) {
     const id = firstString(item, ID_KEYS);
     if (id && known.has(id)) continue;
-    rows.push(toRow('list_inbox', firstString(item, TABLE_KEYS) ?? 'unknown', firstString(item, ['verdict', 'status']) ?? 'open', item, observedAt));
+    rows.push(toRow('list_inbox', firstString(item, TABLE_KEYS) ?? 'unknown', firstString(item, STATUS_KEYS) ?? 'open', item, observedAt));
   }
   return { rows, parsed: true };
 }
 
 function ruleRow(rule: IntegrityRule, raw: unknown, observedAt: string): QualityRow {
   const data = structured(raw);
-  const broken = isObject(data) ? firstNumber(data, COUNT_KEYS) : null;
-  // A count is read only from an explicit numeric field. Without one, the verdict is unknown, never held.
-  const verdict = rule.status === 'exploratory' ? 'exploratory' : broken === null ? 'unknown' : broken > 0 ? 'rule_breached' : 'rule_held';
+  const status = isObject(data) ? firstString(data, ['status']) : null;
+  // The provider says to branch on status. A count alone never decides, and no status is unknown, never held.
+  const fromStatus: Record<string, string> = { pass: 'rule_held', fail: 'rule_breached', unknown: 'rule_unknown', unsupported: 'rule_unsupported', ambiguous: 'rule_ambiguous' };
+  const verdict = rule.status === 'exploratory' ? 'exploratory' : (status && fromStatus[status]) || 'unknown';
+  const disposition = rule.status === 'exploratory' ? 'exploratory' : verdict === 'rule_breached' ? 'actionable' : undefined;
   return {
-    provider: 'sodabase', provider_finding_id: null, table_name: rule.dataset, verdict, problem: rule.rule, finding_count: broken, severity: null, observed_at: observedAt,
-    raw: { tool: 'check_rule', rule_id: rule.id, rule_status: rule.status, basis: rule.basis, disposition: rule.status === 'exploratory' ? 'exploratory' : 'actionable', response: sanitize(raw) },
+    provider: 'sodabase', provider_finding_id: null, table_name: rule.dataset, verdict, problem: rule.rule,
+    finding_count: isObject(data) ? firstNumber(data, COUNT_KEYS) : null, severity: null, observed_at: observedAt,
+    raw: { tool: 'check_rule', rule_id: rule.id, rule_status: rule.status, provider_status: status, basis: rule.basis, ...(disposition ? { disposition } : {}), response: sanitize(raw) },
   };
 }
 
@@ -129,11 +128,15 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
   if (client.provenance !== 'live' && resolve(receiptsDir) === resolve(DEFAULT_RECEIPTS_DIR)) {
     throw new Error('A test double cannot write to docs/receipts');
   }
-  const counts: PullResult['counts'] = { actionable: 0, expected_by_definition: 0, exploratory: 0, clean: 0, unparsed: 0, errors: 0 };
+  const counts: PullResult['counts'] = { actionable: 0, expected_by_definition: 0, exploratory: 0, clean: 0, undetermined: 0, unparsed: 0, errors: 0 };
   const status = await client.connect();
   const observedAt = now().toISOString();
-  const blocked: PullResult = { status, provenance: client.provenance, observed_at: observedAt, rows: [], counts, receipt_path: null, inserted: 0 };
-  if (status.state !== 'ready') { await client.close(); return blocked; }
+  const blocked = (s: ConnectionStatus): PullResult => ({ status: s, provenance: client.provenance, observed_at: observedAt, rows: [], counts, quality_evidence: 'NOT_RUN', receipt_path: null, inserted: 0 });
+  if (status.state !== 'ready') { await client.close(); return blocked(status); }
+  if (!(await client.verifyProject(SODABASE_PROJECT_REF))) {
+    await client.close();
+    return blocked({ ...status, state: 'wrong_project', reason: `This Sodabase workspace does not list project ${SODABASE_PROJECT_REF}, so nothing was read.` });
+  }
 
   const calls: Array<Record<string, unknown>> = [];
   const call = async (tool: Parameters<ReadToolClient['callReadTool']>[0], args: Record<string, unknown>): Promise<unknown | null> => {
@@ -141,7 +144,8 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       const raw = await client.callReadTool(tool, args);
       const isError = isObject(raw) && raw.isError === true;
       if (isError) counts.errors++;
-      calls.push({ tool, ok: !isError, parsed: structured(raw) !== null, ...(structured(raw) === null ? { unparsed_response: sanitize(raw) } : {}) });
+      const parsed = structured(raw) !== null;
+      calls.push({ tool, ok: !isError, parsed, ...(parsed ? {} : { unparsed_response: sanitize(raw) }) });
       return isError ? null : raw;
     } catch {
       // Errors are not recorded verbatim: upstream text can hold credentials.
@@ -153,9 +157,15 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
 
   try {
     const rows: QualityRow[] = [];
+    let quality: PullResult['quality_evidence'] = 'NOT_RUN';
     if (status.tools.includes('data_trust_health')) {
       const raw = await call('data_trust_health', {});
-      if (raw) { const h = healthRows(raw, observedAt); rows.push(...h.rows); if (!h.parsed) counts.unparsed++; }
+      if (raw) {
+        const h = healthRows(raw, observedAt);
+        rows.push(...h.rows);
+        if (!h.parsed) counts.unparsed++;
+        quality = !h.parsed ? 'UNPARSED' : h.tables === 0 ? 'NO_WATCHED_TABLES' : 'RECEIVED';
+      }
     }
     if (status.tools.includes('list_inbox')) {
       const raw = await call('list_inbox', {});
@@ -180,17 +190,20 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
     }
     for (const r of rows) {
       const d = r.raw.disposition as Disposition | undefined;
-      if (d) counts[d]++; else counts.clean++;
+      if (d) counts[d]++;
+      else if (r.verdict === 'trusted' || r.verdict === 'rule_held') counts.clean++;
+      else counts.undetermined++;
     }
 
     const inserted = options.db ? await insertQualityRows(options.db, rows) : 0;
     mkdirSync(receiptsDir, { recursive: true });
     const receiptPath = join(receiptsDir, `sodabase-${observedAt.replace(/\.\d+Z$/, 'Z').replace(/:/g, '-')}.json`);
     writeFileSync(receiptPath, `${JSON.stringify({
-      provider: 'sodabase', provenance: client.provenance, endpoint: status.endpoint, observed_at: observedAt, scope: SCOPE_NOTE,
+      provider: 'sodabase', provenance: client.provenance, endpoint: status.endpoint, project_ref: SODABASE_PROJECT_REF, observed_at: observedAt, scope: SCOPE_NOTE,
+      quality_evidence: quality,
       tools_discovered: status.tools, tool_calls: calls, counts, inserted_into_quality_findings: inserted, findings: rows,
     }, null, 2)}\n`);
-    return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, receipt_path: receiptPath, inserted };
+    return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, quality_evidence: quality, receipt_path: receiptPath, inserted };
   } finally {
     await client.close();
   }
