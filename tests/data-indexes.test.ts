@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 const read = (p: string) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
-const request = read('docs/migration-requests/gym-indexes.sql');
+const request = read('supabase/migrations/007_gym_indexes.sql');
 let db: PGlite;
 
 /** With sequential scans priced out, the plan shows whether an index fits the query's shape at all. */
