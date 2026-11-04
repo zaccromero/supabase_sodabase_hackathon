@@ -1,0 +1,612 @@
+{
+  "step": "6-gym-operator",
+  "environment": "hosted Supabase, project dgqcanfiapxztmqqlqnh",
+  "transport": "hermes_oauth",
+  "source_head": "61a45e68a5b1c848d4700c9a3d104dd39ec88e2f",
+  "source_clean": true,
+  "started": "2026-11-04T22:55:32.084Z",
+  "finished": "2026-11-04T22:56:37.617Z",
+  "accepted_for_profile": [
+    "gym.active_individual_definition@1",
+    "gym.freshness_completeness@1"
+  ],
+  "run_id": "70e040f6-c4cb-4816-b4fe-eb84342d8f1f",
+  "memory_mode": "on",
+  "status": "completed",
+  "failure_reason": null,
+  "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26",
+  "pinned": [
+    {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:55:32.378Z"
+    },
+    {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:55:32.378Z"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "attempt_no": 1,
+      "kind": "initial",
+      "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+      "body": {
+        "sql": "WITH latest AS (SELECT DISTINCT ON (location_id) * FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC) SELECT l.id AS location_id, CASE WHEN r.status = 'complete' AND r.had_errors = false AND r.parse_drift = false AND r.structural_differences = 0 AND r.unmapped_members = 0 AND r.unexplained_records = 0 AND r.finished_at IS NOT NULL AND COUNT(p.id) = r.source_rows_total AND COUNT(DISTINCT p.source_membership_key) = r.unique_membership_keys AND COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) = r.active_individual_members THEN COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) ELSE NULL END AS active_individual_members, r.report_as_of AS source_report_date, r.finished_at AS fetched_at FROM gym.locations l LEFT JOIN latest r ON r.location_id = l.id LEFT JOIN gym.ezf_active_memberships p ON p.location_id = r.location_id AND p.report_as_of = r.report_as_of AND p.source_csv_sha256 = r.source_csv_sha256 GROUP BY l.id, r.id, r.status, r.had_errors, r.parse_drift, r.structural_differences, r.unmapped_members, r.unexplained_records, r.finished_at, r.source_rows_total, r.unique_membership_keys, r.active_individual_members, r.report_as_of ORDER BY l.id",
+        "answer": [
+          {
+            "fetched_at": "2026-10-05 08:36:03.785+00",
+            "location_id": "bk",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 704
+          },
+          {
+            "fetched_at": "2026-10-01 23:25:00.813+00",
+            "location_id": "east3",
+            "source_report_date": "2026-10-01",
+            "active_individual_members": null
+          },
+          {
+            "fetched_at": "2026-10-05 08:36:24.875+00",
+            "location_id": "lex",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 367
+          },
+          {
+            "fetched_at": "2026-10-05 08:34:38.574+00",
+            "location_id": "mul",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 439
+          }
+        ],
+        "data_as_of": "2026-10-05",
+        "definition": "Count client-backed MATCHED_INDIVIDUAL rows in gym.ezf_active_memberships matching each location's latest official v1 gym.ezf_active_membership_sync_runs snapshot, requiring complete, error-free, reconciled projections; include PIF without a mode restriction and exclude business classes and additional memberships: bk 704, lex 367, mul 439 (source report 2026-10-05; fetched respectively 08:36:03.785, 08:36:24.875, 08:34:38.574 UTC); east3 unknown because its 2026-10-01 report, fetched 23:25:00.813 UTC, has one structural difference; all observed data is stale as of 2026-11-04 and cannot establish counts right now.",
+        "data_age_days": 30
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "1f7df98a-1203-4355-aa37-1d4ee7046b2e",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "sql_result",
+      "sha256": "b1b139e668a41d27350eacbfe1a5d5af2c8ee8ad231367deeeffe2f3c2c16f51",
+      "payload": {
+        "sql": "WITH latest AS (SELECT DISTINCT ON (location_id) * FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC) SELECT l.id AS location_id, CASE WHEN r.status = 'complete' AND r.had_errors = false AND r.parse_drift = false AND r.structural_differences = 0 AND r.unmapped_members = 0 AND r.unexplained_records = 0 AND r.finished_at IS NOT NULL AND COUNT(p.id) = r.source_rows_total AND COUNT(DISTINCT p.source_membership_key) = r.unique_membership_keys AND COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) = r.active_individual_members THEN COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) ELSE NULL END AS active_individual_members, r.report_as_of AS source_report_date, r.finished_at AS fetched_at FROM gym.locations l LEFT JOIN latest r ON r.location_id = l.id LEFT JOIN gym.ezf_active_memberships p ON p.location_id = r.location_id AND p.report_as_of = r.report_as_of AND p.source_csv_sha256 = r.source_csv_sha256 GROUP BY l.id, r.id, r.status, r.had_errors, r.parse_drift, r.structural_differences, r.unmapped_members, r.unexplained_records, r.finished_at, r.source_rows_total, r.unique_membership_keys, r.active_individual_members, r.report_as_of ORDER BY l.id",
+        "rows": [
+          {
+            "fetched_at": "2026-10-05 08:36:03.785+00",
+            "location_id": "bk",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 704
+          },
+          {
+            "fetched_at": "2026-10-01 23:25:00.813+00",
+            "location_id": "east3",
+            "source_report_date": "2026-10-01",
+            "active_individual_members": null
+          },
+          {
+            "fetched_at": "2026-10-05 08:36:24.875+00",
+            "location_id": "lex",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 367
+          },
+          {
+            "fetched_at": "2026-10-05 08:34:38.574+00",
+            "location_id": "mul",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 439
+          }
+        ],
+        "columns": [
+          "location_id",
+          "active_individual_members",
+          "source_report_date",
+          "fetched_at"
+        ],
+        "row_count": 4,
+        "metric_totals": {}
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "6631dc65-935d-4480-a589-42a83dffd27d",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "model_run",
+      "sha256": "0c5928464ba922df68f4ffd6db775f199669044bd4f1eb389a23a3ae40d8acb0",
+      "payload": {
+        "calls": 3,
+        "served_by": [
+          "gpt-6.1-sol"
+        ],
+        "transport": "hermes_oauth",
+        "input_tokens": 77067,
+        "output_tokens": 1490,
+        "requested_model": "gpt-6.1-sol",
+        "pinned_decision_ids": [
+          "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+          "d1b6100d-6cce-5d8a-9381-13d42475a204"
+        ],
+        "declared_agent_model": "claude-sonnet-5-5",
+        "system_prompt_sha256": "bf1d49e036df4762eb7f69b26273d2f4852ba2046dcd4d22192564c6c4173e89",
+        "requested_model_source": "hermes_transport"
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "9dd8f7a2-79f3-4f67-a8dc-26b85e0e3c75",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "sql_trace",
+      "sha256": "fd4342c65ed283e3fe7cec31aa0fdf0d81a96a0fac6fe5d2e5d44b7fb02ea393",
+      "payload": {
+        "queries": [
+          {
+            "sql": "SELECT * FROM gym.ezf_active_membership_sync_runs ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST LIMIT 100",
+            "row_count": 100
+          },
+          {
+            "sql": "SELECT location_id, bridge_class, membership_mode, COUNT(*) AS rows, COUNT(member_id) AS client_backed_rows, MIN(report_as_of) AS earliest_report_as_of, MAX(report_as_of) AS latest_report_as_of, MAX(source_last_seen_at) AS latest_source_last_seen_at FROM gym.ezf_active_memberships GROUP BY location_id, bridge_class, membership_mode ORDER BY location_id, bridge_class, membership_mode",
+            "row_count": 14
+          },
+          {
+            "sql": "SELECT id FROM gym.locations ORDER BY id",
+            "row_count": 4
+          },
+          {
+            "sql": "SELECT DISTINCT ON (location_id) location_id, id, report_as_of, report_filter_version, started_at, finished_at, source_csv_sha256, source_rows_total, unique_membership_keys, active_individual_members, explained_exclusions, structural_differences, unmapped_members, unexplained_records, status, had_errors, parse_drift, error_code FROM gym.ezf_active_membership_sync_runs ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC",
+            "row_count": 4
+          },
+          {
+            "sql": "SELECT DISTINCT ON (location_id) location_id, id, report_as_of, finished_at, source_csv_sha256, source_rows_total, unique_membership_keys, active_individual_members, explained_exclusions FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' AND status = 'complete' AND had_errors = false AND parse_drift = false AND structural_differences = 0 AND unmapped_members = 0 AND unexplained_records = 0 AND finished_at IS NOT NULL ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC, id DESC",
+            "row_count": 3
+          },
+          {
+            "sql": "SELECT location_id, report_as_of, source_csv_sha256, COUNT(*) AS projection_rows, COUNT(DISTINCT source_membership_key) AS unique_membership_keys, COUNT(*) FILTER (WHERE bridge_class = 'MATCHED_INDIVIDUAL' AND member_id IS NOT NULL) AS active_individual_members, COUNT(DISTINCT member_id) FILTER (WHERE bridge_class = 'MATCHED_INDIVIDUAL' AND member_id IS NOT NULL) AS distinct_individual_clients, MIN(source_last_seen_at) AS earliest_fetch_at, MAX(source_last_seen_at) AS latest_fetch_at FROM gym.ezf_active_memberships GROUP BY location_id, report_as_of, source_csv_sha256 ORDER BY location_id, report_as_of DESC",
+            "row_count": 4
+          },
+          {
+            "sql": "WITH latest AS (SELECT DISTINCT ON (location_id) * FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC) SELECT l.id AS location_id, CASE WHEN r.status = 'complete' AND r.had_errors = false AND r.parse_drift = false AND r.structural_differences = 0 AND r.unmapped_members = 0 AND r.unexplained_records = 0 AND r.finished_at IS NOT NULL AND COUNT(p.id) = r.source_rows_total AND COUNT(DISTINCT p.source_membership_key) = r.unique_membership_keys AND COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) = r.active_individual_members THEN COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) ELSE NULL END AS active_individual_members, r.report_as_of AS source_report_date, r.finished_at AS fetched_at FROM gym.locations l LEFT JOIN latest r ON r.location_id = l.id LEFT JOIN gym.ezf_active_memberships p ON p.location_id = r.location_id AND p.report_as_of = r.report_as_of AND p.source_csv_sha256 = r.source_csv_sha256 GROUP BY l.id, r.id, r.status, r.had_errors, r.parse_drift, r.structural_differences, r.unmapped_members, r.unexplained_records, r.finished_at, r.source_rows_total, r.unique_membership_keys, r.active_individual_members, r.report_as_of ORDER BY l.id",
+            "row_count": 4
+          },
+          {
+            "sql": "WITH latest AS (SELECT DISTINCT ON (location_id) * FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC), counted AS (SELECT l.id AS location_id, r.report_as_of, r.finished_at FROM gym.locations l JOIN latest r ON r.location_id = l.id LEFT JOIN gym.ezf_active_memberships p ON p.location_id = r.location_id AND p.report_as_of = r.report_as_of AND p.source_csv_sha256 = r.source_csv_sha256 WHERE r.status = 'complete' AND r.had_errors = false AND r.parse_drift = false AND r.structural_differences = 0 AND r.unmapped_members = 0 AND r.unexplained_records = 0 AND r.finished_at IS NOT NULL GROUP BY l.id, r.id, r.report_as_of, r.finished_at, r.source_rows_total, r.unique_membership_keys, r.active_individual_members HAVING COUNT(p.id) = r.source_rows_total AND COUNT(DISTINCT p.source_membership_key) = r.unique_membership_keys AND COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) = r.active_individual_members) SELECT MIN(report_as_of) AS data_as_of FROM counted",
+            "row_count": 1
+          }
+        ],
+        "largest_request_bytes": 23784
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "1e103e39-cde9-4fc5-a207-a084c01fcbec",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "data_freshness",
+      "sha256": "8e1d1b64880b35ca7e596ae14d90f6ecf363601790a0676411fb90543bc44427",
+      "payload": {
+        "sql": "WITH latest AS (SELECT DISTINCT ON (location_id) * FROM gym.ezf_active_membership_sync_runs WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC), counted AS (SELECT l.id AS location_id, r.report_as_of, r.finished_at FROM gym.locations l JOIN latest r ON r.location_id = l.id LEFT JOIN gym.ezf_active_memberships p ON p.location_id = r.location_id AND p.report_as_of = r.report_as_of AND p.source_csv_sha256 = r.source_csv_sha256 WHERE r.status = 'complete' AND r.had_errors = false AND r.parse_drift = false AND r.structural_differences = 0 AND r.unmapped_members = 0 AND r.unexplained_records = 0 AND r.finished_at IS NOT NULL GROUP BY l.id, r.id, r.report_as_of, r.finished_at, r.source_rows_total, r.unique_membership_keys, r.active_individual_members HAVING COUNT(p.id) = r.source_rows_total AND COUNT(DISTINCT p.source_membership_key) = r.unique_membership_keys AND COUNT(p.id) FILTER (WHERE p.bridge_class = 'MATCHED_INDIVIDUAL' AND p.member_id IS NOT NULL) = r.active_individual_members) SELECT MIN(report_as_of) AS data_as_of FROM counted",
+        "data_as_of": "2026-10-05",
+        "measured_at": "2026-11-04T22:55:33.078Z",
+        "data_age_days": 30
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "2af3b08b-10c9-4c3a-9203-e2a830fab897",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "hermes_transport",
+      "sha256": "5d46d5fcd8138c56ae6ede719a1b1c0944ed33df8aac8fcb8177d5e88fc6ef2c",
+      "payload": {
+        "purpose": "generation",
+        "receipt": {
+          "state": "RECEIVED",
+          "profile": "existing Hermes profile; fresh task only",
+          "turn_id": "01a1a8c6-befc-7f00-ab7c-a617eab7e214",
+          "api_mode": "codex_app_server",
+          "provider": "openai-codex",
+          "isolation": {
+            "use_memories": false,
+            "generate_memories": false,
+            "thread_memory_mode": "disabled"
+          },
+          "thread_id": "01a1a8c6-bb77-7800-be91-ad8e75ef8ad4",
+          "transport": "hermes_codex_app_server",
+          "started_at": "2026-11-04T22:55:57.644024+00:00",
+          "finished_at": "2026-11-04T22:56:22.217520+00:00",
+          "model_turns": 1,
+          "soul_loaded": false,
+          "token_usage": {
+            "inputTokens": 28875,
+            "totalTokens": 29819,
+            "outputTokens": 944,
+            "cachedInputTokens": 8448,
+            "cacheWriteInputTokens": 0,
+            "reasoningOutputTokens": 92
+          },
+          "guard_bypass": false,
+          "input_sha256": "b8310334350c89d0a45461cc222534de81f96d6aada7fa609d8b74e6f8a174bd",
+          "served_model": "gpt-6.1-sol",
+          "tools_policy": "none",
+          "fallback_used": false,
+          "memory_loaded": false,
+          "model_provider": "openai",
+          "no_tools_scope": {
+            "profile_id": "hermes-no-tools-86e8babe7d9543f794d9fa6c88a26be3",
+            "tool_policy": "none",
+            "max_authorized_actions": 0
+          },
+          "requested_model": "gpt-6.1-sol",
+          "tool_iterations": 0,
+          "background_review": false,
+          "credential_exported": false,
+          "private_history_loaded": false
+        }
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "ae553684-9bbe-4b72-9243-28ea89e5f6aa",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "hermes_transport",
+      "sha256": "75b6a66ffa3b3a2fdcff3d4b1efba2e3c7963aacd9a0a6385704edb69378ae52",
+      "payload": {
+        "purpose": "generation",
+        "receipt": {
+          "state": "RECEIVED",
+          "profile": "existing Hermes profile; fresh task only",
+          "turn_id": "01a1a8c6-85a4-75d2-8d47-7b86e2a63d51",
+          "api_mode": "codex_app_server",
+          "provider": "openai-codex",
+          "isolation": {
+            "use_memories": false,
+            "generate_memories": false,
+            "thread_memory_mode": "disabled"
+          },
+          "thread_id": "01a1a8c6-82ea-7243-a073-247b9f23169b",
+          "transport": "hermes_codex_app_server",
+          "started_at": "2026-11-04T22:55:42.841150+00:00",
+          "finished_at": "2026-11-04T22:55:56.173019+00:00",
+          "model_turns": 1,
+          "soul_loaded": false,
+          "token_usage": {
+            "inputTokens": 26551,
+            "totalTokens": 26954,
+            "outputTokens": 403,
+            "cachedInputTokens": 8448,
+            "cacheWriteInputTokens": 0,
+            "reasoningOutputTokens": 0
+          },
+          "guard_bypass": false,
+          "input_sha256": "b3a583c0e85fbeaaa7ad7c93eecd79b832f391da0ced8167a04fe80ee3bc9aeb",
+          "served_model": "gpt-6.1-sol",
+          "tools_policy": "none",
+          "fallback_used": false,
+          "memory_loaded": false,
+          "model_provider": "openai",
+          "no_tools_scope": {
+            "profile_id": "hermes-no-tools-cf7a0047539546d7a7c309af57bc64b4",
+            "tool_policy": "none",
+            "max_authorized_actions": 0
+          },
+          "requested_model": "gpt-6.1-sol",
+          "tool_iterations": 0,
+          "background_review": false,
+          "credential_exported": false,
+          "private_history_loaded": false
+        }
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "51654cd7-3008-40ba-b4f7-bdc96532a3ed",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "hermes_transport",
+      "sha256": "1afbebacec3f59a8e3b15f070090ef4104b01010c967449a1bb014b268e3f121",
+      "payload": {
+        "purpose": "generation",
+        "receipt": {
+          "state": "RECEIVED",
+          "profile": "existing Hermes profile; fresh task only",
+          "turn_id": "01a1a8c6-61e7-7930-8120-127899f29fc5",
+          "api_mode": "codex_app_server",
+          "provider": "openai-codex",
+          "isolation": {
+            "use_memories": false,
+            "generate_memories": false,
+            "thread_memory_mode": "disabled"
+          },
+          "thread_id": "01a1a8c6-5e5d-7253-ae73-81191762b795",
+          "transport": "hermes_codex_app_server",
+          "started_at": "2026-11-04T22:55:33.631595+00:00",
+          "finished_at": "2026-11-04T22:55:41.407712+00:00",
+          "model_turns": 1,
+          "soul_loaded": false,
+          "token_usage": {
+            "inputTokens": 21641,
+            "totalTokens": 21784,
+            "outputTokens": 143,
+            "cachedInputTokens": 0,
+            "cacheWriteInputTokens": 0,
+            "reasoningOutputTokens": 0
+          },
+          "guard_bypass": false,
+          "input_sha256": "769082dcc38ace23ee08501ebe74a3c996ae29d83e06ca140de6d0519a2fa0f1",
+          "served_model": "gpt-6.1-sol",
+          "tools_policy": "none",
+          "fallback_used": false,
+          "memory_loaded": false,
+          "model_provider": "openai",
+          "no_tools_scope": {
+            "profile_id": "hermes-no-tools-b53394c77aa84e2cba243c9ebeddc607",
+            "tool_policy": "none",
+            "max_authorized_actions": 0
+          },
+          "requested_model": "gpt-6.1-sol",
+          "tool_iterations": 0,
+          "background_review": false,
+          "credential_exported": false,
+          "private_history_loaded": false
+        }
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "a7b33f5f-32cd-4331-93f6-ee74c07a688a",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "behavioral_evaluation",
+      "sha256": "b5ab078ef52f50305535508159454a7b2f02c9db61b9d2c56a75dd31e7ac0d47",
+      "payload": {
+        "reason": "SQL reads ezf_active_memberships with MATCHED_INDIVIDUAL on the latest complete projection and counts match an independent recount",
+        "verdict": "pass",
+        "analysis": {
+          "hasOr": false,
+          "readsRuns": true,
+          "selectsLatest": true,
+          "usesChurnedAt": false,
+          "canonicalClass": true,
+          "completeStatus": true,
+          "hasSetOperation": false,
+          "readsProjection": true,
+          "negatedProjection": false,
+          "otherClassComparison": false
+        },
+        "check_id": "gym.canonical_definition",
+        "reported": [
+          {
+            "fetched_at": "2026-10-05 08:36:03.785+00",
+            "location_id": "bk",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 704
+          },
+          {
+            "fetched_at": "2026-10-01 23:25:00.813+00",
+            "location_id": "east3",
+            "source_report_date": "2026-10-01",
+            "active_individual_members": null
+          },
+          {
+            "fetched_at": "2026-10-05 08:36:24.875+00",
+            "location_id": "lex",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 367
+          },
+          {
+            "fetched_at": "2026-10-05 08:34:38.574+00",
+            "location_id": "mul",
+            "source_report_date": "2026-10-05",
+            "active_individual_members": 439
+          }
+        ],
+        "evaluator": "det.gym_definition",
+        "recomputed": {
+          "bk": 704,
+          "lex": 367,
+          "mul": 439
+        },
+        "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+        "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26",
+        "canonical_source": "gym-nyc:apps/web/lib/member-contract.ts",
+        "evaluator_version": "1",
+        "independent_recount": true
+      },
+      "created_by": "det.gym_definition"
+    },
+    {
+      "id": "369a662d-2f51-47e3-98aa-bee393dbf2c2",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "behavioral_evaluation",
+      "sha256": "805a85fb3753c6a21ade8c35dc644bc56cbd127436818ae29c7d0cf7b02c4d7d",
+      "payload": {
+        "reason": "data_as_of 2026-10-05 matches the source; age 30 day(s)",
+        "verdict": "pass",
+        "check_id": "gym.data_age_reported",
+        "expected": "2026-10-05",
+        "reported": "2026-10-05",
+        "evaluator": "det.gym_data_age",
+        "source_dates": {
+          "bk": "2026-10-05",
+          "lex": "2026-10-05",
+          "mul": "2026-10-05"
+        },
+        "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+        "actual_age_days": 30,
+        "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26",
+        "evaluator_version": "1"
+      },
+      "created_by": "det.gym_data_age"
+    },
+    {
+      "id": "1578b62b-ae42-47db-8777-93857f0b8274",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "kind": "hermes_critic_evaluation",
+      "sha256": "658d86cedfe82b041875fadd3811b6e3bed1d815fd2d756a27026c86b1216b51",
+      "payload": {
+        "model": "gpt-6.1-sol",
+        "reason": "Critic: output violates gym.active_individual_definition v1: The SQL selects the latest run before checking completeness, so an incomplete latest run yields null instead of counting the latest complete official projection.",
+        "excerpt": "WHERE report_filter_version = 'ezfacility-memberships-by-status-owner-filters-v1' ORDER BY location_id, report_as_of DESC NULLS LAST, finished_at DESC NULLS LAST, started_at DESC, id DESC",
+        "purpose": "critic",
+        "verdict": "fail",
+        "check_id": "critic.meaning",
+        "evaluator": "critic.meaning",
+        "transport": "hermes_oauth",
+        "confidence": 0.96,
+        "decision_id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+        "decision_key": "gym.active_individual_definition",
+        "critic_reason": "The SQL selects the latest run before checking completeness, so an incomplete latest run yields null instead of counting the latest complete official projection.",
+        "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+        "prompt_sha256": "38aa5bfd1c84154e3119e21a129f7131e0d45ab06a6e7dc24972a5d336b8e14a",
+        "critic_verdict": "violates",
+        "min_confidence": 0.75,
+        "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26",
+        "hermes_receipts": [
+          {
+            "state": "RECEIVED",
+            "profile": "existing Hermes profile; fresh task only",
+            "turn_id": "01a1a8c7-2918-7e70-86c5-9a51d589a32c",
+            "api_mode": "codex_app_server",
+            "provider": "openai-codex",
+            "isolation": {
+              "use_memories": false,
+              "generate_memories": false,
+              "thread_memory_mode": "disabled"
+            },
+            "thread_id": "01a1a8c7-26f8-7b32-a561-27d86d2c9ede",
+            "transport": "hermes_codex_app_server",
+            "started_at": "2026-11-04T22:56:24.075385+00:00",
+            "finished_at": "2026-11-04T22:56:36.530718+00:00",
+            "model_turns": 1,
+            "soul_loaded": false,
+            "token_usage": {
+              "inputTokens": 27390,
+              "totalTokens": 27513,
+              "outputTokens": 123,
+              "cachedInputTokens": 8448,
+              "cacheWriteInputTokens": 0,
+              "reasoningOutputTokens": 28
+            },
+            "guard_bypass": false,
+            "input_sha256": "38aa5bfd1c84154e3119e21a129f7131e0d45ab06a6e7dc24972a5d336b8e14a",
+            "served_model": "gpt-6.1-sol",
+            "tools_policy": "none",
+            "fallback_used": false,
+            "memory_loaded": false,
+            "model_provider": "openai",
+            "no_tools_scope": {
+              "profile_id": "hermes-no-tools-c6b810915c4e4a798067c583ce28c958",
+              "tool_policy": "none",
+              "max_authorized_actions": 0
+            },
+            "requested_model": "gpt-6.1-sol",
+            "tool_iterations": 0,
+            "background_review": false,
+            "credential_exported": false,
+            "private_history_loaded": false
+          }
+        ],
+        "requested_model": "gpt-6.1-sol",
+        "decision_version": 1,
+        "evaluator_version": "1"
+      },
+      "created_by": "critic.meaning"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "5dbfc504-b4f1-489f-b9fa-10f06ac97c6e",
+      "attempt_id": "341f735f-2f46-4aeb-adfe-85e3e84991a8",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "check_id": "gym.canonical_definition",
+      "verdict": "pass",
+      "reason": "SQL reads ezf_active_memberships with MATCHED_INDIVIDUAL on the latest complete projection and counts match an independent recount",
+      "evaluator": "det.gym_definition",
+      "evaluator_version": "1",
+      "evidence_id": "a7b33f5f-32cd-4331-93f6-ee74c07a688a",
+      "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+      "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26"
+    },
+    {
+      "id": "face2119-6772-426c-a9f9-747b5cb863a5",
+      "attempt_id": "341f735f-2f46-4aeb-adfe-85e3e84991a8",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "check_id": "gym.data_age_reported",
+      "verdict": "pass",
+      "reason": "data_as_of 2026-10-05 matches the source; age 30 day(s)",
+      "evaluator": "det.gym_data_age",
+      "evaluator_version": "1",
+      "evidence_id": "369a662d-2f51-47e3-98aa-bee393dbf2c2",
+      "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+      "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26"
+    },
+    {
+      "id": "fb0ba781-3855-49e6-a5ed-ce378921f077",
+      "attempt_id": "341f735f-2f46-4aeb-adfe-85e3e84991a8",
+      "output_id": "daac4d9e-70e4-4ce7-a42b-95f2aa08728f",
+      "check_id": "critic.meaning",
+      "verdict": "fail",
+      "reason": "Critic: output violates gym.active_individual_definition v1: The SQL selects the latest run before checking completeness, so an incomplete latest run yields null instead of counting the latest complete official projection.",
+      "evaluator": "critic.meaning",
+      "evaluator_version": "1",
+      "evidence_id": "1578b62b-ae42-47db-8777-93857f0b8274",
+      "output_sha256": "d9863b8aecf8c094684ca6687ecce2fa79f8967dd9617a37e5a62af33b0196cb",
+      "contract_sha256": "048714bbde8a1ae1ccd541fca2ac295d943b9633f45cbf34a9b3984cba055b26"
+    }
+  ],
+  "gate_decisions": [
+    {
+      "verdict": "completed",
+      "missing": [],
+      "attempt_id": "341f735f-2f46-4aeb-adfe-85e3e84991a8",
+      "created_at": "2026-11-04T22:56:37.385Z"
+    }
+  ],
+  "attempt_errors": [
+    {
+      "attempt_no": 1,
+      "handler_error": null,
+      "evaluator_errors": []
+    }
+  ],
+  "compared_with": "docs/receipts/gym-active-members-2026-11-04T22-22-50-393Z.json",
+  "compared_attempt_no": 1,
+  "comparison": [
+    {
+      "location_id": "bk",
+      "recorded_state": "STALE",
+      "recorded": 704,
+      "answered": 704,
+      "match": true
+    },
+    {
+      "location_id": "east3",
+      "recorded_state": "PARTIAL",
+      "recorded": null,
+      "answered": null,
+      "match": null
+    },
+    {
+      "location_id": "lex",
+      "recorded_state": "STALE",
+      "recorded": 367,
+      "answered": 367,
+      "match": true
+    },
+    {
+      "location_id": "mul",
+      "recorded_state": "STALE",
+      "recorded": 439,
+      "answered": 439,
+      "match": true
+    }
+  ],
+  "answer_definition": "Count client-backed MATCHED_INDIVIDUAL rows in gym.ezf_active_memberships matching each location's latest official v1 gym.ezf_active_membership_sync_runs snapshot, requiring complete, error-free, reconciled projections; include PIF without a mode restriction and exclude business classes and additional memberships: bk 704, lex 367, mul 439 (source report 2026-10-05; fetched respectively 08:36:03.785, 08:36:24.875, 08:34:38.574 UTC); east3 unknown because its 2026-10-01 report, fetched 23:25:00.813 UTC, has one structural difference; all observed data is stale as of 2026-11-04 and cannot establish counts right now.",
+  "data_as_of": "2026-10-05",
+  "data_age_days": 30
+}
