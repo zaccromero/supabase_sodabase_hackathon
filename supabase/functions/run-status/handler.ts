@@ -8,7 +8,7 @@ from cm.v_run_status where run_id = $1::uuid`;
 export const READ_ROLE = 'dashboard_reader';
 export const STATEMENT_TIMEOUT = '2s';
 
-export const BOARD_ORIGIN = 'https://company-memory-zacc-r.vercel.app';
+export const BOARD_ORIGIN = 'https://company-memory-kohl.vercel.app';
 export const RATE_LIMIT = { limit: 60, windowMs: 60_000, maxClients: 10_000 };
 const MAX_MISSING = 50;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

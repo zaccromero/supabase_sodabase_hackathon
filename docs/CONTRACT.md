@@ -11,7 +11,7 @@ Deadline: **work-ready 17:50 ET, submit 18:30 ET**. Source of truth for tables a
 Every lane checks its work against these. Fixing a finding means fixing the data or the pipeline, never muting a monitor or hiding a result.
 
 ## One production board (owner, 2026-11-04)
-- **The only evidence board is https://company-memory-zacc-r.vercel.app**, built from `app/` on `main`, reading hosted Supabase `dgqcanfiapxztmqqlqnh`. Port 4971 is a local view of the same app and the same data.
+- **The only evidence board is https://company-memory-kohl.vercel.app**, built from `app/` on `main`, reading hosted Supabase `dgqcanfiapxztmqqlqnh`. Port 4971 is a local view of the same app and the same data.
 - No other evidence board, mock or deployment. Other packages feed this one; they do not run beside it.
 - All runs write to hosted Supabase. PGlite and local Postgres are for tests only and never appear as results.
 - Only the Dashboard lane deploys, only from a commit on `main`, after the governor merges it.

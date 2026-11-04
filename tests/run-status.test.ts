@@ -38,7 +38,7 @@ describe('run-status edge function', () => {
       missing: [{ check_id: null, reason: 'CONTRACT_NOT_FROZEN', evaluation_id: null }],
     });
     expect(response.headers.get('cache-control')).toBe('private, max-age=5');
-    expect(response.headers.get('access-control-allow-origin')).toBe('https://company-memory-zacc-r.vercel.app');
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://company-memory-kohl.vercel.app');
   });
 
   it('the read role can only read: a write in the same transaction is refused', async () => {
