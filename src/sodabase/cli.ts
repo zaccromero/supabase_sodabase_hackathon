@@ -38,6 +38,8 @@ if (command === 'status') {
     console.log(JSON.stringify({ receipt: path, responses: results }, null, 2));
   }
   await client.close();
+  // The MCP stream can keep the process alive after close, which left a finished triage run hanging.
+  process.exit(process.exitCode ?? 0);
 } else if (command === 'scan') {
   const status = await client.connect();
   if (status.state !== 'ready' || !(await client.verifyProject())) { console.log(JSON.stringify({ ...status, project_ref: SODABASE_PROJECT_REF }, null, 2)); process.exitCode = 3; }
