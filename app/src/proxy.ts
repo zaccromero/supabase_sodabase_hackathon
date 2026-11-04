@@ -16,6 +16,10 @@ export function proxy(request: NextRequest) {
   // The claims API checks its own bearer token, so agents do not need the page password.
   if (request.nextUrl.pathname === '/api/claims') return NextResponse.next();
   const password = process.env.DASHBOARD_PASSWORD;
+  // Agents' coordination notes never go public with the site: hosted, this page needs the password.
+  if (process.env.VERCEL && !password && request.nextUrl.pathname === '/claims') {
+    return new NextResponse('Not found.', { status: 404 });
+  }
   if (!password) {
     // *.vercel.app sits behind Vercel Authentication. A custom domain does not, so it stays shut.
     if (process.env.VERCEL && !request.nextUrl.hostname.endsWith('.vercel.app')) {
