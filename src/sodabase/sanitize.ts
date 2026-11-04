@@ -12,6 +12,7 @@ export function scrubText(text: string): string {
     .replace(/```[\s\S]*?```/g, '[code removed]')
     .replace(/\bselect\b[\s\S]{0,800}?\bfrom\b[^\n]*/gi, '[query removed]')
     .replace(/\bsb_pat_[\w-]+/g, '[token removed]')
+    .replace(/(https?:\/\/[^\s?"']+)\?[^\s"']*/g, '$1?[query string removed]')
     .replace(/\bBearer\s+[\w.~+/=-]+/gi, 'Bearer [token removed]')
     .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[email removed]')
     .replace(/(?<![\w-])\+?\d[\d ().-]{8,}\d(?![\w-])/g, (m) => (/^\d{4}-\d{2}-\d{2}/.test(m) ? m : '[phone removed]'))

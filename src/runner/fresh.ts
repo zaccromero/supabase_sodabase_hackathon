@@ -94,6 +94,29 @@ export async function correct(db: Db, input: { findingId: string; proposedBy: st
   });
 }
 
+/**
+ * For when the decision a finding cites is itself the correction: the output drifted from memory that was already
+ * right, so no new version is needed. Accepts nothing. It only records a link to a decision the founder already
+ * accepted, under the same key the finding cites, and refuses anything else.
+ */
+export async function linkAcceptedCorrection(db: Db, input: { findingId: string; decisionId: string }): Promise<void> {
+  await db.withRole('evaluator_service', async (tx) => {
+    const [row] = await tx.query<{ status: string; cited_key: string; correction_key: string | null; correction_status: string | null }>(
+      `select f.status, cited.decision_key as cited_key, d.decision_key as correction_key, d.status as correction_status
+       from cm.findings f
+       join cm.decisions cited on cited.id = f.decision_id
+       left join cm.decisions d on d.id = $2::uuid
+       where f.id = $1::uuid`,
+      [input.findingId, input.decisionId],
+    );
+    if (!row) throw new Error(`FINDING_NOT_FOUND: ${input.findingId}`);
+    if (row.status !== 'open') throw new Error(`FINDING_NOT_OPEN: ${row.status}`);
+    if (row.correction_status !== 'accepted') throw new Error(`CORRECTION_NOT_ACCEPTED: decision is ${row.correction_status ?? 'absent'}`);
+    if (row.correction_key !== row.cited_key) throw new Error(`CORRECTION_KEY_MISMATCH: finding cites ${row.cited_key}, decision is ${row.correction_key}`);
+    await tx.query(`update cm.findings set correction_decision_id = $2::uuid, status = 'corrected' where id = $1::uuid`, [input.findingId, input.decisionId]);
+  });
+}
+
 /** Founder only. Supersedes the current version, accepts this one, and marks findings it corrects. */
 export async function acceptDecision(db: Db, input: { decisionId: string; acceptedBy: string }): Promise<void> {
   await db.withRole('founder_approver', async (tx) => {
