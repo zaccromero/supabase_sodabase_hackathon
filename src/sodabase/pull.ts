@@ -27,7 +27,7 @@ export interface PullResult {
 }
 
 export const DEFAULT_RECEIPTS_DIR = 'docs/receipts';
-const SCOPE_NOTE = 'Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run.';
+const SCOPE_NOTE = 'Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run. An empty result is a dated observation, not a healthy verdict.';
 
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const firstString = (o: Record<string, unknown>, keys: string[]) => { for (const k of keys) if (typeof o[k] === 'string' && o[k]) return o[k] as string; return null; };
@@ -122,6 +122,8 @@ export interface PullOptions {
   receiptsDir?: string;
   runRules?: boolean;
   rules?: IntegrityRule[];
+  /** Tool discovery and data_trust_health only: no inbox, explain, rules or database. */
+  healthOnly?: boolean;
   /** Fetch the root-cause story for this many inbox and health findings. */
   explainLimit?: number;
   now?: () => Date;
@@ -153,8 +155,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       const raw = await client.callReadTool(tool, args);
       const isError = isObject(raw) && raw.isError === true;
       if (isError) counts.errors++;
-      const parsed = structured(raw) !== null;
-      calls.push({ tool, ok: !isError, parsed, ...(parsed ? {} : { unparsed_response: sanitize(raw) }) });
+      calls.push({ tool, ok: !isError, parsed: structured(raw) !== null, response: sanitize(raw) });
       return isError ? null : raw;
     } catch {
       // Errors are not recorded verbatim: upstream text can hold credentials.
@@ -177,21 +178,21 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
         quality = noScans ? 'NO_SCANS_YET' : !h.parsed ? 'UNPARSED' : h.tables === 0 ? 'NO_WATCHED_TABLES' : 'RECEIVED';
       }
     }
-    if (status.tools.includes('list_inbox')) {
+    if (!options.healthOnly && status.tools.includes('list_inbox')) {
       const raw = await call('list_inbox', {});
       if (raw) {
         const known = new Set(rows.map((r) => r.provider_finding_id).filter((x): x is string => !!x));
         const i = inboxRows(raw, observedAt, known); rows.push(...i.rows); if (!i.parsed && !INBOX_CLEAR.test(proseResult(raw))) counts.unparsed++;
       }
     }
-    if (status.tools.includes('explain')) {
+    if (!options.healthOnly && status.tools.includes('explain')) {
       const targets = rows.filter((r) => r.provider_finding_id && r.raw.disposition === 'actionable').slice(0, options.explainLimit ?? 5);
       for (const r of targets) {
         const raw = await call('explain', { id: r.provider_finding_id });
         if (raw) r.raw.explanation = sanitize(raw);
       }
     }
-    if (options.runRules && status.tools.includes('check_rule')) {
+    if (!options.healthOnly && options.runRules && status.tools.includes('check_rule')) {
       for (const rule of options.rules ?? INTEGRITY_RULES) {
         assertRuleAllowed(rule);
         const raw = await call('check_rule', { dataset: rule.dataset, rule: rule.rule, persist: false });
@@ -208,7 +209,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
     // A database failure must not lose real provider results, so the receipt is still written. Only the code is kept.
     let inserted = 0;
     let databaseError: string | null = null;
-    if (options.db) {
+    if (options.db && !options.healthOnly) {
       try {
         inserted = await insertQualityRows(options.db, rows);
       } catch (e) {
@@ -221,7 +222,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
     writeFileSync(receiptPath, `${JSON.stringify({
       provider: 'sodabase', provenance: client.provenance, endpoint: status.endpoint, project_ref: SODABASE_PROJECT_REF, observed_at: observedAt, scope: SCOPE_NOTE,
       quality_evidence: quality,
-      tools_discovered: status.tools, tool_calls: calls, counts, inserted_into_quality_findings: inserted, database_error: databaseError, findings: rows,
+      tools_discovered: status.tools, ...(status.catalog ? { server_catalog: status.catalog } : {}), tool_calls: calls, counts, inserted_into_quality_findings: inserted, database_error: databaseError, findings: rows,
     }, null, 2)}\n`);
     return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, quality_evidence: quality, receipt_path: receiptPath, inserted, database_error: databaseError };
   } finally {

@@ -35,15 +35,17 @@ export class SodabaseClient implements ReadToolClient {
     try {
       await client.connect(transport, { timeout: 15000 });
       let cursor: string | undefined;
+      const catalog: string[] = [];
       // Bounded pagination; an incomplete catalog never authorizes an undiscovered tool.
       for (let page = 0; page < 10; page++) {
         const result = await client.listTools(cursor ? { cursor } : {}, { timeout: 15000 });
+        catalog.push(...result.tools.map((t) => t.name));
         for (const tool of result.tools) if (READ_TOOLS.has(tool.name) || tool.name === SCAN_TOOL || tool.name === PROJECT_TOOL) this.schemas.set(tool.name, tool.inputSchema);
         cursor = result.nextCursor;
         if (!cursor) break;
       }
       this.client = client;
-      return { ...base, state: 'ready', tools: [...this.schemas.keys()], reason: 'MCP initialized and tool catalog discovered; no quality result implied.' };
+      return { ...base, state: 'ready', tools: [...this.schemas.keys()], catalog: catalog.sort(), reason: 'MCP initialized and tool catalog discovered; no quality result implied.' };
     } catch (error) {
       await client.close().catch(() => {});
       await transport.close().catch(() => {});
