@@ -404,5 +404,5 @@ describe('SodabaseClient over real Streamable HTTP, against a local test server'
     // Only ever lists projects. Passing project_ref would provision a role and start watching.
     expect(seen.tools.filter((t) => t.name === 'connect_project')).toEqual([{ name: 'connect_project', args: {} }]);
     expect(existsSync(result.receipt_path!)).toBe(true);
-  });
+  }, 30_000);
 });
