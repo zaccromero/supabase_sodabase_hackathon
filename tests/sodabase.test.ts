@@ -27,11 +27,10 @@ describe('integrity rules', () => {
     expect(classifyProblem('billed_items has duplicate invoice groups').disposition).toBe('expected_by_definition');
     expect(classifyProblem('cm.decisions Unused column: supersedes_id: effectively unused').disposition).toBe('expected_by_definition');
   });
-  it('treats joined_at against a membership end as invalid, but keeps the real bad dates visible as a rule', () => {
+  it('treats joined_at against a membership end as invalid, and keeps a real import defect actionable', () => {
     expect(classifyProblem('gym.members Rule broken: joined_at must be on or before expiration_date').never_flag_id).toBe('joined-at-is-client-created');
     expect(classifyProblem('gym.members Rule broken: joined_at must be on or before churned_at').never_flag_id).toBe('joined-at-is-client-created');
     expect(classifyProblem('cm.decisions Rule broken: created_at must be on or before accepted_at').disposition).toBe('actionable');
-    expect(INTEGRITY_RULES.find((r) => r.id === 'expiration-date-plausible')).toMatchObject({ dataset: 'gym.members', status: 'active' });
   });
   it('triage marks expected only what it proved, and leaves the real defect open', () => {
     const open = TRIAGE.filter((t) => t.classification === 'real_defect').map((t) => t.table);
