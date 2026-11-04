@@ -39,7 +39,7 @@ export async function importApproved(tx: Tx, packet = loadApprovedPacket()) {
   for (const d of bundle.decisions) {
     const { rows } = await tx.query('select id, decision_key, version, statement, source_id, status from cm.decisions where id = $1', [d.id]);
     for (const f of FIELDS) if (!rows[0] || rows[0][f] !== d[f]) throw new Error(`EXISTING_DECISION_DIFFERS:${d.decision_key}`);
-    await tx.query(`update cm.decisions set status = 'accepted', accepted_by = $2, accepted_at = $3 where id = $1 and status = 'proposed'`, [d.id, approval.approver, approval.recorded_at]);
+    await tx.query(`update cm.decisions set status = 'accepted', accepted_by = $2, accepted_at = now(), owner_approved_at = $3 where id = $1 and status = 'proposed'`, [d.id, approval.approver, approval.recorded_at]);
   }
   await tx.exec('reset role');
   return bundle.decisions.length as number;

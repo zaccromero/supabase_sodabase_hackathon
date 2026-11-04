@@ -3,7 +3,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { expect, it } from 'vitest';
 import { importApproved, loadApprovedPacket } from '../tools/import-approved';
 
-const sql = readFileSync(new URL('../supabase/migrations/001_core.sql', import.meta.url), 'utf8');
+const sql = ['001_core', '008_decision_owner_approved_at'].map((f) => readFileSync(new URL(`../supabase/migrations/${f}.sql`, import.meta.url), 'utf8')).join('\n');
 
 it('imports exactly the six approved decisions as accepted, idempotently', async () => {
   const db = new PGlite();
