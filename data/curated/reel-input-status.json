@@ -1,0 +1,9 @@
+{
+  "status": "OWNER_FILE_REQUIRED",
+  "input_path": null,
+  "rights_confirmation": null,
+  "sha256": null,
+  "extraction_status": "NOT_RUN",
+  "reason": "No owner-supplied reel file or explicit input path was present in the task attachment. No broad personal-file search or Instagram scraping performed.",
+  "next_action": "Owner supplies one allowed video file to the reel lane; that lane hashes it and records timestamped extraction as proposed techniques only."
+}

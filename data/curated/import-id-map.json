@@ -1,0 +1,37 @@
+{
+  "sources": {
+    "gym-member-contract": "9597b987-8e47-5273-bdad-55438f0a9be1",
+    "gym-membership-quality": "6371deea-575a-576a-b2ed-4f4a3d9ffa3a",
+    "gym-decisions-proposal": "948a091f-b72e-548b-91a7-e5eeb60aa55b",
+    "milo-corrected-context": "6b05ab6f-2703-50cf-bc1f-35982ce1b75d",
+    "milo-positioning": "7aa10620-8399-5b68-8807-df25bd78afcc",
+    "milo-fee-caveat": "4c248e5b-fd0d-5bd3-bab9-dff0eab16185",
+    "milo-historical-slide": "baa03e20-e80e-54eb-939b-29027675443b"
+  },
+  "decisions": {
+    "gym-active-individual": {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition"
+    },
+    "gym-freshness-completeness": {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness"
+    },
+    "milo-partner": {
+      "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "decision_key": "milo.gym_nyc_partner"
+    },
+    "milo-conditional-fee": {
+      "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+      "decision_key": "milo.fee_not_collected"
+    },
+    "milo-alpha-evidence": {
+      "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+      "decision_key": "milo.alpha_not_usage"
+    },
+    "milo-current-positioning": {
+      "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+      "decision_key": "milo.current_positioning"
+    }
+  }
+}

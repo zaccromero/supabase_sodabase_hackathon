@@ -1,0 +1,22 @@
+{
+  "id": "milo-one-slide-text",
+  "status": "proposed",
+  "distribution": "sanitized_text_only",
+  "historical_input": {
+    "source_id": "milo-historical-slide",
+    "label": "Historical draft excerpt, 2026-10-30; contains a superseded relationship claim. Not a new incident or current output.",
+    "text": "The founder\u2019s own gym: the first operations fee"
+  },
+  "task": "Revise this historical slide excerpt using accepted decisions, once founder-approved. Return only the title and body; no financial figures or usage claims.",
+  "suggested_revision": {
+    "label": "Authored candidate; not founder-accepted and not proof of a model run",
+    "title": "Start with a partner. Prove the work.",
+    "body": "Gym NYC is a partner. Milo is building organization agents for athletics operators. Demonstrate the workflow, preserve the evidence, and establish usage before claiming traction."
+  },
+  "source_ids": [
+    "milo-historical-slide",
+    "milo-corrected-context",
+    "milo-positioning"
+  ],
+  "excluded": "Full decks, financial figures, partner receipts, private histories, member records and personal identifiers are not included."
+}
