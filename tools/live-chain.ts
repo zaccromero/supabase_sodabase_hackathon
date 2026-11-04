@@ -158,7 +158,9 @@ async function gymRun() {
   }, GYM_TIMEBOX_MS);
   const report = await runAgent(db, { profile: 'gym_operator', task: GYM_TASK, binding: liveBinding(db, 'gym_operator'), onRunCreated: async (id) => { runId = id; } });
   clearTimeout(timer);
-  const output = report.attempts.at(-1)?.output_id;
+  // A later attempt can crash with no output, so compare the last attempt that actually answered.
+  const answeredAttempt = report.attempts.filter((a) => a.output_id).at(-1);
+  const output = answeredAttempt?.output_id;
   const body: any = output ? (await read(`select body from cm.outputs where id = $1`, [output]))[0].body : null;
   const expected = Object.fromEntries(recorded.locations.map((l: any) => [l.location_id, { state: l.state, active_individual_members: l.active_individual_members }]));
   const answered = Object.fromEntries((body?.answer ?? []).map((a: any) => [a.location_id, a.active_individual_members ?? null]));
@@ -166,7 +168,7 @@ async function gymRun() {
     location_id, recorded_state: e.state, recorded: e.active_individual_members, answered: answered[location_id] ?? null,
     match: e.active_individual_members === null ? null : e.active_individual_members === (answered[location_id] ?? null),
   }));
-  await writeReceipt('6-gym-operator', started, 'gym_operator', report, { compared_with: `docs/receipts/${recordedFile}`, comparison, answer_definition: body?.definition ?? null, data_as_of: body?.data_as_of ?? null, data_age_days: body?.data_age_days ?? null });
+  await writeReceipt('6-gym-operator', started, 'gym_operator', report, { compared_with: `docs/receipts/${recordedFile}`, compared_attempt_no: answeredAttempt?.attempt_no ?? null, comparison, answer_definition: body?.definition ?? null, data_as_of: body?.data_as_of ?? null, data_age_days: body?.data_age_days ?? null });
   say({ ...brief(report), comparison, definition: body?.definition, data_as_of: body?.data_as_of, data_age_days: body?.data_age_days });
 }
 

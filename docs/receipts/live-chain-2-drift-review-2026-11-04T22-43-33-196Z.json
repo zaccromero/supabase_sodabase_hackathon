@@ -1,0 +1,282 @@
+{
+  "step": "2-drift-review",
+  "environment": "hosted Supabase, project dgqcanfiapxztmqqlqnh",
+  "transport": "hermes_oauth",
+  "source_head": "75cf9446916a78342570d54c70d86d21b953eeb3",
+  "source_clean": true,
+  "started": "2026-11-04T22:43:33.196Z",
+  "finished": "2026-11-04T22:43:43.375Z",
+  "accepted_for_profile": [
+    "gym.active_individual_definition@1",
+    "gym.freshness_completeness@1",
+    "milo.alpha_not_usage@1",
+    "milo.current_positioning@1",
+    "milo.fee_not_collected@1",
+    "milo.gym_nyc_partner@1"
+  ],
+  "run_id": "6bedd90b-433d-4ced-af55-4d0b715edd43",
+  "memory_mode": "on",
+  "status": "completed",
+  "failure_reason": null,
+  "contract_sha256": "a8c0b93bc7e98726d031fe4b9fe2d0ee1bf7e0e02708b2abf5aade2e5543b06b",
+  "pinned": [
+    {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    },
+    {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    },
+    {
+      "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+      "decision_key": "milo.alpha_not_usage",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    },
+    {
+      "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+      "decision_key": "milo.current_positioning",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    },
+    {
+      "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+      "decision_key": "milo.fee_not_collected",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    },
+    {
+      "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "decision_key": "milo.gym_nyc_partner",
+      "version": 1,
+      "status": "accepted",
+      "accepted_at": "2026-11-04T21:39:16.437Z",
+      "pinned_at": "2026-11-04T22:43:33.352Z"
+    }
+  ],
+  "outputs": [
+    {
+      "id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "attempt_no": 1,
+      "kind": "initial",
+      "output_sha256": "9b3e73e76b7c37c37f248e1abecb3429a25b39171e40bb968caf214c44cf0b50",
+      "body": {
+        "findings": [
+          {
+            "excerpt": "The founder’s own gym: the first operations fee",
+            "decision_id": "0cb43524-2f09-5427-89cb-67614535bee0",
+            "explanation": "The output describes Gym NYC as the founder’s own gym, contradicting the pinned decision that it is a partner and equity ownership is unconfirmed.",
+            "decision_key": "milo.gym_nyc_partner",
+            "proposed_repair": "Replace “The founder’s own gym” with “Gym NYC, a partner”.",
+            "decision_version": 1,
+            "target_output_id": "8ec80503-84a1-44a5-8d23-2c17117be899"
+          }
+        ],
+        "proposed_only": true,
+        "target_output_id": "8ec80503-84a1-44a5-8d23-2c17117be899",
+        "decisions_reviewed": [
+          {
+            "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+            "version": 1,
+            "decision_key": "gym.active_individual_definition"
+          },
+          {
+            "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+            "version": 1,
+            "decision_key": "gym.freshness_completeness"
+          },
+          {
+            "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+            "version": 1,
+            "decision_key": "milo.alpha_not_usage"
+          },
+          {
+            "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+            "version": 1,
+            "decision_key": "milo.current_positioning"
+          },
+          {
+            "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+            "version": 1,
+            "decision_key": "milo.fee_not_collected"
+          },
+          {
+            "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+            "version": 1,
+            "decision_key": "milo.gym_nyc_partner"
+          }
+        ]
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "6429bb7c-3ad4-4f5f-aa7f-87cf3cbf2383",
+      "output_id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "kind": "hermes_transport",
+      "sha256": "de72c28e047ee0b50351bb322fbff7de6deac556fe9b8f299f1d3ff9a5245502",
+      "payload": {
+        "purpose": "generation",
+        "receipt": {
+          "state": "RECEIVED",
+          "profile": "existing Hermes profile; fresh task only",
+          "turn_id": "01a1a8bb-68aa-76a2-b16d-00a7a66f1408",
+          "api_mode": "codex_app_server",
+          "provider": "openai-codex",
+          "isolation": {
+            "use_memories": false,
+            "generate_memories": false,
+            "thread_memory_mode": "disabled"
+          },
+          "thread_id": "01a1a8bb-6652-70f2-ab59-ceca832af6fa",
+          "transport": "hermes_codex_app_server",
+          "started_at": "2026-11-04T22:43:34.345896+00:00",
+          "finished_at": "2026-11-04T22:43:42.136390+00:00",
+          "model_turns": 1,
+          "soul_loaded": false,
+          "token_usage": {
+            "inputTokens": 27586,
+            "totalTokens": 27688,
+            "outputTokens": 102,
+            "cachedInputTokens": 8448,
+            "cacheWriteInputTokens": 0,
+            "reasoningOutputTokens": 0
+          },
+          "guard_bypass": false,
+          "input_sha256": "ce318ed71e1314a97af6947e678ffccf86ddbefe58c7fd64d1d79b6876ebc249",
+          "served_model": "gpt-6.1-sol",
+          "tools_policy": "none",
+          "fallback_used": false,
+          "memory_loaded": false,
+          "model_provider": "openai",
+          "no_tools_scope": {
+            "profile_id": "hermes-no-tools-80f0d5e9cbb142cd843c6428dac20b6f",
+            "tool_policy": "none",
+            "max_authorized_actions": 0
+          },
+          "requested_model": "gpt-6.1-sol",
+          "tool_iterations": 0,
+          "background_review": false,
+          "credential_exported": false,
+          "private_history_loaded": false
+        }
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "100138d6-9757-4d0f-80e3-bf138e7ae017",
+      "output_id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "kind": "model_run",
+      "sha256": "138fdac9d4fb56642d409d86a57f12f44e27157d87c4521879b995c1e3bdd1f9",
+      "payload": {
+        "calls": 1,
+        "served_by": [
+          "gpt-6.1-sol"
+        ],
+        "transport": "hermes_oauth",
+        "input_tokens": 27586,
+        "output_tokens": 102,
+        "requested_model": "gpt-6.1-sol",
+        "pinned_decision_ids": [
+          "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+          "d1b6100d-6cce-5d8a-9381-13d42475a204",
+          "62485fdb-c225-50cb-8bc7-c7976717d72c",
+          "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+          "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+          "0cb43524-2f09-5427-89cb-67614535bee0"
+        ],
+        "declared_agent_model": "claude-sonnet-5-5",
+        "system_prompt_sha256": "f828ddc4818d5b616976462565bdb1580a436994cb2aee7c12953a4ef203c42d",
+        "requested_model_source": "hermes_transport"
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "e2963d65-7ecc-4966-922b-0fdc79439451",
+      "output_id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "kind": "drift_review",
+      "sha256": "ed7f492dd00c9bfc99f1ba8352f3fabfba2fd122b5e432e02def8229dd18f167",
+      "payload": {
+        "candidate_count": 1,
+        "rejected_findings": [],
+        "target_output_sha256": "2dfbe0fc39e76e29161ab6951275db6b992162a0e19fca1f58d60b47a422d641"
+      },
+      "created_by": "agent_worker"
+    },
+    {
+      "id": "ff98718f-4a2e-4e8c-823f-6083871115f4",
+      "output_id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "kind": "behavioral_evaluation",
+      "sha256": "9188671482c27f8ec16b0c6a4ad251e13fddea93c83e241f7a85b9ce65c20cd4",
+      "payload": {
+        "reason": "1 finding(s) cite pinned decisions and real excerpts",
+        "verdict": "pass",
+        "check_id": "drift.findings_cited",
+        "failures": [],
+        "findings": 1,
+        "evaluator": "det.drift_findings",
+        "output_sha256": "9b3e73e76b7c37c37f248e1abecb3429a25b39171e40bb968caf214c44cf0b50",
+        "contract_sha256": "a8c0b93bc7e98726d031fe4b9fe2d0ee1bf7e0e02708b2abf5aade2e5543b06b",
+        "evaluator_version": "1",
+        "verified_excerpts": 1
+      },
+      "created_by": "det.drift_findings"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "e75eaf73-3c21-4c66-8280-a2bf33e98465",
+      "attempt_id": "e2677aa7-ef75-4c1e-a384-0cdaad8612de",
+      "output_id": "87617a30-15d4-4d06-83f4-4cd8ef886cb1",
+      "check_id": "drift.findings_cited",
+      "verdict": "pass",
+      "reason": "1 finding(s) cite pinned decisions and real excerpts",
+      "evaluator": "det.drift_findings",
+      "evaluator_version": "1",
+      "evidence_id": "ff98718f-4a2e-4e8c-823f-6083871115f4",
+      "output_sha256": "9b3e73e76b7c37c37f248e1abecb3429a25b39171e40bb968caf214c44cf0b50",
+      "contract_sha256": "a8c0b93bc7e98726d031fe4b9fe2d0ee1bf7e0e02708b2abf5aade2e5543b06b"
+    }
+  ],
+  "gate_decisions": [
+    {
+      "verdict": "completed",
+      "missing": [],
+      "attempt_id": "e2677aa7-ef75-4c1e-a384-0cdaad8612de",
+      "created_at": "2026-11-04T22:43:42.912Z"
+    }
+  ],
+  "attempt_errors": [
+    {
+      "attempt_no": 1,
+      "handler_error": null,
+      "evaluator_errors": []
+    }
+  ],
+  "target_output_id": "8ec80503-84a1-44a5-8d23-2c17117be899",
+  "findings": [
+    {
+      "id": "a5eed242-e26e-456a-8959-d6d0e26ff0fc",
+      "decision_id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "excerpt": "The founder’s own gym: the first operations fee",
+      "explanation": "The output describes Gym NYC as the founder’s own gym, contradicting the pinned decision that it is a partner and equity ownership is unconfirmed.",
+      "proposed_repair": "Replace “The founder’s own gym” with “Gym NYC, a partner”.",
+      "status": "open"
+    }
+  ]
+}

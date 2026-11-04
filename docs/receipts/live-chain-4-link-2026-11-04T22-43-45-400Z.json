@@ -1,0 +1,32 @@
+{
+  "step": "4-link",
+  "environment": "hosted Supabase, project dgqcanfiapxztmqqlqnh",
+  "transport": "hermes_oauth",
+  "source_head": "75cf9446916a78342570d54c70d86d21b953eeb3",
+  "source_clean": true,
+  "started": "2026-11-04T22:43:45.400Z",
+  "finished": "2026-11-04T22:43:45.794Z",
+  "accepted_for_profile": [
+    "milo.alpha_not_usage@1",
+    "milo.current_positioning@1",
+    "milo.fee_not_collected@1",
+    "milo.gym_nyc_partner@1"
+  ],
+  "linked": true,
+  "finding_id": "a5eed242-e26e-456a-8959-d6d0e26ff0fc",
+  "finding_chain": {
+    "status": "corrected",
+    "decision_key": "milo.gym_nyc_partner",
+    "decision_version": 1,
+    "excerpt": "The founder’s own gym: the first operations fee",
+    "correction_decision_id": "0cb43524-2f09-5427-89cb-67614535bee0",
+    "verifying_run_id": null
+  },
+  "decision_versions": [
+    {
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero"
+    }
+  ]
+}
