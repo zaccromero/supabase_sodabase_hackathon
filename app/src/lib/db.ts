@@ -7,7 +7,7 @@ import { Pool } from 'pg';
 import { SUPABASE_CA } from './supabase-ca';
 
 export type DbMode = 'live' | 'local' | 'none';
-export type AppRole = 'dashboard_reader' | 'founder_approver';
+export type AppRole = 'dashboard_reader' | 'founder_approver' | 'coord_writer';
 
 export interface Tx {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -53,7 +53,7 @@ function livePool(): Pool {
 
 export async function withRole<T>(role: AppRole, fn: (tx: Tx) => Promise<T>): Promise<T> {
   const readOnly = role === 'dashboard_reader';
-  if (!readOnly && !founderWritesAllowed()) throw Object.assign(new Error('read-only'), { code: 'HOSTED_READ_ONLY' });
+  if (role === 'founder_approver' && !founderWritesAllowed()) throw Object.assign(new Error('read-only'), { code: 'HOSTED_READ_ONLY' });
   if (dbMode() === 'none') throw Object.assign(new Error('no database'), { code: 'NO_DATABASE' });
   if (dbMode() === 'live') {
     const client = await livePool().connect();
