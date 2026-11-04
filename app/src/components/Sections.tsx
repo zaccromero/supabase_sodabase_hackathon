@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { acceptDecision, approveEvaluation } from '@/app/actions';
-import { FounderButton } from '@/components/FounderButton';
-import { founderWritesAllowed } from '@/lib/db';
+import { FounderAction } from '@/components/FounderAction';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
 import { countedEvaluationIds, historicalLabel, isReplayRun, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type Records, type RunRow, type SourceFreshness } from '@/lib/records';
 import { presentQuality, QUALITY_GROUP_ORDER } from '@/lib/sodabase-presentation';
@@ -50,7 +49,7 @@ export function Decisions({ r, tag }: { r: Records; tag: ReactNode }) {
                     {s?.historical ? <span className="flag">historical</span> : null}
                     {s ? <span>captured {ago(s.captured_at, r.readAt)}</span> : null}
                   </p>
-                  {d.status === 'proposed' ? <FounderButton action={acceptDecision} id={d.id} label="Accept this decision" readOnly={!founderWritesAllowed()} /> : null}
+                  {d.status === 'proposed' ? <FounderAction action={acceptDecision} id={d.id} label="Accept this decision" /> : null}
                 </li>
               );
             })}
@@ -84,6 +83,9 @@ function GymAnswer({ r, run }: { r: Records; run: RunRow }) {
   return (
     <div className="agent-body">
       <p className="agent-task">{run.task}</p>
+      {run.status !== 'completed' ? (
+        <p className="flag-line"><span className="flag">not accepted</span> The gate refused this answer. These are what the agent reported, not a result.</p>
+      ) : null}
       <div className="figures">
         {figures.slice(0, 8).map((f) => (
           <div key={f.key} className="figure">
@@ -131,6 +133,60 @@ const lineage = (r: RunRow) => [
   r.technique_id ? 'reel technique' : null,
 ].filter(Boolean).join(', ');
 
+// From the governor's review of how each run was produced. Records do not carry this yet.
+const RUN_NOTES: Array<[string, string]> = [['70e040f6', 'Run on an earlier prompt that carried the rule.']];
+const runNote = (runId: string) => RUN_NOTES.find(([prefix]) => runId.startsWith(prefix))?.[1] ?? null;
+
+/** Every gate verdict on a run, oldest first, with its reasons, as recorded. */
+function GateAttempts({ r, run }: { r: Records; run: RunRow }) {
+  const gates = r.gates.filter((g) => g.run_id === run.run_id && g.verdict !== 'completed').reverse();
+  if (gates.length === 0) return null;
+  const attemptNo = (id: string | null) => r.attempts.find((a) => a.id === id)?.attempt_no ?? '?';
+  return (
+    <ul className="gate-attempts">
+      {gates.map((g) => (
+        <li key={g.id}>
+          <span className="gate-attempt">Attempt {attemptNo(g.attempt_id)}: gate {g.verdict.replaceAll('_', ' ')}</span>
+          {g.missing.map((m, i) => <span key={i} className="gate-reason">{m.check_id ? `${m.check_id}: ` : ''}{reasonText(m.reason)}</span>)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A completed gate can sit beside a failed check that was not required. That disagreement is evidence. */
+function Disagreement({ r, run }: { r: Records; run: RunRow }) {
+  if (run.status !== 'completed') return null;
+  const failed = r.evaluations.filter((e) => e.attempt_id === run.attempt_id && e.verdict === 'fail');
+  if (failed.length === 0) return null;
+  return (
+    <div className="disagreement">
+      <p className="flag-line"><span className="flag">not fully clean</span> The gate completed, but a check that was not required failed.</p>
+      {failed.map((e) => <p key={e.id} className="eval-reason"><span className="eval-check">{e.check_id}</span> {e.reason}</p>)}
+    </div>
+  );
+}
+
+function GymCard({ r, run }: { r: Records; run: RunRow }) {
+  const earlier = r.runs.find((x) => x.profile === 'gym_operator' && x.run_id !== run.run_id && x.status === 'completed' && x.memory_mode === 'on');
+  return (
+    <>
+      <p className="kicker gym-latest">Latest run, {short(run.run_id, 8)}</p>
+      <GymAnswer r={r} run={run} />
+      <GateAttempts r={r} run={run} />
+      <Disagreement r={r} run={run} />
+      {earlier ? (
+        <div className="gym-earlier">
+          <p className="kicker">Earlier completed run, {short(earlier.run_id, 8)}, not the current result</p>
+          {runNote(earlier.run_id) ? <p className="flag-line"><span className="flag">earlier prompt</span> {runNote(earlier.run_id)}</p> : null}
+          <GymAnswer r={r} run={earlier} />
+          <Disagreement r={r} run={earlier} />
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function AgentCard({ r, profile, children }: { r: Records; profile: string; children: (run: RunRow) => ReactNode }) {
   const runs = r.runs.filter((x) => x.profile === profile);
   const run = runs.find((x) => x.status !== 'pending' && !x.technique_id && x.memory_mode === 'on') ?? runs[0];
@@ -159,7 +215,7 @@ export function Agents({ r, tag }: { r: Records; tag: ReactNode }) {
     <section aria-labelledby="q-agents">
       <Head id="q-agents" question="What is each agent doing?" age={newest(r.runs.map((x) => x.completed_at ?? x.created_at))} now={r.readAt} tag={tag} />
       <div className="agents">
-        <AgentCard r={r} profile="gym_operator">{(run) => <GymAnswer r={r} run={run} />}</AgentCard>
+        <AgentCard r={r} profile="gym_operator">{(run) => <GymCard r={r} run={run} />}</AgentCard>
         <AgentCard r={r} profile="milo_pitch">{(run) => <SlideRevision r={r} run={run} />}</AgentCard>
         <AgentCard r={r} profile="drift_reviewer">{(run) => {
           // The runner stores this agent's task as JSON holding the whole target output, so it is not displayed.
@@ -218,6 +274,9 @@ export function Agents({ r, tag }: { r: Records; tag: ReactNode }) {
                     <span>{isReplayRun(r, x.run_id) ? 'not model-generated' : servedModel(r, x.run_id) ?? 'model not recorded'}</span>
                     <span>{et(x.created_at)}</span>
                   </p>
+                  {runNote(x.run_id) ? <p className="meta"><span className="flag">earlier prompt</span></p> : null}
+                  <GateAttempts r={r} run={x} />
+                  {x.status === 'completed' && r.evaluations.some((e) => e.attempt_id === x.attempt_id && e.verdict === 'fail') ? <p className="meta"><span className="flag">not fully clean</span></p> : null}
                 </div>
               </li>
             ))}
@@ -288,7 +347,7 @@ export function Evidence({ r, tag }: { r: Records; tag: ReactNode }) {
                   <div className="eval-main">
                     <p className="eval-check">{e.check_id}</p>
                     <p className="eval-reason">{e.reason}</p>
-                    {waitsOnFounder(e) ? <FounderButton action={approveEvaluation} id={e.id} label="Approve this evaluation" readOnly={!founderWritesAllowed()} /> : null}
+                    {waitsOnFounder(e) ? <FounderAction action={approveEvaluation} id={e.id} label="Approve this evaluation" /> : null}
                     {approval ? <p className="meta"><span>{approval.decision} by {approval.approver}, {ago(approval.created_at, r.readAt)}{run?.status === 'awaiting_approval' ? '. Waiting for the runner to call the gate again.' : '.'}</span></p> : null}
                   </div>
                   <p className="meta eval-binding">

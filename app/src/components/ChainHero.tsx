@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { acceptDecision } from '@/app/actions';
-import { FounderButton } from '@/components/FounderButton';
-import { founderWritesAllowed } from '@/lib/db';
+import { FounderAction } from '@/components/FounderAction';
 import { servedModel, type Chain, type EvaluationRow, type Records } from '@/lib/records';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
 
@@ -134,7 +133,7 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
                     : chain.conflictRun?.memory_mode === 'baseline' ? 'none, a memory-off baseline gets no repairs' : 'no repair attempt recorded'],
                   ...(chain.repairAttempt ? [['output', short(chain.repairAttempt.output_sha256)] as [string, string]] : []),
                 ]} />
-                {chain.correction?.status === 'proposed' ? <FounderButton action={acceptDecision} id={chain.correction.id} label="Accept this correction" readOnly={!founderWritesAllowed()} /> : null}
+                {chain.correction?.status === 'proposed' ? <FounderAction action={acceptDecision} id={chain.correction.id} label="Accept this correction" /> : null}
               </>
             ) : <NotYet>Proposed repair: {chain.row.proposed_repair}. Nothing has acted on it yet.</NotYet>}
           </Step>
