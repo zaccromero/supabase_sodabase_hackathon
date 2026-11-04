@@ -19,8 +19,12 @@ async function boot(): Promise<PGlite> {
   const db = new PGlite();
   const dir = migrationsDir();
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
-    await db.exec(readFileSync(join(dir, file), 'utf8'));
+    const sql = readFileSync(join(dir, file), 'utf8');
+    // Sodabase's reader role exists only on the hosted database. Migrations grant to it.
+    for (const role of new Set(sql.match(/\bsoda_readonly_\w+/g) ?? [])) await db.exec(`create role ${role} nologin`);
+    await db.exec(sql);
   }
+  await db.exec(readFileSync(join(dir, '..', '..', existsSync(join(dir, '..', '..', 'app')) ? 'app/sql/coord.sql' : 'sql/coord.sql'), 'utf8'));
   // LOCAL_DB_ROWS=none leaves only the schema, to inspect the empty states.
   if (process.env.LOCAL_DB_ROWS !== 'none') await writeLocalTestRows(db);
   return db;
