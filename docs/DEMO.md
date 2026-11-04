@@ -56,9 +56,11 @@ Timings are cumulative. Twenty seconds a beat leaves no spare time, so cut words
 *If it has not run:* "This run has not happened. The excerpt is historical input and nothing has revised it yet."
 
 ### 1:05 Beat 4: reviewer conflict
-**Show:** "Where did it drift?", then click the finding. Step 2 of the chain shows the quoted excerpt, the decision it conflicts with, and whether the run had memory off.
+**Show:** "Where did it drift?" and step 2 of the chain: the quoted excerpt, the decision it conflicts with, and the **historical replay** label.
 
-**Say:** "Run it with memory off and see what the agent does on its own. An independent reviewer reads that output against what I decided. It has to quote the exact words, and it names the decision they conflict with. It cannot fix or accept anything."
+**Say:** "This is that old line, replayed through the normal checks. It is labeled a replay because no model wrote it tonight. An independent reviewer reads it against what I decided. It has to quote the exact words, and it names the decision they conflict with. It cannot fix or accept anything."
+
+**Do not say** an agent drifted just now, or that this was the memory-off agent. The board says "not model-generated", so match it.
 
 *If the output did not drift:* say that. "This run did not drift, so there is no finding to show, and I am not going to stage one." Then go to beat 8.
 
@@ -70,18 +72,20 @@ Timings are cumulative. Twenty seconds a beat leaves no spare time, so cut words
 *If it has not run:* "The chain shows no rejection for this output, so I cannot claim one."
 
 ### 1:45 Beat 6: repair and correction
-**Show:** step 4, the corrected decision and its version. If it is still proposed, click **Accept this correction** on stage. That button is only on the local dashboard, because the hosted page is read-only.
+**Show:** step 4, the reviewer's proposed repair and the decision it points to.
 
-**Say:** "The reviewer proposes a correction, a new version of the decision. It waits for me. I accept it, and now it is company memory instead of something I have to say again tomorrow."
+**Say, if step 4 says "accepted before this check, no new version":** "The reviewer proposes the repair and cannot apply it. My correction was already accepted as a decision, so it did not have to change. It is company memory instead of something I have to say again tomorrow."
 
-**If step 4 shows a repair attempt, add:** "A repair is a new attempt, so every earlier pass stops counting." A memory-off baseline gets no repairs, because repair notes would hand it the decision. Step 4 says so, and that is correct.
+**Say, if step 4 shows a new version still proposed:** "It waits for me." Click **Accept this correction**. That button is only on the local dashboard, because the hosted page is read-only.
+
+**If step 4 shows a repair attempt, add:** "A repair is a new attempt, so every earlier pass stops counting." A replay or a memory-off baseline gets no repairs, and step 4 says so.
 
 *If it has not run:* "No repair or correction is recorded yet."
 
 ### 2:05 Beat 7: a fresh run follows it
 **Show:** step 5 and the headline. **This is the moment. Stop and let them read it.**
 
-**Say:** "This is a new run with a fresh start. Nobody told it about the mistake. It pinned the corrected decision, it passed the gate, and I did not have to repeat myself."
+**Say:** "This is a real model run with a fresh start: [read the model off the screen]. It got no repair notes. It pinned my decision, it revised that same line, it passed the gate, and I did not have to repeat myself."
 
 Say "Yes" only if the hero says **Yes**. The hero says it only when the finding is verified, the verifying run is a different run, it completed, and it pinned the correction.
 

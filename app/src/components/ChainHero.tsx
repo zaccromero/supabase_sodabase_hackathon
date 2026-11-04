@@ -50,6 +50,12 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
       <div className="hero-head">
         <h2 id="q-correction" className="question">Did the correction work? {label}</h2>
         <p className={h.yes ? 'answer yes' : 'answer'}><em>{h.lead}</em> {h.rest}</p>
+        {chain?.conflictIsReplay ? (
+          <p className="flag-line hero-flag">
+            <span className="flag">historical replay</span>
+            The conflict is a labeled replay of an old slide line, not new model output. {chain.freshRun ? 'The fresh run is a real model run.' : ''}
+          </p>
+        ) : null}
       </div>
 
       {!chain ? (
@@ -68,12 +74,13 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
 
           <Step n="2" label="Conflicting output" reached={!!chain.conflictAttempt}>
             <blockquote className="excerpt">“{chain.row.excerpt}”</blockquote>
-            {chain.conflictIsHistoricalInput ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a new incident.</p> : null}
+            {chain.conflictIsReplay ? <p className="flag-line"><span className="flag">historical replay</span> Not a model output.</p>
+              : chain.conflictIsHistoricalInput ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a new incident.</p> : null}
             <p className="step-note">{chain.row.explanation}</p>
             <Binding items={[
-              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}${chain.conflictRun.memory_mode === 'baseline' ? ', memory off' : ''}` : 'not readable'],
+              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}${chain.conflictIsReplay ? ', replay' : chain.conflictRun.memory_mode === 'baseline' ? ', memory off' : ''}` : 'not readable'],
               ['attempt', chain.conflictAttempt ? `${chain.conflictAttempt.attempt_no}, ${chain.conflictAttempt.kind}` : 'not readable'],
-              ['model', servedModel(records, chain.conflictRun?.run_id) ?? 'not recorded'],
+              ['model', chain.conflictIsReplay ? 'none, not model-generated' : servedModel(records, chain.conflictRun?.run_id) ?? 'not recorded'],
               ['output', short(chain.conflictAttempt?.output_sha256)],
             ]} />
           </Step>
@@ -94,11 +101,14 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
           <Step n="4" label="Repair and correction" reached={!!chain.repairAttempt || !!chain.correction}>
             {chain.repairAttempt || chain.correction ? (
               <>
-                {chain.correction ? <p className="step-lead">{chain.correction.statement}</p> : <p className="step-note">{chain.row.proposed_repair}</p>}
+                {chain.correction && chain.correctionIsNewVersion ? <p className="step-lead">{chain.correction.statement}</p> : <p className="step-lead">{chain.row.proposed_repair}</p>}
                 <Binding items={[
-                  ...(chain.correction ? [['correction', `${chain.correction.decision_key} v${chain.correction.version}, ${chain.correction.status}`] as [string, string]] : []),
+                  ...(chain.correction ? [['correction', chain.correctionIsNewVersion
+                    ? `${chain.correction.decision_key} v${chain.correction.version}, ${chain.correction.status}`
+                    : `${chain.correction.decision_key} v${chain.correction.version}, accepted before this check, no new version`] as [string, string]] : []),
                   ['repair', chain.repairAttempt
                     ? `attempt ${chain.repairAttempt.attempt_no}, gate ${chain.repairGate?.verdict ?? 'not called'}`
+                    : chain.conflictIsReplay ? 'none, a replay is not repaired'
                     : chain.conflictRun?.memory_mode === 'baseline' ? 'none, a memory-off baseline gets no repairs' : 'no repair attempt recorded'],
                   ...(chain.repairAttempt ? [['output', short(chain.repairAttempt.output_sha256)] as [string, string]] : []),
                 ]} />

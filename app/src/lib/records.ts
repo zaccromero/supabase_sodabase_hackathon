@@ -117,6 +117,14 @@ export function servedModel(r: Records, runId: string | null | undefined): strin
   return models.size ? [...models].join(', ') : null;
 }
 
+/** A replayed historical line goes through the normal checks, but no model wrote it. */
+export function isReplay(body: Record<string, unknown> | null | undefined): boolean {
+  const p = body?.provenance as { kind?: unknown; model_generated?: unknown } | undefined;
+  return p?.kind === 'historical_replay' || p?.model_generated === false;
+}
+export const isReplayRun = (r: Records, runId: string | null | undefined) =>
+  r.attempts.some((a) => a.run_id === runId && isReplay(a.body));
+
 /** The label the Milo handler records in evidence when its input is a historical excerpt. */
 export const historicalLabel = (r: Records, outputId: string | null | undefined): string | null =>
   r.evidence.find((e) => e.output_id === outputId && e.historical_label)?.historical_label ?? null;
@@ -135,6 +143,8 @@ export interface Chain {
   conflictAttempt: AttemptRow | null;
   conflictRun: RunRow | null;
   conflictIsHistoricalInput: boolean;
+  conflictIsReplay: boolean;
+  correctionIsNewVersion: boolean;
   failedEvaluation: EvaluationRow | null;
   rejection: GateRow | null;
   repairAttempt: AttemptRow | null;
@@ -177,7 +187,9 @@ export function buildChain(r: Records, row: ChainRow): Chain {
   const freshGate = freshRun ? r.gates.find((g) => g.run_id === freshRun.run_id) ?? null : null;
   const proven = row.status === 'verified' && freshIsNewRun && freshRun?.status === 'completed' && freshPinsCorrection;
   const conflictIsHistoricalInput = !!historicalLabel(r, row.target_output_id) && quotesOnlyInput(conflictAttempt?.body, row.excerpt);
-  return { row, decision, source, conflictAttempt, conflictRun, conflictIsHistoricalInput, failedEvaluation, rejection, repairAttempt, repairEvaluation, repairGate, correction, freshRun, freshIsNewRun, freshPinsCorrection, freshEvaluations, freshGate, proven };
+  const conflictIsReplay = isReplay(conflictAttempt?.body);
+  const correctionIsNewVersion = !!correction && correction.id !== decision?.id;
+  return { row, decision, source, conflictAttempt, conflictRun, conflictIsHistoricalInput, conflictIsReplay, correctionIsNewVersion, failedEvaluation, rejection, repairAttempt, repairEvaluation, repairGate, correction, freshRun, freshIsNewRun, freshPinsCorrection, freshEvaluations, freshGate, proven };
 }
 
 export function newest(dates: Array<Date | null | undefined>): Date | null {

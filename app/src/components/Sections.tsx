@@ -4,7 +4,7 @@ import { acceptDecision, approveEvaluation } from '@/app/actions';
 import { FounderButton } from '@/components/FounderButton';
 import { founderWritesAllowed } from '@/lib/db';
 import { ago, et, profileName, reasonText, short } from '@/lib/format';
-import { countedEvaluationIds, historicalLabel, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type QualityRow, type Records, type RunRow } from '@/lib/records';
+import { countedEvaluationIds, historicalLabel, isReplayRun, newest, servedModel, type AttemptRow, type ChainRow, type EvaluationRow, type QualityRow, type Records, type RunRow } from '@/lib/records';
 
 function Head({ id, question, age, now, tag }: { id: string; question: string; age: Date | null; now: Date; tag: ReactNode }) {
   return (
@@ -211,10 +211,10 @@ export function Agents({ r, tag }: { r: Records; tag: ReactNode }) {
                 <div>
                   <p className="run-title">{profileName(x.profile)} <span className="run-id">{short(x.run_id, 8)}</span></p>
                   <p className="meta">
-                    <span>{x.memory_mode === 'baseline' ? 'memory off, baseline' : 'memory on'}</span>
+                    {isReplayRun(r, x.run_id) ? <span className="flag">historical replay</span> : <span>{x.memory_mode === 'baseline' ? 'memory off, baseline' : 'memory on'}</span>}
                     {x.technique_id ? <span>reel technique</span> : null}
                     <span>attempt {x.attempt_no ?? 'none'}</span>
-                    <span>{servedModel(r, x.run_id) ?? 'model not recorded'}</span>
+                    <span>{isReplayRun(r, x.run_id) ? 'not model-generated' : servedModel(r, x.run_id) ?? 'model not recorded'}</span>
                     <span>{et(x.created_at)}</span>
                   </p>
                 </div>
@@ -291,7 +291,7 @@ export function Evidence({ r, tag }: { r: Records; tag: ReactNode }) {
                     {approval ? <p className="meta"><span>{approval.decision} by {approval.approver}, {ago(approval.created_at, r.readAt)}{run?.status === 'awaiting_approval' ? '. Waiting for the runner to call the gate again.' : '.'}</span></p> : null}
                   </div>
                   <p className="meta eval-binding">
-                    <span>{run ? profileName(run.profile) : 'run not readable'}, {e.evaluator} v{e.evaluator_version}</span>
+                    <span>{run ? profileName(run.profile) : 'run not readable'}{isReplayRun(r, e.run_id) ? ' (historical replay)' : ''}, {e.evaluator} v{e.evaluator_version}</span>
                     <span>output {short(e.output_sha256)}</span>
                     <span>{ev ? `evidence ${ev.kind}${ev.sha256 ? ` ${short(ev.sha256)}` : ''}` : 'no evidence attached'}</span>
                     <span>{current ? `${ago(e.created_at, r.readAt)}` : 'superseded, gate no longer counts it'}</span>
