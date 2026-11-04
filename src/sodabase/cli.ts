@@ -1,5 +1,6 @@
 // Run under Doppler so the token stays out of the shell:
 //   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts status
+//   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts probe
 //   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts scan
 //   doppler run --project hackathon --config dev -- tsx src/sodabase/cli.ts pull --rules
 // pull writes to cm.quality_findings when SUPABASE_DB_URL is set, and always writes a dated receipt on a ready connection.
@@ -15,6 +16,11 @@ if (command === 'status') {
   const status = await client.connect();
   console.log(JSON.stringify({ ...status, project_ref: SODABASE_PROJECT_REF, project_listed: status.state === 'ready' ? await client.verifyProject() : null }, null, 2));
   await client.close();
+} else if (command === 'probe') {
+  // Read-only: tool discovery and data_trust_health, bound to the event project. No database.
+  const result = await pullFindings(client, { healthOnly: true });
+  console.log(JSON.stringify({ state: result.status.state, reason: result.status.reason, provenance: result.provenance, project_ref: SODABASE_PROJECT_REF, tools: result.status.tools, catalog: result.status.catalog, quality_evidence: result.quality_evidence, counts: result.counts, receipt: result.receipt_path }, null, 2));
+  if (result.status.state !== 'ready') process.exitCode = 3;
 } else if (command === 'scan') {
   const status = await client.connect();
   if (status.state !== 'ready' || !(await client.verifyProject())) { console.log(JSON.stringify({ ...status, project_ref: SODABASE_PROJECT_REF }, null, 2)); process.exitCode = 3; }
