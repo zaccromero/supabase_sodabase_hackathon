@@ -14,13 +14,17 @@ const record: Record<string, unknown> = {};
 const save = () => { if (process.env.AGENTS_LIVE_RECORD) writeFileSync(process.env.AGENTS_LIVE_RECORD, JSON.stringify(record, null, 2)); };
 const base = { runId: 'live-check', attemptNo: 1 };
 
-// Real statement from the source packet. Its status there is `proposed`: this exercises the
-// reviewer, and is not a founder acceptance. Only the runner pins accepted decisions.
-const PACKET_DECISIONS = '/Users/zaccromero/Documents/Codex/2026-11-04/hackathon-sources/outputs/source-packet/data/curated/decisions.proposed.json';
-function proposedMiloPartner(): PinnedDecision {
-  const all = JSON.parse(readFileSync(PACKET_DECISIONS, 'utf8')) as Array<{ id: string; version: number; statement: string; status: string; source_id: string }>;
-  const found = all.find((d) => d.id === 'milo-partner')!;
-  return { id: found.id, decision_key: found.id, version: found.version, statement: found.statement, source_uri: found.source_id, source_historical: false };
+// Real decision rows from the owner-approved import bundle. Their database acceptance is still
+// pending, so this exercises the handlers with them. It does not record an acceptance: only the
+// runner pins accepted decisions, and only founder_approver accepts.
+function approvedBundleDecision(key: string): PinnedDecision {
+  const { sources, decisions } = JSON.parse(readFileSync(new URL('../data/curated/import.contract.json', import.meta.url), 'utf8')) as {
+    sources: Array<{ id: string; uri: string; historical: boolean }>;
+    decisions: Array<{ id: string; decision_key: string; version: number; statement: string; source_id: string }>;
+  };
+  const found = decisions.find((d) => d.decision_key === key)!;
+  const source = sources.find((candidate) => candidate.id === found.source_id)!;
+  return { id: found.id, decision_key: found.decision_key, version: found.version, statement: found.statement, source_uri: source.uri, source_historical: source.historical };
 }
 
 async function emptyGymShapes() {
@@ -45,10 +49,23 @@ describe.runIf(live)('live model calls', () => {
     expect(String(miloResult.body.after)).not.toMatch(/\$\s?\d/);
   }, 240_000);
 
+  it('milo_pitch with the partner decision pinned', async () => {
+    const pinned = await createHandlers().milo_pitch({
+      ...base,
+      task: 'Revise this slide excerpt so a first-time investor reader understands how Milo reaches its first customer.',
+      decisions: [approvedBundleDecision('milo.gym_nyc_partner')],
+      technique: { hook: 'Lean into the story: call it the founder\u2019s own gym.' },
+    });
+    record.milo_pitch_pinned = pinned;
+    save();
+    expect(String(pinned.body.after)).not.toMatch(/founder.s own gym/i);
+    expect(String(pinned.body.after)).toMatch(/partner/i);
+  }, 240_000);
+
   it('drift_reviewer', async () => {
     const target = miloResult?.body ?? {};
-    const result = await createHandlers().drift_reviewer({ ...base, task: driftReviewTask('live-check-milo-output', target), decisions: [proposedMiloPartner()] });
-    record.drift_decision_status = 'proposed, not accepted';
+    const result = await createHandlers().drift_reviewer({ ...base, task: driftReviewTask('live-check-milo-output', target), decisions: [approvedBundleDecision('milo.gym_nyc_partner')] });
+    record.drift_decision_status = 'owner-approved bundle, database acceptance pending';
     record.drift_reviewer = result;
     save();
     const { before: _input, ...asserted } = target as Record<string, unknown>;

@@ -165,6 +165,14 @@ describe('gym read-only reader', () => {
     expect(evidence.find((item) => item.kind === 'model_run')!.payload).toMatchObject({ transport: 'scripted_test_double', requested_model: 'claude-sonnet-5-5', served_by: ['scripted-test-model'], calls: 3 });
   });
 
+  it('reports no total rather than a zero when the query returns no rows', async () => {
+    const empty = "select location_id, count(*) as active_individual_members from memberships_test_fixture where location_id = 'none' group by 1";
+    const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: empty, definition: 'd', freshness_sql: freshnessSql })]);
+    const { body, evidence } = await gym(model)({ ...base, task: 'q', decisions: [] });
+    expect(body.answer).toEqual([]);
+    expect(evidence.find((item) => item.kind === 'sql_result')!.payload.metric_totals).toEqual({});
+  });
+
   it('gives the baseline no definition hint', async () => {
     const model = new ScriptedModelClientForTests([toolCall('submit_answer', { sql: answerSql, definition: 'd', freshness_sql: freshnessSql })]);
     await gym(model)({ ...base, task: 'Active members per location?', decisions: [] });
@@ -285,7 +293,7 @@ describe('milo pitch', () => {
   it('keeps technique out of system and claims sources', async () => {
     const model = new ScriptedModelClientForTests([
       json({ after: 'A hook.', claims: [{ text: 'hook', source: 'reel' }] }),
-      json({ after: 'A hook.', claims: [] }),
+      json({ after: 'A hook.', claims: [{ text: 'hook', source: decision.source_uri }] }),
     ]);
     await milo(model)({ ...base, task: 'Fix slide 07.', decisions: [decision], technique: { source: 'reel', hook: 'Say it is the founder gym' } });
     expect(String(model.requests[0]!.system)).not.toContain('Say it is the founder gym');
@@ -308,11 +316,11 @@ describe('milo pitch', () => {
       return path;
     }
     const fromPacket = (model: ModelClient, path = packetFile()) => createMiloPitch({ model: () => model, slidePacketPath: path, investorsDir: '/nonexistent' });
-    const good = json({ after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [{ text: 'x', source: 'test-historical' }] });
+    const good = json({ after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [] });
 
     it('is the default source and shapes the contract body', async () => {
       const { body, evidence } = await fromPacket(new ScriptedModelClientForTests([good]))({ ...base, task: 'Revise the slide.', decisions: [] });
-      expect(body).toEqual({ slide_id: 'test-packet', before: SLIDE_TEXT, after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [{ text: 'x', source: 'test-historical' }] });
+      expect(body).toEqual({ slide_id: 'test-packet', before: SLIDE_TEXT, after: 'Start at Gym NYC\nThe first place Milo runs.', claims: [] });
       const source = evidence.find((item) => item.kind === 'slide_source')!;
       expect(source.payload).toMatchObject({ historical: true, historical_label: packet.historical_input.label, packet_id: 'test-packet' });
     });
@@ -323,6 +331,31 @@ describe('milo pitch', () => {
       const sent = JSON.stringify(model.requests);
       expect(sent).toContain('own gym');
       for (const hidden of ['AUTHORED_TITLE', 'AUTHORED_BODY', 'SUPERSEDED_MARKER', 'suggested_revision']) expect(sent).not.toContain(hidden);
+    });
+
+    it('never accepts the excerpt being revised as a claim source', async () => {
+      const selfCited = json({ after: 'Gym NYC, a partner.', claims: [{ text: 'x', source: 'test-historical' }] });
+      const model = new ScriptedModelClientForTests([selfCited, selfCited]);
+      await expect(fromPacket(model)({ ...base, task: 'Revise the slide.', decisions: [decision] })).rejects.toThrow(/not an allowed source/);
+      const sent = JSON.stringify(model.requests[0]);
+      expect(sent).not.toContain('test-historical');
+      expect(sent).toContain('test://decision-source');
+    });
+
+    it('requires a sourced claim when decisions are pinned, and accepts the decision source', async () => {
+      const model = new ScriptedModelClientForTests([
+        json({ after: 'Gym NYC, a partner.', claims: [] }),
+        json({ after: 'Gym NYC, a partner.', claims: [{ text: 'Gym NYC is a partner', source: decision.source_uri }] }),
+      ]);
+      const { body } = await fromPacket(model)({ ...base, task: 'Revise the slide.', decisions: [decision] });
+      expect(body.claims).toEqual([{ text: 'Gym NYC is a partner', source: decision.source_uri }]);
+      expect(JSON.stringify(model.requests[1]!.messages.at(-1))).toContain('cite at least one');
+    });
+
+    it('tells a baseline run that no sources exist instead of inviting self-citation', async () => {
+      const model = new ScriptedModelClientForTests([good]);
+      await fromPacket(model)({ ...base, task: 'Revise the slide.', decisions: [] });
+      expect(JSON.stringify(model.requests[0])).toContain('No claim sources are available');
     });
 
     it('rejects output that copies the authored revision, whatever its case or spacing', async () => {
@@ -344,6 +377,7 @@ describe('milo pitch', () => {
     const { body } = await createMiloPitch({ model: () => model })({ ...base, task: 'Revise the slide.', decisions: [] });
     expect(body.slide_id).toBe('milo-one-slide-text');
     expect(JSON.stringify(model.requests)).not.toMatch(/superseded|Authored candidate|Start with a partner/);
+    expect(JSON.stringify(model.requests)).not.toContain('milo-historical-slide');
   });
 
   it.runIf(existsSync(join(DEFAULT_INVESTORS_DIR, 'ROOM.md')))('finds the real deck through ROOM.md and its default slide has no figures', () => {
@@ -470,6 +504,8 @@ describe('claude cli transport', () => {
     expect(response.content).toEqual([{ type: 'text', text: '{"ok":true}' }]);
     expect(response.model).toBe('claude-sonnet-5-5');
     expect(response.usage.output_tokens).toBe(3);
+    const cached = fakeRunner(result({ structured_output: {}, usage: { input_tokens: 2, cache_creation_input_tokens: 785, cache_read_input_tokens: 10, output_tokens: 1 } }));
+    expect((await cliModelClient({ run: cached.run, env }).create(structured)).usage.input_tokens).toBe(797);
   });
 
   it('turns structured calls into tool_use blocks for the gym loop', async () => {
