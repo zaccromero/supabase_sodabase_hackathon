@@ -3,8 +3,10 @@ import type { GymSource } from './gym';
 export interface Queryable { query(text: string, params?: unknown[]): Promise<{ rows: any[] }>; }
 
 /**
- * Evaluator-side reader over the source projection (or its mirror). Mirrors owner-membership.ts: the latest run per
- * location must itself be complete, otherwise that location has no trustworthy position. Returns dates and counts only.
+ * Evaluator-side reader over the source projection (or its mirror). Reads the latest complete run per location, as the
+ * accepted decision gym.active_individual_definition says. A later failed or stuck run does not replace that
+ * projection, so its report date stays what freshness must report (east3 is 2026-10-01 for this reason).
+ * Returns dates and counts only.
  */
 export function createPgGymSource(db: Queryable, opts: { schema?: string } = {}): GymSource {
   const schema = opts.schema ?? 'public';
@@ -12,6 +14,7 @@ export function createPgGymSource(db: Queryable, opts: { schema?: string } = {})
   const latest = `(
     select distinct on (location_id) location_id, status, report_as_of
     from "${schema}".ezf_active_membership_sync_runs
+    where status = 'complete'
     order by location_id, started_at desc
   ) r`;
   return {

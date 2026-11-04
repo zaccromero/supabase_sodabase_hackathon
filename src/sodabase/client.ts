@@ -7,6 +7,7 @@ export const SODABASE_ENDPOINT = 'https://sodabase.io/mcp' as const;
 const READ_TOOLS = new Set<string>(['data_trust', 'data_trust_health', 'list_datasets', 'list_inbox', 'explain', 'check_rule']);
 const SCAN_TOOL = 'data_trust_scan';
 const PROJECT_TOOL = 'connect_project';
+const FEEDBACK_TOOL = 'give_feedback';
 /** Owner-confirmed event project: Drako Agent Memory. */
 export const SODABASE_PROJECT_REF = 'dgqcanfiapxztmqqlqnh';
 const ajv = new Ajv({ strict: false, allErrors: false });
@@ -40,7 +41,7 @@ export class SodabaseClient implements ReadToolClient {
       for (let page = 0; page < 10; page++) {
         const result = await client.listTools(cursor ? { cursor } : {}, { timeout: 15000 });
         catalog.push(...result.tools.map((t) => t.name));
-        for (const tool of result.tools) if (READ_TOOLS.has(tool.name) || tool.name === SCAN_TOOL || tool.name === PROJECT_TOOL) this.schemas.set(tool.name, tool.inputSchema);
+        for (const tool of result.tools) if (READ_TOOLS.has(tool.name) || tool.name === SCAN_TOOL || tool.name === PROJECT_TOOL || tool.name === FEEDBACK_TOOL) this.schemas.set(tool.name, tool.inputSchema);
         cursor = result.nextCursor;
         if (!cursor) break;
       }
@@ -84,6 +85,14 @@ export class SodabaseClient implements ReadToolClient {
     } catch {
       return null;
     }
+  }
+  /**
+   * Records that an Issue is legitimate, with the reason. The reaction is fixed: this client cannot mute or dismiss,
+   * because those would hide a finding rather than explain it.
+   */
+  async markExpected(issueId: string, reason: string): Promise<unknown> {
+    if (!issueId.trim() || !reason.trim()) throw new Error('An issue id and a reason are required');
+    return this.invoke(FEEDBACK_TOOL, { id: issueId, reaction: 'expected', note: reason });
   }
   /** Starts a fresh profile of watched tables and returns at once. Separate from reads: it causes work at the provider. */
   async startScan(): Promise<unknown> {
