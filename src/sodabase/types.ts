@@ -5,7 +5,10 @@ export interface ConnectionStatus {
   observed_at: string;
   endpoint: 'https://sodabase.io/mcp';
   credential_present: boolean;
+  /** Tools this client may call. */
   tools: string[];
+  /** Every tool name the server listed, for the record. Listing one does not make it callable here. */
+  catalog?: string[];
   reason: string;
 }
 export interface ProviderEvidence {

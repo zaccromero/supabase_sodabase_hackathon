@@ -4,6 +4,7 @@
 // The mode comes from the environment and nothing else: a failed live read is
 // reported as a failure and never falls back to the local test database.
 import { Pool } from 'pg';
+import { SUPABASE_CA } from './supabase-ca';
 
 export type DbMode = 'live' | 'local' | 'none';
 export type AppRole = 'dashboard_reader' | 'founder_approver';
@@ -13,6 +14,13 @@ export interface Tx {
 }
 
 const hosted = () => Boolean(process.env.VERCEL);
+const isSupabaseHost = (host: string) => host.endsWith('.supabase.co') || host.endsWith('.supabase.com');
+
+// What the page calls the connected database. Only a Supabase host is called Supabase.
+export function liveDatabaseLabel(): string {
+  const host = new URL(process.env.SUPABASE_DB_URL as string).hostname;
+  return isSupabaseHost(host) ? 'Live, Supabase' : 'Other Postgres, not Supabase';
+}
 
 // A hosted page never shows test rows: with no database it says so.
 export const dbMode = (): DbMode => (process.env.SUPABASE_DB_URL ? 'live' : hosted() ? 'none' : 'local');
@@ -28,14 +36,14 @@ function livePool(): Pool {
   const local = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
   // pg lets sslmode in the URL override the ssl object below, so the object decides.
   url.searchParams.delete('sslmode');
-  const ca = process.env.SUPABASE_DB_CA?.replace(/\\n/g, '\n');
+  const ca = process.env.SUPABASE_DB_CA?.replace(/\\n/g, '\n') || (isSupabaseHost(url.hostname) ? SUPABASE_CA : undefined);
   const pool = new Pool({
     connectionString: url.toString(),
     max: 4,
     connectionTimeoutMillis: 5000,
     idleTimeoutMillis: 30000,
-    // Certificates are always verified. If the server chains to a private CA, put
-    // that CA in SUPABASE_DB_CA; until then the read fails and the page says so.
+    // Certificates are always verified: against SUPABASE_DB_CA if set, the bundled
+    // Supabase CA on a Supabase host, otherwise the system's trusted roots.
     ssl: local ? undefined : ca ? { ca } : true,
   });
   pool.on('error', () => {}); // An idle client dropping is not a page failure.

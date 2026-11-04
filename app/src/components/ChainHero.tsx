@@ -71,7 +71,7 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
             {chain.conflictIsHistoricalInput ? <p className="flag-line"><span className="flag">historical</span> Input excerpt, not a new incident.</p> : null}
             <p className="step-note">{chain.row.explanation}</p>
             <Binding items={[
-              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}` : 'not readable'],
+              ['run', chain.conflictRun ? `${profileName(chain.conflictRun.profile)} ${short(chain.conflictRun.run_id, 8)}${chain.conflictRun.memory_mode === 'baseline' ? ', memory off' : ''}` : 'not readable'],
               ['attempt', chain.conflictAttempt ? `${chain.conflictAttempt.attempt_no}, ${chain.conflictAttempt.kind}` : 'not readable'],
               ['output', short(chain.conflictAttempt?.output_sha256)],
             ]} />
@@ -97,9 +97,9 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
                 <Binding items={[
                   ...(chain.correction ? [['correction', `${chain.correction.decision_key} v${chain.correction.version}, ${chain.correction.status}`] as [string, string]] : []),
                   ['repair', chain.repairAttempt
-                    ? `attempt ${chain.repairAttempt.attempt_no}, ${chain.repairEvaluation?.verdict ?? 'not evaluated'}, gate ${chain.repairGate?.verdict ?? 'not called'}`
-                    : 'no repair attempt recorded'],
-                  ['output', short(chain.repairAttempt?.output_sha256)],
+                    ? `attempt ${chain.repairAttempt.attempt_no}, gate ${chain.repairGate?.verdict ?? 'not called'}`
+                    : chain.conflictRun?.memory_mode === 'baseline' ? 'none, a memory-off baseline gets no repairs' : 'no repair attempt recorded'],
+                  ...(chain.repairAttempt ? [['output', short(chain.repairAttempt.output_sha256)] as [string, string]] : []),
                 ]} />
                 {chain.correction?.status === 'proposed' ? <FounderButton action={acceptDecision} id={chain.correction.id} label="Accept this correction" readOnly={!founderWritesAllowed()} /> : null}
               </>
@@ -110,7 +110,7 @@ export function ChainHero({ chain, records, label }: { chain: Chain | null; reco
             {chain.freshRun ? (
               <>
                 <p className={chain.proven ? 'stamp proven' : 'stamp'}>{chain.freshRun.status}</p>
-                <p className="step-note">{chain.freshEvaluations[0]?.reason ?? chain.freshRun.task}</p>
+                {chain.freshRun.memory_mode === 'baseline' ? <p className="step-note">This run has memory off, so it cannot verify a correction.</p> : null}
                 <Binding items={[
                   ['run', `${profileName(chain.freshRun.profile)} ${short(chain.freshRun.run_id, 8)}${chain.freshIsNewRun ? '' : ' (same run)'}`],
                   ['memory', chain.freshPinsCorrection ? 'pins the correction' : 'correction not pinned'],

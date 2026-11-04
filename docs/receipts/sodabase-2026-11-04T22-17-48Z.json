@@ -1,0 +1,74 @@
+{
+  "provider": "sodabase",
+  "provenance": "live",
+  "endpoint": "https://sodabase.io/mcp",
+  "project_ref": "dgqcanfiapxztmqqlqnh",
+  "observed_at": "2026-11-04T22:17:48.173Z",
+  "scope": "Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run. An empty result is a dated observation, not a healthy verdict.",
+  "quality_evidence": "NO_SCANS_YET",
+  "tools_discovered": [
+    "list_inbox",
+    "explain",
+    "connect_project",
+    "data_trust",
+    "data_trust_scan",
+    "data_trust_health",
+    "check_rule"
+  ],
+  "server_catalog": [
+    "add_monitor",
+    "check_rule",
+    "check_trust",
+    "confirm_demote",
+    "confirm_proposals",
+    "connect_project",
+    "data_trust",
+    "data_trust_health",
+    "data_trust_sample",
+    "data_trust_scan",
+    "decline_proposals",
+    "explain",
+    "get_usage",
+    "give_feedback",
+    "investigate",
+    "list_datasets",
+    "list_inbox",
+    "list_proposals",
+    "list_removal_suggestions",
+    "mute",
+    "reclassify_manual_disables",
+    "reconcile_removals",
+    "remove_monitor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "data_trust_health",
+      "ok": true,
+      "parsed": false,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "No data-trust scans yet — run data_trust_scan to check your watched tables."
+          }
+        ],
+        "structuredContent": {
+          "result": "No data-trust scans yet — run data_trust_scan to check your watched tables."
+        },
+        "isError": false
+      }
+    }
+  ],
+  "counts": {
+    "actionable": 0,
+    "expected_by_definition": 0,
+    "exploratory": 0,
+    "clean": 0,
+    "undetermined": 0,
+    "unparsed": 0,
+    "errors": 0
+  },
+  "inserted_into_quality_findings": 0,
+  "database_error": null,
+  "findings": []
+}

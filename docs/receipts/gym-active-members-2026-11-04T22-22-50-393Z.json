@@ -1,0 +1,93 @@
+{
+  "kind": "gym_active_members",
+  "provenance": "real",
+  "observed_at": "2026-11-04T22:22:50.393Z",
+  "database": "supabase schema gym, read-only transaction",
+  "definition": "gym.active_individual_definition v1, gym.freshness_completeness v1",
+  "logic_source": "projects/gym-nyc@9cbef1f858d9/apps/web/lib/db/queries/owner-membership.ts:L92-L129",
+  "query": "src/data/active-members.ts ACTIVE_MEMBERS_SQL",
+  "query_sha256": "ec4127d747e34c44527c1174c6008cd4769df4f1499ec0c2df559c7aa38e9929",
+  "latest_mirror": {
+    "finished_at": "2026-11-04T22:15:51.391Z",
+    "manifest_sha256": "36f6bc988f1ad164a17a9dcb95ecedbaabafed37766b6bc56a8fe5b37841c638",
+    "source": "gym-nyc/dev"
+  },
+  "state": "PARTIAL",
+  "total_active_individual_members": null,
+  "oldest_report_as_of": "2026-10-05",
+  "locations": [
+    {
+      "location_id": "bk",
+      "checks": {
+        "projected_rows": 705,
+        "source_rows_total": 705,
+        "matched_distinct_members": 704
+      },
+      "not_canonical_churned_at_null": 4017,
+      "state": "STALE",
+      "active_individual_members": 704,
+      "problems": [],
+      "report_as_of": "2026-10-05",
+      "fetched_at": "2026-10-05T08:36:03.785Z",
+      "data_age_days": 30,
+      "fetch_age_hours": 733
+    },
+    {
+      "location_id": "east3",
+      "checks": {
+        "projected_rows": 361,
+        "source_rows_total": 0,
+        "matched_distinct_members": 328
+      },
+      "not_canonical_churned_at_null": 3758,
+      "state": "PARTIAL",
+      "active_individual_members": null,
+      "problems": [
+        "LATEST_RUN_FAILED"
+      ],
+      "latest_run_error_code": "DUPLICATE_MEMBERSHIP_KEY",
+      "not_current_last_complete": {
+        "report_as_of": "2026-10-01",
+        "fetched_at": "2026-10-01T23:25:00.813Z",
+        "active_individual_members": 328,
+        "rows_match_table": true
+      },
+      "report_as_of": null,
+      "fetched_at": "2026-10-05T08:36:47.047Z",
+      "data_age_days": null,
+      "fetch_age_hours": 733
+    },
+    {
+      "location_id": "lex",
+      "checks": {
+        "projected_rows": 367,
+        "source_rows_total": 367,
+        "matched_distinct_members": 367
+      },
+      "not_canonical_churned_at_null": 4325,
+      "state": "STALE",
+      "active_individual_members": 367,
+      "problems": [],
+      "report_as_of": "2026-10-05",
+      "fetched_at": "2026-10-05T08:36:24.875Z",
+      "data_age_days": 30,
+      "fetch_age_hours": 733
+    },
+    {
+      "location_id": "mul",
+      "checks": {
+        "projected_rows": 458,
+        "source_rows_total": 458,
+        "matched_distinct_members": 439
+      },
+      "not_canonical_churned_at_null": 22230,
+      "state": "STALE",
+      "active_individual_members": 439,
+      "problems": [],
+      "report_as_of": "2026-10-05",
+      "fetched_at": "2026-10-05T08:34:38.574Z",
+      "data_age_days": 30,
+      "fetch_age_hours": 733
+    }
+  ]
+}
