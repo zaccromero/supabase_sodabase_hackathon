@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MemberExpirationReview } from '@/components/MemberExpirationReview';
 import { ChainHero } from '@/components/ChainHero';
 import { GovernanceAdvisory } from '@/components/GovernanceAdvisory';
 import { VERIFIED_MILO_RUN, VerifiedRun } from '@/components/VerifiedRun';
@@ -127,6 +128,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
         <Evidence r={r} tag={tag} />
       </div>
       <Sodabase r={r} tag={tag} source={source} />
+      <MemberExpirationReview />
       <footer className="colophon"><p>{THE_LINE}</p></footer>
       <LiveRefresh />
     </main>
