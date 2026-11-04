@@ -1,0 +1,323 @@
+{
+ "kind": "gym_indexes_freshness",
+ "provenance": "real",
+ "observed_at": "2026-11-04 22:44:21.516526+00",
+ "database": "supabase schema gym, read-only transaction",
+ "note": "Mirror is recent; the DEV source it copies is stale. Ages are from source timestamps, not mirror time.",
+ "latest_mirror_finished_at": "2026-11-04 22:15:51.391124+00",
+ "mirror_runs": 2,
+ "freshness": {
+  "members": {
+   "column": "last_synced_at",
+   "newest_source_timestamp": "2026-10-15 08:54:50.636+00",
+   "age_days": 20.6,
+   "rows": 35543
+  },
+  "checkins": {
+   "column": "checked_in_at",
+   "newest_source_timestamp": "2026-10-15 02:09:44.793+00",
+   "age_days": 20.9,
+   "rows": 92317
+  },
+  "ezf_active_memberships": {
+   "column": "source_last_seen_at",
+   "newest_source_timestamp": "2026-10-05 08:36:24.875+00",
+   "age_days": 30.6,
+   "rows": 1891
+  },
+  "ezf_active_membership_sync_runs": {
+   "column": "complete_finished_at",
+   "newest_source_timestamp": "2026-10-05 08:36:24.875+00",
+   "age_days": 30.6,
+   "rows": 1373
+  },
+  "checkin_sync_runs": {
+   "column": "finished_at",
+   "newest_source_timestamp": "2026-10-15 08:54:52.097+00",
+   "age_days": 20.6,
+   "rows": 6362
+  },
+  "finance_snapshots": {
+   "column": "computed_at",
+   "newest_source_timestamp": "2026-10-05 06:12:08.47776+00",
+   "age_days": 30.7,
+   "rows": 226
+  },
+  "locations": {
+   "column": "created_at, reference data",
+   "newest_source_timestamp": "2026-04-28 17:01:21.528761+00",
+   "age_days": 190.2,
+   "rows": 4
+  }
+ },
+ "freshness_detail": {
+  "checkin_sync_runs.latest_source_event_at": "2026-10-04 23:26:25.727+00",
+  "east3_last_complete_projection": "2026-10-01 23:25:00.813+00",
+  "future_dated_rows": {
+   "future_joined": 0,
+   "future_churned": 0,
+   "future_last_check_in": 0,
+   "future_checked_in": 0
+  }
+ },
+ "freshness_by_location": {
+  "checkins": [
+   {
+    "location_id": "bk",
+    "newest": "2026-10-15 02:09:22.35+00",
+    "n": 36693
+   },
+   {
+    "location_id": "east3",
+    "newest": "2026-10-15 02:06:18.93+00",
+    "n": 15454
+   },
+   {
+    "location_id": "lex",
+    "newest": "2026-10-15 02:09:44.793+00",
+    "n": 16461
+   },
+   {
+    "location_id": "mul",
+    "newest": "2026-10-15 01:17:30.3+00",
+    "n": 23709
+   }
+  ],
+  "amsr": [
+   {
+    "location_id": "bk",
+    "complete": "2026-10-05 08:36:03.785+00",
+    "latest_start": "2026-10-05 08:36:01+00"
+   },
+   {
+    "location_id": "east3",
+    "complete": "2026-10-01 23:25:00.813+00",
+    "latest_start": "2026-10-05 08:36:43.759+00"
+   },
+   {
+    "location_id": "lex",
+    "complete": "2026-10-05 08:36:24.875+00",
+    "latest_start": "2026-10-05 08:36:22.309+00"
+   },
+   {
+    "location_id": "mul",
+    "complete": "2026-10-05 08:34:38.574+00",
+    "latest_start": "2026-10-05 08:34:33.143+00"
+   }
+  ],
+  "checkin_runs": [
+   {
+    "location_id": "bk",
+    "newest": "2026-10-15 08:54:51.879+00"
+   },
+   {
+    "location_id": "east3",
+    "newest": "2026-10-15 08:54:51.652+00"
+   },
+   {
+    "location_id": "lex",
+    "newest": "2026-10-15 08:54:52.097+00"
+   },
+   {
+    "location_id": "mul",
+    "newest": "2026-10-15 08:54:51.361+00"
+   }
+  ]
+ },
+ "existing_indexes": [
+  {
+   "t": "checkin_sync_runs",
+   "i": "checkin_runs_location_finished_idx",
+   "d": "(location_id, finished_at)"
+  },
+  {
+   "t": "checkin_sync_runs",
+   "i": "checkin_sync_runs_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "checkins",
+   "i": "checkins_ezf_checkin_id_key",
+   "d": "(ezf_checkin_id)"
+  },
+  {
+   "t": "checkins",
+   "i": "checkins_location_time_idx",
+   "d": "(location_id, checked_in_at)"
+  },
+  {
+   "t": "checkins",
+   "i": "checkins_member_idx",
+   "d": "(member_id)"
+  },
+  {
+   "t": "checkins",
+   "i": "checkins_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "ezf_active_membership_sync_runs",
+   "i": "amsr_location_finished_idx",
+   "d": "(location_id, finished_at)"
+  },
+  {
+   "t": "ezf_active_membership_sync_runs",
+   "i": "ezf_active_membership_sync_runs_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "ezf_active_memberships",
+   "i": "am_location_class_idx",
+   "d": "(location_id, bridge_class)"
+  },
+  {
+   "t": "ezf_active_memberships",
+   "i": "am_member_idx",
+   "d": "(member_id)"
+  },
+  {
+   "t": "ezf_active_memberships",
+   "i": "ezf_active_memberships_location_id_source_membership_key_key",
+   "d": "(location_id, source_membership_key)"
+  },
+  {
+   "t": "ezf_active_memberships",
+   "i": "ezf_active_memberships_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "finance_snapshots",
+   "i": "finance_snapshots_pkey",
+   "d": "(snapshot_date, location_id)"
+  },
+  {
+   "t": "locations",
+   "i": "locations_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "members",
+   "i": "members_ezf_client_id_key",
+   "d": "(ezf_client_id)"
+  },
+  {
+   "t": "members",
+   "i": "members_location_idx",
+   "d": "(location_id)"
+  },
+  {
+   "t": "members",
+   "i": "members_pkey",
+   "d": "(id)"
+  },
+  {
+   "t": "mirror_runs",
+   "i": "mirror_runs_pkey",
+   "d": "(id)"
+  }
+ ],
+ "foreign_keys_without_index": [],
+ "row_level_security": {
+  "checkin_sync_runs": true,
+  "checkins": true,
+  "ezf_active_membership_sync_runs": true,
+  "ezf_active_memberships": true,
+  "finance_snapshots": true,
+  "locations": true,
+  "members": true,
+  "mirror_runs": true
+ },
+ "query_plans": {
+  "active_members": {
+   "ms": 47,
+   "scan": [
+    "Index Only Scan(locations_pkey)",
+    "Seq Scan(ezf_active_membership_sync_runs)",
+    "Index Scan(ezf_active_memberships_location_id_source_membership_key_key)",
+    "Seq Scan(members)"
+   ]
+  },
+  "eval_latest_run": {
+   "ms": 3.4,
+   "scan": [
+    "Seq Scan(ezf_active_membership_sync_runs)"
+   ]
+  },
+  "eval_canonical": {
+   "ms": 6.5,
+   "scan": [
+    "Seq Scan(ezf_active_membership_sync_runs)",
+    "Bitmap Heap Scan(ezf_active_memberships)",
+    "Bitmap Index Scan(am_location_class_idx)"
+   ]
+  },
+  "agent_matched_by_location": {
+   "ms": 2.6,
+   "scan": [
+    "Index Only Scan(am_location_class_idx)"
+   ]
+  },
+  "agent_latest_complete_run": {
+   "ms": 2.3,
+   "scan": [
+    "Seq Scan(ezf_active_membership_sync_runs)"
+   ]
+  },
+  "agent_checkins_30d_by_location": {
+   "ms": 34.3,
+   "scan": [
+    "Index Only Scan(checkins_location_time_idx)"
+   ]
+  },
+  "agent_newest_checkin": {
+   "ms": 23.1,
+   "scan": [
+    "Index Only Scan(checkins_location_time_idx)"
+   ]
+  },
+  "agent_checkins_one_location_30d": {
+   "ms": 1.7,
+   "scan": [
+    "Index Only Scan(checkins_location_time_idx)"
+   ]
+  },
+  "agent_active_join_checkins": {
+   "ms": 160.2,
+   "scan": [
+    "Index Scan(am_location_class_idx)",
+    "Index Only Scan(checkins_member_idx)"
+   ]
+  },
+  "naive_churned_null": {
+   "ms": 19.6,
+   "scan": [
+    "Seq Scan(members)"
+   ]
+  },
+  "members_recently_churned": {
+   "ms": 7.2,
+   "scan": [
+    "Seq Scan(members)"
+   ]
+  },
+  "finance_latest_per_location": {
+   "ms": 0.5,
+   "scan": [
+    "Seq Scan(finance_snapshots)"
+   ]
+  },
+  "latest_mirror": {
+   "ms": 0,
+   "scan": [
+    "Seq Scan(mirror_runs)"
+   ]
+  },
+  "checkin_run_latest": {
+   "ms": 4.6,
+   "scan": [
+    "Index Only Scan(checkin_runs_location_finished_idx)"
+   ]
+  }
+ },
+ "requested_indexes": "docs/migration-requests/gym-indexes.sql"
+}
