@@ -15,8 +15,9 @@ Read from hosted Supabase at 22:57 UTC on 2026-11-04. Re-check on screen. If the
 | Beat | Record | What it shows |
 |---|---|---|
 | 1 | `milo.gym_nyc_partner` v1 | Accepted by Zacc Romero. One of six accepted decisions, each with a source. |
-| 2 | Gym run `70e040f6` | Gate completed on attempt 1. `bk` 704, `lex` 367, `mul` 439, `east3` unknown. Data as of 2026-10-05, age 30 days. The optional critic failed and is on record. Earlier runs `8d536a05` and `37b1ce48` failed, and `37b1ce48` reported the wrong data date. The critic is optional on all three Gym runs. It is required on Milo runs. |
-| 2 | East 3rd projection | Last complete run: report date 2026-10-01, 361 rows, 328 `MATCHED_INDIVIDUAL`, fully reconciled. Its one structural difference is the extra membership the definition already excludes. 57 later runs did not complete: 54 `DUPLICATE_MEMBERSHIP_KEY`, 2 `NETWORK_ERROR`, 1 still marked running. The agent's SQL requires zero structural differences, which the definition does not, so it returned unknown. |
+| 2 | Gym run `9a040d49` (newest, on the presented code; read 23:05 UTC) | Failed. All 3 attempts blocked by the gate. Every attempt: `bk` 704, `lex` 367, `mul` 439. Attempts 1 and 3: `east3` unknown, definition check passed, date check failed (reported 2026-10-01, source 2026-10-05). Attempt 2: `east3` 328, both checks failed. |
+| 2 | Earlier Gym runs | `70e040f6` completed on attempt 1, on an earlier prompt that carried the rule, with its optional critic failing. `8d536a05` and `37b1ce48` failed. The critic is optional on Gym runs and required on Milo runs. |
+| 2 | East 3rd projection | Last complete run: report date 2026-10-01, 361 rows, 328 `MATCHED_INDIVIDUAL`, fully reconciled. Its one structural difference is the extra membership the definition already excludes. 57 later runs did not complete: 54 `DUPLICATE_MEMBERSHIP_KEY`, 2 `NETWORK_ERROR`, 1 still marked running. The accepted definition's "latest complete" points to 328. Gym NYC's owner view and the evaluator treat a failed latest run as no count. Open founder decision. |
 | 3 | Milo run `eed0520a` | Gate completed. Before: "The founder's own gym: the first operations fee". After: "Gym NYC: a partner. Founder-reported operations fee remains conditional on dashboard completion and buyer acceptance." |
 | 4 | Replay `7116a6d3`, reviewer `6bedd90b`, finding `a5eed242` | The old line, replayed. `model_generated: false`. The reviewer quotes it against `milo.gym_nyc_partner`. |
 | 4 | Memory-off run `d7d43ddf` | A real model run. It did not repeat the claim, and reviewer `93f4172f` found nothing. It wrote "Start with gym operations. Focus on the day-to-day work." |
@@ -65,14 +66,16 @@ Timings are cumulative. Cut words rather than beats.
 
 *If it has not run:* "No decision is accepted in this database yet."
 
-### 0:25 Beat 2: Gym answer with data age
-**Show:** "What is each agent doing?" and the Gym operator card: the answer, the definition, the data age.
+### 0:25 Beat 2: the gate refuses the Gym answer
+**Show:** "What is each agent doing?", the Gym operator card, and run `9a040d49` with its blocked gate.
 
-**Say, if the newest Gym run completed:** "The Gym agent counts active members the way I defined them, and passed the gate. It says how old the data is: [read the age]. East 3rd shows unknown, and that one is open. Its last complete report, from October 1, has 328, and no sync since has completed. The agent's stated reason is not in my definition, and an advisory critic objects. Two earlier runs failed this gate, one for reporting the wrong data date. It all stays on the record."
+**Say:** "The Gym agent got Brooklyn, Lexington and Mulberry right by my definition. Their source report is from October 5. But the gate refused to complete the run. The agent reported the wrong data date, and when a repair gave East 3rd a count, it failed again. The root cause is mine: 'latest complete' is ambiguous for a location whose latest sync failed. East 3rd's last complete report has 328, from October 1. That is my decision to make, and it is still open. The gate did its job."
 
-**Say, if the newest Gym run failed:** "The Gym agent did not pass. [Read the reason.] So the gate did not complete it, and I am not going to claim an answer."
+**Do not** imply the Gym agent passes on the current code. **Do not** add up the locations, with or without 328.
 
-**Do not** add up the locations, with or without 328. East 3rd's figure is older than the others, so there is no chain total. **Do not** say East 3rd is unknown because its latest sync failed: this run's stated reason is a structural difference, so match the screen.
+**If `70e040f6` comes up, or the run list shows it as completed:** "That run completed on an earlier prompt that carried the rule for this location. The current code does not pass."
+
+**If a newer Gym run is on screen:** read its gate result and reasons instead. If it completed, say so and read the reason from the screen.
 
 ### 0:50 Beat 3: Milo slide revision
 **Show:** the Milo pitch card, the struck-through before text, and its **historical** label.
@@ -141,8 +144,8 @@ Say "Yes" only if the hero says **Yes**.
 | Vercel login page | Switch to Zacc's signed-in browser and say the page is behind a login. |
 | "Records could not be read" | Say the database did not answer. Nothing is shown, because nothing was read. Restart with the command above. |
 | Hero does not say "Yes" | Say what it says. A demo that refuses to claim a pass is the product working. Walk the chain as far as it goes. |
-| Newest Gym run is not `70e040f6` | Read the newest run on screen and use the matching beat 2 line. |
+| Newest Gym run is not `9a040d49` | Read the newest run on screen, its gate result and its reasons. |
 | A run lands during the demo | The page re-reads every 5 seconds. Point at the new row and its age. |
 | Local test database band | Name it out loud. Those rows are test rows, not company records. |
-| A judge asks whether East 3rd's unknown is right | "It is open. The accepted definition points to its last complete report, 328 from October 1. Gym NYC's owner view shows no count when the latest sync failed. I have not ruled on it, and the agent's own reason does not match either one." |
+| A judge asks whether East 3rd's unknown is right | "It is open. The accepted definition points to its last complete report, 328 from October 1. Gym NYC's owner view shows no count when the latest sync failed. I have not ruled on it, so the gate does not let the run complete." |
 | A judge asks why the data is 30 days old | "Our dev sync is off by my own ruling, and production is off limits for this project. So we show the real age instead of hiding it." |
