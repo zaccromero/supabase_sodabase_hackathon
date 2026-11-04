@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { sha256 } from '../contract/hash.js';
 import type { EvidenceInput, Handler } from '../contract/types.js';
 import { AgentOutputError, type ModelClient, ModelTrace, structuredCall } from './model.js';
@@ -16,11 +17,11 @@ import { buildSystemPrompt, withTechnique } from './prompt.js';
 
 export const DEFAULT_INVESTORS_DIR = '/Users/zaccromero/code/projects/milo.ai/docs/investors';
 export const DEFAULT_SLIDE_ID = '07';
-export const DEFAULT_SLIDE_PACKET = '/Users/zaccromero/Documents/Codex/2026-11-04/hackathon-sources/outputs/source-packet/data/curated/milo-slide-text.json';
+export const DEFAULT_SLIDE_PACKET = fileURLToPath(new URL('../../data/curated/milo-slide-text.json', import.meta.url));
 
 const ROLE = `You are the Milo pitch agent. You revise the text of one investor-deck slide.
 
-Change only what the task asks for and keep the slide's structure and length. Every factual statement in your revision needs a claim naming its source, chosen from the sources you are given. Do not add market sizes, prices, revenue, fundraising amounts or any other financial figure. Do not invent traction, usage, customers or partnerships.`;
+Change only what the task asks for and keep the slide's structure and length. List a claim for each factual statement you can tie to one of the allowed sources you are given, using its key exactly. The text being revised is not a source and must never be cited: a draft cannot support itself. Do not add market sizes, prices, revenue, fundraising amounts or any other financial figure. Do not invent traction, usage, customers or partnerships.`;
 
 const OUTPUT_SCHEMA = {
   type: 'object',
@@ -113,7 +114,7 @@ function deckSource(investorsDir: string, slideId: string, technique: boolean): 
   return {
     slideId: slide.id,
     before,
-    sources: [[`deck.json#slide-${slide.id}`, 'the slide text itself'], ...Object.entries(deck.sources)],
+    sources: Object.entries(deck.sources),
     instructions: '',
     mustNotCopy: [],
     evidence: { kind: 'deck_source', uri: deck.path, sha256: deck.sha256, payload },
@@ -140,7 +141,7 @@ function packetSource(path: string, technique: boolean): RevisionSource {
   return {
     slideId: packet.id,
     before,
-    sources: [[packet.historical_input.source_id, 'the slide text itself']],
+    sources: [],
     instructions: `Return only a title and a body, with the title on the first line of "after". No financial figures or usage claims.`,
     mustNotCopy: [packet.suggested_revision?.title, packet.suggested_revision?.body].filter((text): text is string => !!text),
     evidence: { kind: 'slide_source', uri: path, sha256: fileSha, payload },
@@ -162,13 +163,15 @@ export function createMiloPitch(deps: { model: () => ModelClient; investorsDir?:
       ...source.sources,
       ...decisions.map((d): [string, string] => [d.source_uri, `source of pinned decision ${d.decision_key}`]),
     ]);
-    const sourceList = [...allowedSources].map(([key, description]) => `- ${key}: ${description}`).join('\n');
+    const sourceList = allowedSources.size > 0
+      ? `Allowed claim sources (use the exact key before the colon):\n${[...allowedSources].map(([key, description]) => `- ${key}: ${description}`).join('\n')}`
+      : 'No claim sources are available for this run. Return an empty claims list.';
     const user = withTechnique(
       [
         `Task: ${task}`,
         source.instructions,
         `Current text:\n<slide>\n${source.before}\n</slide>`,
-        `Allowed claim sources (use the exact key before the colon):\n${sourceList}`,
+        sourceList,
       ].filter(Boolean).join('\n\n'),
       technique,
     );
@@ -184,6 +187,7 @@ export function createMiloPitch(deps: { model: () => ModelClient; investorsDir?:
         if (figure) found.push(`after contains a financial figure: "${figure[0]}"`);
         if (!revision.after.trim()) found.push('after is empty');
         if (source.mustNotCopy.some((text) => folded(revision.after).includes(folded(text)))) found.push('after copies authored text instead of generating a revision');
+        if (allowedSources.size > 0 && revision.claims.length === 0) found.push('claims is empty: cite at least one allowed source');
         for (const claim of revision.claims) {
           if (!allowedSources.has(claim.source)) found.push(`claim source "${claim.source}" is not an allowed source key`);
         }
