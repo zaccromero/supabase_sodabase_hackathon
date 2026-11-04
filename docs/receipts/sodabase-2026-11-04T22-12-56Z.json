@@ -1,0 +1,588 @@
+{
+  "provider": "sodabase",
+  "provenance": "live",
+  "endpoint": "https://sodabase.io/mcp",
+  "project_ref": "dgqcanfiapxztmqqlqnh",
+  "observed_at": "2026-11-04T22:12:56.858Z",
+  "scope": "Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run.",
+  "quality_evidence": "NO_SCANS_YET",
+  "tools_discovered": [
+    "list_inbox",
+    "explain",
+    "connect_project",
+    "data_trust",
+    "data_trust_scan",
+    "data_trust_health",
+    "check_rule"
+  ],
+  "tool_calls": [
+    {
+      "tool": "data_trust_health",
+      "ok": true,
+      "parsed": false,
+      "unparsed_response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "No data-trust scans yet — run data_trust_scan to check your watched tables."
+          }
+        ],
+        "structuredContent": {
+          "result": "No data-trust scans yet — run data_trust_scan to check your watched tables."
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "list_inbox",
+      "ok": true,
+      "parsed": false,
+      "unparsed_response": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Your inbox is clear — nothing needs a look right now."
+          }
+        ],
+        "structuredContent": {
+          "result": "Your inbox is clear — nothing needs a look right now."
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    },
+    {
+      "tool": "check_rule",
+      "ok": true,
+      "parsed": true
+    }
+  ],
+  "counts": {
+    "actionable": 0,
+    "expected_by_definition": 0,
+    "exploratory": 1,
+    "clean": 0,
+    "undetermined": 9,
+    "unparsed": 0,
+    "errors": 0
+  },
+  "inserted_into_quality_findings": 0,
+  "database_error": "SELF_SIGNED_CERT_IN_CHAIN",
+  "findings": [
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "rule_unknown",
+      "problem": "bridge_class must be one of MATCHED_INDIVIDUAL, EXCLUDED_INDEPENDENT_TRAINING_MEMBER, EXCLUDED_INDEPENDENT_TRAINER, EXCLUDED_CORPORATE, EXCLUDED_EMPLOYEE, EXCLUDED_NON_MEMBER, EXCLUDED_HOTEL or MULTIPLE_ACTIVE_MEMBERSHIPS_ONE_CLIENT.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "membership-bridge-class-domain",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "CHECK ezf_active_memberships_bridge_class_check",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_memberships",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "rule_unknown",
+      "problem": "Every row with bridge_class MATCHED_INDIVIDUAL must have a non-null member_id.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "matched-individual-client-backed",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "sync-ezfacility-active-memberships.ts throws MEMBER_IDENTITY_UNRESOLVED before a projection with an unmapped individual can complete",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_memberships",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_memberships",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_membership_sync_runs",
+      "verdict": "rule_unknown",
+      "problem": "Every row with status complete must have unmapped_members = 0 and unexplained_records = 0.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "complete-run-nothing-unexplained",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "CHECK ezf_active_membership_runs_zero_unexplained_complete_check",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_membership_sync_runs",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_membership_sync_runs",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_membership_sync_runs",
+      "verdict": "rule_unknown",
+      "problem": "Every row with status complete must have source_rows_total equal to active_individual_members + explained_exclusions + structural_differences.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "complete-run-bridge-balance",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "CHECK ezf_active_membership_runs_bridge_balance_check",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_membership_sync_runs",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_membership_sync_runs",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_membership_sync_runs",
+      "verdict": "rule_unknown",
+      "problem": "Every row with status complete must have a non-null report_as_of and a non-null finished_at.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "complete-run-has-report-date",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "owner-membership.ts treats a run with no report_as_of as PARTIAL",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.ezf_active_membership_sync_runs",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.ezf_active_membership_sync_runs",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.decisions",
+      "verdict": "rule_unknown",
+      "problem": "Every row with status accepted must have non-null accepted_by, accepted_at and source_id.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "accepted-decision-provenance",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql decisions_accepted check and source_id",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.decisions",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.decisions",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.decisions",
+      "verdict": "rule_unknown",
+      "problem": "Each combination of decision_key and version must be unique.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "decision-version-unique",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql unique (decision_key, version)",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.decisions",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.decisions",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evaluations",
+      "verdict": "rule_unknown",
+      "problem": "verdict must be one of pass, fail or uncertain and check_id must not be null.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "evaluation-verdict-domain",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql evaluations verdict check",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.evaluations",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.evaluations",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.runs",
+      "verdict": "rule_unknown",
+      "problem": "memory_mode must not be null.",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "run-memory-mode",
+        "rule_status": "active",
+        "provider_status": "unknown",
+        "basis": "001_core.sql runs memory_mode",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "cm.runs",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "cm.runs",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.checkins",
+      "verdict": "exploratory",
+      "problem": "How many check-ins have checked_in_at earlier than the joined_at of their member?",
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:12:56.858Z",
+      "raw": {
+        "tool": "check_rule",
+        "rule_id": "checkin-before-joined",
+        "rule_status": "exploratory",
+        "provider_status": "unknown",
+        "basis": "Candidate only. No gym-nyc definition makes this an error yet.",
+        "disposition": "exploratory",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": {
+                "dataset": "gym.checkins",
+                "status": "unknown",
+                "rule": "",
+                "column": null,
+                "family": "",
+                "failing_count": null,
+                "precise": true,
+                "note": "I don't have a table matching that in your workspace."
+              }
+            }
+          ],
+          "structuredContent": {
+            "result": {
+              "dataset": "gym.checkins",
+              "status": "unknown",
+              "rule": "",
+              "column": null,
+              "family": "",
+              "failing_count": null,
+              "precise": true,
+              "note": "I don't have a table matching that in your workspace."
+            }
+          },
+          "isError": false
+        }
+      }
+    }
+  ]
+}
