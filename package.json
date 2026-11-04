@@ -1,0 +1,16 @@
+{
+  "name": "supabase-sodabase-hackathon",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
+  "dependencies": { "pg": "8.13.1" },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.2.17",
+    "@types/node": "22.10.2",
+    "@types/pg": "8.11.10",
+    "tsx": "4.19.2",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}
