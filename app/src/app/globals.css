@@ -303,3 +303,17 @@ code { font-family: var(--font-mono), monospace; font-size: 0.88em; color: var(-
   .freshness { gap: 6px 22px; }
   .founder button { width: 100%; min-height: 44px; }
 }
+
+/* Shared Company Memory identity. Semantic status colors remain distinct. */
+:root{--bg:#111111;--surface:#1b1b1b;--line:#343434;--line-strong:#62615d;--ink:#f5f3ed;--ink-2:#d3d0c8;--ink-3:#b9b7b0;--accent:#ff845c;--accent-ink:#17110e;color-scheme:dark}
+body{font-family:var(--font-sans),'Instrument Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+.wordmark{font-family:var(--font-sans),'Instrument Sans',sans-serif;font-weight:650;letter-spacing:-.04em}.brand-glyph{background:#ff845c;color:#111;border:0;border-radius:7px;font-family:system-ui,sans-serif;font-size:13px;font-weight:700}
+.answer,.step-lead,h2,h3{font-family:var(--font-sans),'Instrument Sans',system-ui,sans-serif}.masthead{background:#111111;border-bottom:1px solid #343434}.hero{background:radial-gradient(ellipse at 85% 0%,#ff845c0e,transparent 55%),#111}.step-n{box-shadow:0 0 0 5px #111}.section,.verified-run{border-color:var(--line)}
+:focus-visible{outline:2px solid #ff845c;outline-offset:4px}
+
+.question,.step-lead,.step-after{font-family:var(--font-sans),sans-serif}
+.mark-pass,.mark-completed,.mark-rule_held,.mark-proceed,.mark-group-passed{background:#173020;border-color:#6a995b;color:#c7f2b4}
+.mark-fail,.mark-blocked,.mark-failed,.mark-untrusted,.mark-open,.mark-group-review{background:#3e2020;border-color:#b96d60;color:#ffb8ac}
+.mark-uncertain,.mark-awaiting_approval,.mark-hold,.mark-needs_founder,.mark-caveated,.mark-unknown,.mark-rule_unknown,.mark-group-coverage,.mark-group-pending{background:#332b19;border-color:#aa8a4c;color:#f5d486}
+
+.public-workflow{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:20px;padding:48px var(--gutter);background:radial-gradient(ellipse at center,#ff845c0c,transparent 70%)}.public-step{padding:28px;background:#1b1b1b;border:1px solid #343434;border-radius:12px;box-shadow:0 18px 40px #0003}.public-step.primary{border-color:#a65b40;background:linear-gradient(140deg,#2a201c,#191919)}.public-step>span{font-size:11px;letter-spacing:.08em;color:#ffb498}.public-step h3{font-size:24px;font-weight:500;line-height:1.35;margin:24px 0}.public-step p{color:#b9b7b0;font-size:13px}.evidence-open{display:inline-block;margin-top:24px;padding:14px 20px;border-radius:6px;background:#ff845c;color:#17110e;font-weight:500}@media(max-width:800px){.public-workflow{grid-template-columns:1fr;padding:28px var(--gutter)}}

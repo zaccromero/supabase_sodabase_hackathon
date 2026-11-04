@@ -79,9 +79,9 @@ function Masthead({ mode, records, source }: { mode: DbMode; records: Records | 
   );
 }
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ finding?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ finding?: string; view?: string }> }) {
   const mode = dbMode();
-  const { finding } = await searchParams;
+  const { finding, view } = await searchParams;
   let records: Records | null = null;
   let failure: unknown = null;
   try {
@@ -103,6 +103,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ f
 
   const r = records;
   const source = await readSourceFreshness();
+  if (view !== 'evidence') {
+    const launch = r.decisions.find(d => d.decision_key === 'milo.current_positioning' && d.version === 1);
+    return <main>
+      <Masthead mode={mode} records={r} source={source} />
+      <section className="hero"><p className="kicker">COMPANY MEMORY / WORKSPACE</p><h2 className="answer">The decision stays.<br/><em>The work moves forward.</em></h2><p className="section-note">One sourced decision. Every new context. Inspect what is approved before the next agent acts.</p></section>
+      <section className="public-workflow"><div className="public-step"><span>01 / ILLUSTRATIVE OVERCLAIM</span><h3>“Organization agents are live.”</h3><p>A planned capability should not become a shipped claim.</p></div><div className="public-step primary"><span>02 / APPROVED LAUNCH LANGUAGE</span><h3>{launch?.statement ?? 'Approved launch decision unavailable.'}</h3><p>{launch ? 'Read from the stored decision · milo.current_positioning v1' : 'No record is substituted.'}</p></div><div className="public-step"><span>03 / ILLUSTRATIVE CORRECTION</span><h3>Organization agents for athletics operators are being built.</h3><p>This illustrates the rule. It is not a newly executed or evaluated model response.</p></div></section>
+      <section className="hero"><p className="kicker">EXECUTION RECORD</p><h2>{r.runs.length} retained runs. Inspectable evidence.</h2><p className="section-note">The stored execution record is separate from the launch-language illustration above. Sensitive source excerpts appear only in the evidence view.</p><Link className="evidence-open" href="/app?view=evidence">Open source evidence →</Link></section>
+      <Safeguards /><Sodabase r={r} tag={tag} source={source} /><MemberExpirationReview />
+      <footer className="colophon"><p>{THE_LINE}</p></footer>
+    </main>;
+  }
   const verifiedGate = r.gates.find((g) => g.run_id === VERIFIED_MILO_RUN);
   const picked = r.chains.find((c) => c.finding_id === finding)
     ?? r.chains.find((c) => c.status === 'verified')
