@@ -4,7 +4,7 @@ import { Ajv } from 'ajv';
 import type { ConnectionStatus, ReadTool, ReadToolClient } from './types.js';
 
 export const SODABASE_ENDPOINT = 'https://sodabase.io/mcp' as const;
-const READ_TOOLS = new Set<string>(['data_trust', 'data_trust_health', 'list_inbox', 'explain', 'check_rule']);
+const READ_TOOLS = new Set<string>(['data_trust', 'data_trust_health', 'list_datasets', 'list_inbox', 'explain', 'check_rule']);
 const SCAN_TOOL = 'data_trust_scan';
 const PROJECT_TOOL = 'connect_project';
 /** Owner-confirmed event project: Drako Agent Memory. */
@@ -73,12 +73,16 @@ export class SodabaseClient implements ReadToolClient {
    * would provision a role and start watching, and is never done here.
    */
   async verifyProject(ref: string = SODABASE_PROJECT_REF): Promise<boolean> {
-    if (!this.schemas.has(PROJECT_TOOL)) return false;
+    const listing = await this.projectListing();
+    return listing !== null && !(listing as { isError?: boolean }).isError && JSON.stringify(listing).includes(ref);
+  }
+  /** What connect_project says with no arguments. Null if it could not be called. */
+  async projectListing(): Promise<unknown | null> {
+    if (!this.schemas.has(PROJECT_TOOL)) return null;
     try {
-      const raw = await this.invoke(PROJECT_TOOL, {});
-      return !(raw as { isError?: boolean }).isError && JSON.stringify(raw).includes(ref);
+      return await this.invoke(PROJECT_TOOL, {});
     } catch {
-      return false;
+      return null;
     }
   }
   /** Starts a fresh profile of watched tables and returns at once. Separate from reads: it causes work at the provider. */

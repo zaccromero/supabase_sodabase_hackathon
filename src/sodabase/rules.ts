@@ -16,29 +16,27 @@ export interface IntegrityRule {
 }
 
 export const INTEGRITY_RULES: IntegrityRule[] = [
-  { id: 'membership-bridge-class-domain', dataset: 'gym.ezf_active_memberships', status: 'active', basis: 'CHECK ezf_active_memberships_bridge_class_check',
+  { id: 'membership-bridge-class-domain', dataset: 'gym.ezf_active_memberships', status: 'active', basis: 'CHECK am_bridge_class',
     rule: 'bridge_class must be one of MATCHED_INDIVIDUAL, EXCLUDED_INDEPENDENT_TRAINING_MEMBER, EXCLUDED_INDEPENDENT_TRAINER, EXCLUDED_CORPORATE, EXCLUDED_EMPLOYEE, EXCLUDED_NON_MEMBER, EXCLUDED_HOTEL or MULTIPLE_ACTIVE_MEMBERSHIPS_ONE_CLIENT.' },
-  { id: 'matched-individual-client-backed', dataset: 'gym.ezf_active_memberships', status: 'active', basis: 'sync-ezfacility-active-memberships.ts throws MEMBER_IDENTITY_UNRESOLVED before a projection with an unmapped individual can complete',
-    rule: 'Every row with bridge_class MATCHED_INDIVIDUAL must have a non-null member_id.' },
-  { id: 'complete-run-nothing-unexplained', dataset: 'gym.ezf_active_membership_sync_runs', status: 'active', basis: 'CHECK ezf_active_membership_runs_zero_unexplained_complete_check',
-    rule: "Every row with status complete must have unmapped_members = 0 and unexplained_records = 0." },
-  { id: 'complete-run-bridge-balance', dataset: 'gym.ezf_active_membership_sync_runs', status: 'active', basis: 'CHECK ezf_active_membership_runs_bridge_balance_check',
-    rule: 'Every row with status complete must have source_rows_total equal to active_individual_members + explained_exclusions + structural_differences.' },
-  { id: 'complete-run-has-report-date', dataset: 'gym.ezf_active_membership_sync_runs', status: 'active', basis: 'owner-membership.ts treats a run with no report_as_of as PARTIAL',
-    rule: 'Every row with status complete must have a non-null report_as_of and a non-null finished_at.' },
-  { id: 'accepted-decision-provenance', dataset: 'cm.decisions', status: 'active', basis: '001_core.sql decisions_accepted check and source_id',
-    rule: 'Every row with status accepted must have non-null accepted_by, accepted_at and source_id.' },
+  { id: 'membership-source-key-unique', dataset: 'gym.ezf_active_memberships', status: 'active', basis: 'unique (location_id, source_membership_key). This is the real key; a repeated membership number is legitimate.',
+    rule: 'Each combination of location_id and source_membership_key must be unique.' },
+  { id: 'finance-location-known-or-all', dataset: 'gym.finance_snapshots', status: 'active', basis: "schema.ts: location_id has no FK because of the 'all' rollup. Keeps a real broken reference visible.",
+    rule: "location_id must be 'all' or one of lex, bk, east3, mul." },
   { id: 'decision-version-unique', dataset: 'cm.decisions', status: 'active', basis: '001_core.sql unique (decision_key, version)',
     rule: 'Each combination of decision_key and version must be unique.' },
   { id: 'evaluation-verdict-domain', dataset: 'cm.evaluations', status: 'active', basis: '001_core.sql evaluations verdict check',
-    rule: 'verdict must be one of pass, fail or uncertain and check_id must not be null.' },
+    rule: 'verdict must be one of pass, fail or uncertain.' },
   { id: 'run-memory-mode', dataset: 'cm.runs', status: 'active', basis: '001_core.sql runs memory_mode',
     rule: 'memory_mode must not be null.' },
-  // Unvalidated: joined_at and checked_in_at both went through a tz repair (docs/runbooks/sp3-tz-repair.md), so a
-  // nonzero count may not be an error. Stays exploratory until the count is validated.
-  { id: 'checkin-before-joined', dataset: 'gym.checkins', status: 'exploratory', basis: 'Candidate only. No gym-nyc definition makes this an error yet.',
-    rule: "How many check-ins have checked_in_at earlier than the joined_at of their member?" },
 ];
+
+/**
+ * Tried live on 4 Nov 2026 and returned unsupported, because check_rule takes single-column rules and these are
+ * conditional or cross-table. Not sent. Checked by direct count on the gym mirror instead, or enforced by a constraint:
+ * - check-ins before joined_at: 0 of 92,317, so that count is validated. A provider finding about it stays exploratory.
+ * - MATCHED_INDIVIDUAL with a null member_id: 0. More than one per client: 0 groups.
+ * - complete runs with unexplained records or an unbalanced bridge: CHECK amsr_zero_unexplained_complete, amsr_bridge_balance.
+ */
 
 /**
  * Legitimate by gym-nyc's own definitions. Never written as a rule, and a provider finding that matches is recorded
@@ -51,6 +49,13 @@ export const NEVER_FLAG: Array<{ id: string; matches: RegExp[]; why: string }> =
     why: 'Null until fees sync or when a member has no invoices, by design; packages/db/schema.ts. Unknown is never estimated.' },
   { id: 'identical-billed-groups', matches: [/\bbilled_items\b/i, /\bduplicat/i],
     why: 'Same invoice, type, date and amount groups are legitimate; uniqueness is on ezf_billed_item_uid; docs/technical/finance-measures.md' },
+  // Validated by direct count on the gym mirror, 4 Nov 2026 (mirror of 22:15 UTC). Rules above keep the real breaks visible.
+  { id: 'finance-all-rollup', matches: [/\bfinance_snapshots\b/i, /\blocation_id\b/i, /\b(?:references?|exist)\b/i],
+    why: "All 28 failing rows have location_id 'all', the rollup row; schema.ts documents no FK because of it." },
+  { id: 'repeat-membership-number', matches: [/\bezf_active_memberships\b/i, /\bezf_membership_number\b/i, /\b(?:unique|duplicate)/i],
+    why: 'The one repeated group is one MATCHED_INDIVIDUAL plus one MULTIPLE_ACTIVE_MEMBERSHIPS_ONE_CLIENT, as the definition intends. The key is source_membership_key.' },
+  { id: 'sparse-by-design', matches: [/\b(?:finance_snapshots|checkin_sync_runs|members|decisions)\b/i, /\b(?:flagged|error_code|churned_at|supersedes_id)\b/i, /\bunused\b/i],
+    why: 'Set only when something happened: a flag, a failed run, a churn, a superseded decision. churned_at is null on 34,330 of 35,543 members against a canonical count of 1,838, which is why churned_at IS NULL is not the definition.' },
   { id: 'negative-price', matches: [/\bprice_cents\b/i, /\bnegative\b/i],
     why: 'Negative price is a refund or void; packages/db/schema.ts' },
 ];

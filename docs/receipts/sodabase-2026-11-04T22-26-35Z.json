@@ -1,0 +1,2113 @@
+{
+  "provider": "sodabase",
+  "provenance": "live",
+  "endpoint": "https://sodabase.io/mcp",
+  "project_ref": "dgqcanfiapxztmqqlqnh",
+  "observed_at": "2026-11-04T22:26:35.937Z",
+  "scope": "Sodabase checks data integrity of watched tables. It does not judge conversations or whether an agent followed a decision, and nothing here can pass or block a run. An empty result is a dated observation, not a healthy verdict.",
+  "quality_evidence": "RECEIVED",
+  "project_listing": {
+    "content": [
+      {
+        "type": "text",
+        "text": {
+          "projects": [
+            {
+              "ref": "dgqcanfiapxztmqqlqnh",
+              "name": "Drako Agent Memory",
+              "status": "ACTIVE_HEALTHY",
+              "already_connected_elsewhere": false
+            }
+          ],
+          "next": "Call connect_project with project_ref=<ref> to watch that project."
+        }
+      }
+    ],
+    "structuredContent": {
+      "result": {
+        "projects": [
+          {
+            "ref": "dgqcanfiapxztmqqlqnh",
+            "name": "Drako Agent Memory",
+            "status": "ACTIVE_HEALTHY",
+            "already_connected_elsewhere": false
+          }
+        ],
+        "next": "Call connect_project with project_ref=<ref> to watch that project."
+      }
+    },
+    "isError": false
+  },
+  "tools_discovered": [
+    "list_inbox",
+    "list_datasets",
+    "explain",
+    "connect_project",
+    "data_trust",
+    "data_trust_scan",
+    "data_trust_health",
+    "check_rule"
+  ],
+  "server_catalog": [
+    "add_monitor",
+    "check_rule",
+    "check_trust",
+    "confirm_demote",
+    "confirm_proposals",
+    "connect_project",
+    "data_trust",
+    "data_trust_health",
+    "data_trust_sample",
+    "data_trust_scan",
+    "decline_proposals",
+    "explain",
+    "get_usage",
+    "give_feedback",
+    "investigate",
+    "list_datasets",
+    "list_inbox",
+    "list_proposals",
+    "list_removal_suggestions",
+    "mute",
+    "reclassify_manual_disables",
+    "reconcile_removals",
+    "remove_monitor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "data_trust_health",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "tables": [
+                {
+                  "table": "gym.finance_snapshots",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                      "family": "referential",
+                      "label": "Broken references",
+                      "column": "location_id",
+                      "rule": "every value must exist in locations.id",
+                      "failing_count": 28,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "flagged",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 217,
+                      "pct": 96.0176991150443,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "cm.decisions",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "created_at must be on or before accepted_at",
+                      "failing_count": 6,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "supersedes_id",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 6,
+                      "pct": 100,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.members",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "joined_at must be on or before expiration_date",
+                      "failing_count": 91,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                      "family": "business_rule",
+                      "label": "Rule broken",
+                      "column": null,
+                      "rule": "joined_at must be on or before churned_at",
+                      "failing_count": 52,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                      "family": "missing",
+                      "label": "Missing values",
+                      "column": "ezf_membership_number",
+                      "rule": "should not be missing (null)",
+                      "failing_count": 64,
+                      "pct": null,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "churned_at",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 34330,
+                      "pct": 96.5872323664294,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.ezf_active_memberships",
+                  "status": "untrusted",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.checkin_sync_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "error_code",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 6100,
+                      "pct": 95.881798176674,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "gym.locations",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": [
+                    {
+                      "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "lat",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 4,
+                      "pct": 100,
+                      "low_confidence": false
+                    },
+                    {
+                      "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                      "family": "unused",
+                      "label": "Unused column",
+                      "column": "lng",
+                      "rule": "effectively unused (>= 90% empty)",
+                      "failing_count": 4,
+                      "pct": 100,
+                      "low_confidence": false
+                    }
+                  ]
+                },
+                {
+                  "table": "cm.approvals",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.attempts",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.check_contracts",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.contract_checks",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.evaluations",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.evidence",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.findings",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.gate_decisions",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.outputs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.quality_findings",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.run_decisions",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.sources",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "cm.techniques",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.checkins",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.ezf_active_membership_sync_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                },
+                {
+                  "table": "gym.mirror_runs",
+                  "status": "unknown",
+                  "as_of": "2026-11-04 22:22:41.290414+00:00",
+                  "findings": []
+                }
+              ],
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it."
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "tables": [
+              {
+                "table": "gym.finance_snapshots",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                    "family": "referential",
+                    "label": "Broken references",
+                    "column": "location_id",
+                    "rule": "every value must exist in locations.id",
+                    "failing_count": 28,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "flagged",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 217,
+                    "pct": 96.0176991150443,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "cm.decisions",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "created_at must be on or before accepted_at",
+                    "failing_count": 6,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "supersedes_id",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 6,
+                    "pct": 100,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.members",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "joined_at must be on or before expiration_date",
+                    "failing_count": 91,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                    "family": "business_rule",
+                    "label": "Rule broken",
+                    "column": null,
+                    "rule": "joined_at must be on or before churned_at",
+                    "failing_count": 52,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                    "family": "missing",
+                    "label": "Missing values",
+                    "column": "ezf_membership_number",
+                    "rule": "should not be missing (null)",
+                    "failing_count": 64,
+                    "pct": null,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "churned_at",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 34330,
+                    "pct": 96.5872323664294,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.ezf_active_memberships",
+                "status": "untrusted",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.checkin_sync_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "error_code",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 6100,
+                    "pct": 95.881798176674,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "gym.locations",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": [
+                  {
+                    "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "lat",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 4,
+                    "pct": 100,
+                    "low_confidence": false
+                  },
+                  {
+                    "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                    "family": "unused",
+                    "label": "Unused column",
+                    "column": "lng",
+                    "rule": "effectively unused (>= 90% empty)",
+                    "failing_count": 4,
+                    "pct": 100,
+                    "low_confidence": false
+                  }
+                ]
+              },
+              {
+                "table": "cm.approvals",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.attempts",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.check_contracts",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.contract_checks",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.evaluations",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.evidence",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.findings",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.gate_decisions",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.outputs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.quality_findings",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.run_decisions",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.sources",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "cm.techniques",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.checkins",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.ezf_active_membership_sync_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              },
+              {
+                "table": "gym.mirror_runs",
+                "status": "unknown",
+                "as_of": "2026-11-04 22:22:41.290414+00:00",
+                "findings": []
+              }
+            ],
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it."
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "list_datasets",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "datasets": [
+                {
+                  "id": "0c2c74f0-26ed-40e8-a4bc-71cac037b43e",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/approvals",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "789b5f97-361e-43fa-b2a7-bdfbed413363",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/attempts",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "32a5248c-0de4-4384-9ecc-c5e36e95862e",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/check_contracts",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "69ac46d4-fcfe-4930-bc2d-380932c121cb",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/contract_checks",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "7bf3ceb9-d625-48e1-bec5-39f7af0d09c8",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "628f7bf4-79e8-4608-9bd2-a49bfac3c02f",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/evaluations",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "7627c570-d8d5-4b15-bb30-c41ee56cf9f8",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/evidence",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "d025356c-220e-40f3-a790-d6aab7a79e15",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/findings",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "b4c82490-1e51-47ef-834f-8a537aeb2fff",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/gate_decisions",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "44a9d75e-72a8-4b37-9971-8443271c408c",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/outputs",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "813dee3d-5e7c-4da6-a19a-0c01d8771453",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/quality_findings",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "1a4da84a-b175-45d8-8b05-aee679d3c187",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/run_decisions",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "aeade17b-a8a3-443f-8bde-5aea53a25411",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/runs",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "210b5b73-931b-4b00-a442-42e053e73a7b",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/sources",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "2b7c77c3-8a14-4fe2-8256-85a558ed36de",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/techniques",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "b28881a3-11f8-4564-905e-ecffd50348ac",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/checkin_sync_runs",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "828b7224-0bf8-4d3f-8ff7-31736ed97f76",
+                      "type": "row_count",
+                      "enabled": true
+                    },
+                    {
+                      "id": "e53ee234-5918-48be-989a-0b3d63a94911",
+                      "type": "freshness",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "93b78f86-a123-4819-8de9-4445d7dcae0a",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/checkins",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "922f4235-c170-4b22-9cc0-fc0226991619",
+                      "type": "freshness",
+                      "enabled": true
+                    },
+                    {
+                      "id": "d79bfed3-677a-43fd-b9cd-d5430e39e398",
+                      "type": "row_count",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "8e413d77-2684-42f2-b69b-37d89e33a551",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_membership_sync_runs",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "ceb50243-39e8-4969-9017-3dd40e4568fa",
+                      "type": "row_count",
+                      "enabled": true
+                    },
+                    {
+                      "id": "28145430-a2b5-4783-88d8-e6792afcc630",
+                      "type": "freshness",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "2f45e9a8-bb8b-4127-a58c-5d8315ddc644",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "95d32adf-1816-4fb2-a305-8e7dd707ed3b",
+                      "type": "freshness",
+                      "enabled": true
+                    },
+                    {
+                      "id": "61c8f34c-036c-42ce-a8ad-95971a27ec65",
+                      "type": "row_count",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "dbd0c8dd-597c-4dc7-b02a-a4e85021af89",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "4c910ae9-e652-4acd-a138-a544d6de8e5d",
+                      "type": "row_count",
+                      "enabled": true
+                    },
+                    {
+                      "id": "3927a758-d104-4250-ba74-b3326a61bde3",
+                      "type": "freshness",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "22cb8854-e99c-47c8-a5f6-6c7a9870273d",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/locations",
+                  "watched": false,
+                  "monitors": []
+                },
+                {
+                  "id": "f5a661c7-f70a-4733-af09-54fe4ca26cc3",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+                  "watched": true,
+                  "monitors": [
+                    {
+                      "id": "77421df7-42f4-4d61-b637-fce2be63a797",
+                      "type": "freshness",
+                      "enabled": true
+                    },
+                    {
+                      "id": "6befd181-6087-4fe0-883e-d218d0881fa2",
+                      "type": "row_count",
+                      "enabled": true
+                    }
+                  ]
+                },
+                {
+                  "id": "cdff19ab-161d-477a-8b05-aeb805add888",
+                  "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/mirror_runs",
+                  "watched": false,
+                  "monitors": []
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "datasets": [
+              {
+                "id": "0c2c74f0-26ed-40e8-a4bc-71cac037b43e",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/approvals",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "789b5f97-361e-43fa-b2a7-bdfbed413363",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/attempts",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "32a5248c-0de4-4384-9ecc-c5e36e95862e",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/check_contracts",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "69ac46d4-fcfe-4930-bc2d-380932c121cb",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/contract_checks",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "7bf3ceb9-d625-48e1-bec5-39f7af0d09c8",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/decisions",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "628f7bf4-79e8-4608-9bd2-a49bfac3c02f",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/evaluations",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "7627c570-d8d5-4b15-bb30-c41ee56cf9f8",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/evidence",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "d025356c-220e-40f3-a790-d6aab7a79e15",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/findings",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "b4c82490-1e51-47ef-834f-8a537aeb2fff",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/gate_decisions",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "44a9d75e-72a8-4b37-9971-8443271c408c",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/outputs",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "813dee3d-5e7c-4da6-a19a-0c01d8771453",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/quality_findings",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "1a4da84a-b175-45d8-8b05-aee679d3c187",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/run_decisions",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "aeade17b-a8a3-443f-8bde-5aea53a25411",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/runs",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "210b5b73-931b-4b00-a442-42e053e73a7b",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/sources",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "2b7c77c3-8a14-4fe2-8256-85a558ed36de",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/cm/techniques",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "b28881a3-11f8-4564-905e-ecffd50348ac",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/checkin_sync_runs",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "828b7224-0bf8-4d3f-8ff7-31736ed97f76",
+                    "type": "row_count",
+                    "enabled": true
+                  },
+                  {
+                    "id": "e53ee234-5918-48be-989a-0b3d63a94911",
+                    "type": "freshness",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "93b78f86-a123-4819-8de9-4445d7dcae0a",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/checkins",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "922f4235-c170-4b22-9cc0-fc0226991619",
+                    "type": "freshness",
+                    "enabled": true
+                  },
+                  {
+                    "id": "d79bfed3-677a-43fd-b9cd-d5430e39e398",
+                    "type": "row_count",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "8e413d77-2684-42f2-b69b-37d89e33a551",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_membership_sync_runs",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "ceb50243-39e8-4969-9017-3dd40e4568fa",
+                    "type": "row_count",
+                    "enabled": true
+                  },
+                  {
+                    "id": "28145430-a2b5-4783-88d8-e6792afcc630",
+                    "type": "freshness",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "2f45e9a8-bb8b-4127-a58c-5d8315ddc644",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/ezf_active_memberships",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "95d32adf-1816-4fb2-a305-8e7dd707ed3b",
+                    "type": "freshness",
+                    "enabled": true
+                  },
+                  {
+                    "id": "61c8f34c-036c-42ce-a8ad-95971a27ec65",
+                    "type": "row_count",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "dbd0c8dd-597c-4dc7-b02a-a4e85021af89",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/finance_snapshots",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "4c910ae9-e652-4acd-a138-a544d6de8e5d",
+                    "type": "row_count",
+                    "enabled": true
+                  },
+                  {
+                    "id": "3927a758-d104-4250-ba74-b3326a61bde3",
+                    "type": "freshness",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "22cb8854-e99c-47c8-a5f6-6c7a9870273d",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/locations",
+                "watched": false,
+                "monitors": []
+              },
+              {
+                "id": "f5a661c7-f70a-4733-af09-54fe4ca26cc3",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/members",
+                "watched": true,
+                "monitors": [
+                  {
+                    "id": "77421df7-42f4-4d61-b637-fce2be63a797",
+                    "type": "freshness",
+                    "enabled": true
+                  },
+                  {
+                    "id": "6befd181-6087-4fe0-883e-d218d0881fa2",
+                    "type": "row_count",
+                    "enabled": true
+                  }
+                ]
+              },
+              {
+                "id": "cdff19ab-161d-477a-8b05-aeb805add888",
+                "dataset": "dgqcanfiapxztmqqlqnh/postgres/gym/mirror_runs",
+                "watched": false,
+                "monitors": []
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.locations",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.locations",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": [
+                {
+                  "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                  "family": "unused",
+                  "label": "Unused column",
+                  "column": "lat",
+                  "rule": "effectively unused (>= 90% empty)",
+                  "failing_count": 4,
+                  "pct": 100,
+                  "low_confidence": false
+                },
+                {
+                  "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                  "family": "unused",
+                  "label": "Unused column",
+                  "column": "lng",
+                  "rule": "effectively unused (>= 90% empty)",
+                  "failing_count": 4,
+                  "pct": 100,
+                  "low_confidence": false
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.locations",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": [
+              {
+                "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+                "family": "unused",
+                "label": "Unused column",
+                "column": "lat",
+                "rule": "effectively unused (>= 90% empty)",
+                "failing_count": 4,
+                "pct": 100,
+                "low_confidence": false
+              },
+              {
+                "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+                "family": "unused",
+                "label": "Unused column",
+                "column": "lng",
+                "rule": "effectively unused (>= 90% empty)",
+                "failing_count": 4,
+                "pct": 100,
+                "low_confidence": false
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.members",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.members",
+              "status": "untrusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": [
+                {
+                  "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                  "family": "business_rule",
+                  "label": "Rule broken",
+                  "column": null,
+                  "rule": "joined_at must be on or before expiration_date",
+                  "failing_count": 91,
+                  "pct": null,
+                  "low_confidence": false
+                },
+                {
+                  "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                  "family": "business_rule",
+                  "label": "Rule broken",
+                  "column": null,
+                  "rule": "joined_at must be on or before churned_at",
+                  "failing_count": 52,
+                  "pct": null,
+                  "low_confidence": false
+                },
+                {
+                  "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                  "family": "missing",
+                  "label": "Missing values",
+                  "column": "ezf_membership_number",
+                  "rule": "should not be missing (null)",
+                  "failing_count": 64,
+                  "pct": null,
+                  "low_confidence": false
+                },
+                {
+                  "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                  "family": "unused",
+                  "label": "Unused column",
+                  "column": "churned_at",
+                  "rule": "effectively unused (>= 90% empty)",
+                  "failing_count": 34330,
+                  "pct": 96.5872323664294,
+                  "low_confidence": false
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.members",
+            "status": "untrusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": [
+              {
+                "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+                "family": "business_rule",
+                "label": "Rule broken",
+                "column": null,
+                "rule": "joined_at must be on or before expiration_date",
+                "failing_count": 91,
+                "pct": null,
+                "low_confidence": false
+              },
+              {
+                "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+                "family": "business_rule",
+                "label": "Rule broken",
+                "column": null,
+                "rule": "joined_at must be on or before churned_at",
+                "failing_count": 52,
+                "pct": null,
+                "low_confidence": false
+              },
+              {
+                "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+                "family": "missing",
+                "label": "Missing values",
+                "column": "ezf_membership_number",
+                "rule": "should not be missing (null)",
+                "failing_count": 64,
+                "pct": null,
+                "low_confidence": false
+              },
+              {
+                "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+                "family": "unused",
+                "label": "Unused column",
+                "column": "churned_at",
+                "rule": "effectively unused (>= 90% empty)",
+                "failing_count": 34330,
+                "pct": 96.5872323664294,
+                "low_confidence": false
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.checkins",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.checkins",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": []
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.checkins",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": []
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.ezf_active_memberships",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.ezf_active_memberships",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": []
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.ezf_active_memberships",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": []
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.ezf_active_membership_sync_runs",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.ezf_active_membership_sync_runs",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": []
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.ezf_active_membership_sync_runs",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": []
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.checkin_sync_runs",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.checkin_sync_runs",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": [
+                {
+                  "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                  "family": "unused",
+                  "label": "Unused column",
+                  "column": "error_code",
+                  "rule": "effectively unused (>= 90% empty)",
+                  "failing_count": 6100,
+                  "pct": 95.881798176674,
+                  "low_confidence": false
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.checkin_sync_runs",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": [
+              {
+                "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+                "family": "unused",
+                "label": "Unused column",
+                "column": "error_code",
+                "rule": "effectively unused (>= 90% empty)",
+                "failing_count": 6100,
+                "pct": 95.881798176674,
+                "low_confidence": false
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.finance_snapshots",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.finance_snapshots",
+              "status": "untrusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": [
+                {
+                  "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                  "family": "referential",
+                  "label": "Broken references",
+                  "column": "location_id",
+                  "rule": "every value must exist in locations.id",
+                  "failing_count": 28,
+                  "pct": null,
+                  "low_confidence": false
+                },
+                {
+                  "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                  "family": "unused",
+                  "label": "Unused column",
+                  "column": "flagged",
+                  "rule": "effectively unused (>= 90% empty)",
+                  "failing_count": 217,
+                  "pct": 96.0176991150443,
+                  "low_confidence": false
+                }
+              ]
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.finance_snapshots",
+            "status": "untrusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": [
+              {
+                "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+                "family": "referential",
+                "label": "Broken references",
+                "column": "location_id",
+                "rule": "every value must exist in locations.id",
+                "failing_count": 28,
+                "pct": null,
+                "low_confidence": false
+              },
+              {
+                "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+                "family": "unused",
+                "label": "Unused column",
+                "column": "flagged",
+                "rule": "effectively unused (>= 90% empty)",
+                "failing_count": 217,
+                "pct": 96.0176991150443,
+                "low_confidence": false
+              }
+            ]
+          }
+        },
+        "isError": false
+      }
+    },
+    {
+      "tool": "data_trust",
+      "table": "gym.mirror_runs",
+      "ok": true,
+      "parsed": true,
+      "response": {
+        "content": [
+          {
+            "type": "text",
+            "text": {
+              "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+              "next_step": {
+                "recommended": "inspect",
+                "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+                "inspect": "Run the query against your database to see the offending rows.",
+                "fix_at_source": "Correct the data in your own app or a migration.",
+                "remediation_sql": "last_resort"
+              },
+              "table": "gym.mirror_runs",
+              "status": "trusted",
+              "as_of": "2026-11-04 22:22:41.290414+00:00",
+              "findings": []
+            }
+          }
+        ],
+        "structuredContent": {
+          "result": {
+            "note": "Sodabase is read-only and never changes your data. The safe way to act on this: have Sodabase keep an eye on it so you're told if it breaks again, look at the offending rows with the query, and correct the data at the source — in your own app or a migration. Changing existing data is a last resort; if you must, do it in your own migration, never a live UPDATE/DELETE to \"fix\" it.",
+            "next_step": {
+              "recommended": "inspect",
+              "track": "Have Sodabase keep an eye on this so it's looked at again on a schedule and you're told when it breaks.",
+              "inspect": "Run the query against your database to see the offending rows.",
+              "fix_at_source": "Correct the data in your own app or a migration.",
+              "remediation_sql": "last_resort"
+            },
+            "table": "gym.mirror_runs",
+            "status": "trusted",
+            "as_of": "2026-11-04 22:22:41.290414+00:00",
+            "findings": []
+          }
+        },
+        "isError": false
+      }
+    }
+  ],
+  "counts": {
+    "actionable": 7,
+    "expected_by_definition": 4,
+    "exploratory": 0,
+    "clean": 0,
+    "undetermined": 18,
+    "unparsed": 0,
+    "errors": 0
+  },
+  "inserted_into_quality_findings": 0,
+  "database_error": null,
+  "findings": [
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+      "table_name": "gym.finance_snapshots",
+      "verdict": "untrusted",
+      "problem": "Broken references: location_id: every value must exist in locations.id",
+      "finding_count": 28,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "finance-all-rollup",
+        "response": {
+          "id": "13e8367a-5c13-4739-bb4d-383e92fe207f",
+          "family": "referential",
+          "label": "Broken references",
+          "column": "location_id",
+          "rule": "every value must exist in locations.id",
+          "failing_count": 28,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "e61776c4-fb60-46bc-b064-1825849b1855",
+      "table_name": "gym.finance_snapshots",
+      "verdict": "untrusted",
+      "problem": "Unused column: flagged: effectively unused (>= 90% empty)",
+      "finding_count": 217,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "e61776c4-fb60-46bc-b064-1825849b1855",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "flagged",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 217,
+          "pct": 96.0176991150443,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+      "table_name": "cm.decisions",
+      "verdict": "untrusted",
+      "problem": "Rule broken: created_at must be on or before accepted_at",
+      "finding_count": 6,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "beeef2aa-55e7-4cee-a502-a7f6191d7136",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "created_at must be on or before accepted_at",
+          "failing_count": 6,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+      "table_name": "cm.decisions",
+      "verdict": "untrusted",
+      "problem": "Unused column: supersedes_id: effectively unused (>= 90% empty)",
+      "finding_count": 6,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "8cd9cc17-c091-4794-9381-7ddc1ee4eff3",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "supersedes_id",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 6,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Rule broken: joined_at must be on or before expiration_date",
+      "finding_count": 91,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "83836aa5-1951-4af0-ba5c-66ed826ad205",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "joined_at must be on or before expiration_date",
+          "failing_count": 91,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Rule broken: joined_at must be on or before churned_at",
+      "finding_count": 52,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "d99222cc-bc62-4bd4-8b48-dec6632949cc",
+          "family": "business_rule",
+          "label": "Rule broken",
+          "column": null,
+          "rule": "joined_at must be on or before churned_at",
+          "failing_count": 52,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Missing values: ezf_membership_number: should not be missing (null)",
+      "finding_count": 64,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "86e2adc9-bf0a-4623-9a27-f3cc9ea34cea",
+          "family": "missing",
+          "label": "Missing values",
+          "column": "ezf_membership_number",
+          "rule": "should not be missing (null)",
+          "failing_count": 64,
+          "pct": null,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+      "table_name": "gym.members",
+      "verdict": "untrusted",
+      "problem": "Unused column: churned_at: effectively unused (>= 90% empty)",
+      "finding_count": 34330,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "0cb332c1-334b-48f8-a05e-6e15e1aaa32b",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "churned_at",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 34330,
+          "pct": 96.5872323664294,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_memberships",
+      "verdict": "untrusted",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+      "table_name": "gym.checkin_sync_runs",
+      "verdict": "unknown",
+      "problem": "Unused column: error_code: effectively unused (>= 90% empty)",
+      "finding_count": 6100,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "expected_by_definition",
+        "never_flag_id": "sparse-by-design",
+        "response": {
+          "id": "eb855a3b-1f16-45ea-be25-ac9a5241665f",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "error_code",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 6100,
+          "pct": 95.881798176674,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+      "table_name": "gym.locations",
+      "verdict": "unknown",
+      "problem": "Unused column: lat: effectively unused (>= 90% empty)",
+      "finding_count": 4,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "bef480b0-b5ee-45a3-aa71-e74d35e09c1a",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "lat",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 4,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+      "table_name": "gym.locations",
+      "verdict": "unknown",
+      "problem": "Unused column: lng: effectively unused (>= 90% empty)",
+      "finding_count": 4,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "disposition": "actionable",
+        "response": {
+          "id": "c6b24da7-3a8a-4db3-81d5-985859249121",
+          "family": "unused",
+          "label": "Unused column",
+          "column": "lng",
+          "rule": "effectively unused (>= 90% empty)",
+          "failing_count": 4,
+          "pct": 100,
+          "low_confidence": false
+        }
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.approvals",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.attempts",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.check_contracts",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.contract_checks",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evaluations",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.evidence",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.findings",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.gate_decisions",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.outputs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.quality_findings",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.run_decisions",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.sources",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "cm.techniques",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.checkins",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.ezf_active_membership_sync_runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    },
+    {
+      "provider": "sodabase",
+      "provider_finding_id": null,
+      "table_name": "gym.mirror_runs",
+      "verdict": "unknown",
+      "problem": null,
+      "finding_count": null,
+      "severity": null,
+      "observed_at": "2026-11-04T22:26:35.937Z",
+      "raw": {
+        "tool": "data_trust_health",
+        "response": null
+      }
+    }
+  ]
+}

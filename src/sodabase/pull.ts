@@ -11,6 +11,7 @@ export interface PullClient extends ReadToolClient {
   readonly provenance: 'live' | 'test_double';
   connect(): Promise<ConnectionStatus>;
   verifyProject(ref?: string): Promise<boolean>;
+  projectListing?(): Promise<unknown | null>;
   close(): Promise<void>;
 }
 export interface Queryable { query(text: string, params?: unknown[]): Promise<{ rows: any[] }>; }
@@ -53,8 +54,16 @@ const STATUS_KEYS = ['status', 'verdict'];
 const COUNT_KEYS = ['failing_count', 'count', 'finding_count', 'violations', 'violation_count', 'breaking_rows', 'rows_breaking', 'failing_rows', 'rows'];
 const ID_KEYS = ['finding_id', 'id', 'issue_id'];
 
+/** Live findings are {family, label, column, rule, failing_count, id}. Older shapes use one text field. */
+function problemText(p: Record<string, unknown>): string | null {
+  const label = firstString(p, ['label']);
+  const rule = firstString(p, ['rule']);
+  if (label || rule) return [label, firstString(p, ['column']), rule].filter(Boolean).join(': ');
+  return firstString(p, PROBLEM_TEXT);
+}
+
 function toRow(tool: string, table: string, verdict: string, p: Record<string, unknown> | null, observedAt: string, extra: Record<string, unknown> = {}): QualityRow {
-  const problem = p ? firstString(p, PROBLEM_TEXT) : null;
+  const problem = p ? problemText(p) : null;
   const text = problem ? scrubText(problem) : null;
   const { disposition, never_flag_id } = text ? classifyProblem(`${table} ${text}`) : { disposition: undefined, never_flag_id: undefined };
   return {
@@ -79,6 +88,30 @@ function healthRows(raw: unknown, observedAt: string): { rows: QualityRow[]; par
   return { rows, parsed: true, tables: tables.length };
 }
 
+/** Inbox datasets look like <ref>/postgres/<schema>/<table>. Anything for another project keeps its full name. */
+function tableName(dataset: string): string {
+  const m = /^([^/]+)\/[^/]+\/([^/]+)\/([^/]+)$/.exec(dataset);
+  return m && m[1] === SODABASE_PROJECT_REF ? `${m[2]}.${m[3]}` : dataset;
+}
+
+/**
+ * An inbox title is too short to classify, so an Issue is judged by the findings explain links it to, and is expected
+ * only if all of them are. The explain summary itself is the provider's model guess, kept as commentary and never used.
+ */
+function applyExplanation(row: QualityRow, explained: unknown): void {
+  const data = structured(explained);
+  const explanation = isObject(data) && isObject(data.explanation) ? data.explanation : null;
+  const findings = explanation ? listOf(explanation, ['findings']) ?? [] : [];
+  if (findings.length === 0) return;
+  const judged = findings.map((f) => classifyProblem(`${row.problem ?? ''} ${Array.isArray(f.cols) ? f.cols.join(' ') : ''} ${firstString(f, ['family']) ?? ''}`));
+  if (judged.every((j) => j.disposition === 'expected_by_definition')) {
+    row.raw.disposition = 'expected_by_definition';
+    row.raw.never_flag_id = judged[0]!.never_flag_id;
+  }
+  const counts = findings.map((f) => firstNumber(f, COUNT_KEYS)).filter((n): n is number => n !== null);
+  if (row.finding_count === null && counts.length) row.finding_count = counts.reduce((a, b) => a + b, 0);
+}
+
 function inboxRows(raw: unknown, observedAt: string, known: Set<string>): { rows: QualityRow[]; parsed: boolean } {
   const items = listOf(structured(raw), ['issues', 'items', 'inbox', 'results']);
   if (!items) return { rows: [], parsed: false };
@@ -86,7 +119,7 @@ function inboxRows(raw: unknown, observedAt: string, known: Set<string>): { rows
   for (const item of items) {
     const id = firstString(item, ID_KEYS);
     if (id && known.has(id)) continue;
-    rows.push(toRow('list_inbox', firstString(item, TABLE_KEYS) ?? 'unknown', firstString(item, STATUS_KEYS) ?? 'open', item, observedAt));
+    rows.push(toRow('list_inbox', tableName(firstString(item, TABLE_KEYS) ?? 'unknown'), firstString(item, STATUS_KEYS) ?? 'open', item, observedAt));
   }
   return { rows, parsed: true };
 }
@@ -124,6 +157,8 @@ export interface PullOptions {
   rules?: IntegrityRule[];
   /** Tool discovery and data_trust_health only: no inbox, explain, rules or database. */
   healthOnly?: boolean;
+  /** With healthOnly: ask data_trust about these tables and list datasets, to show whether Sodabase can see them. */
+  probeTables?: string[];
   /** Fetch the root-cause story for this many inbox and health findings. */
   explainLimit?: number;
   now?: () => Date;
@@ -155,7 +190,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       const raw = await client.callReadTool(tool, args);
       const isError = isObject(raw) && raw.isError === true;
       if (isError) counts.errors++;
-      calls.push({ tool, ok: !isError, parsed: structured(raw) !== null, response: sanitize(raw) });
+      calls.push({ tool, ...(tool === 'data_trust' ? { table: args.table } : {}), ok: !isError, parsed: structured(raw) !== null, response: sanitize(raw) });
       return isError ? null : raw;
     } catch {
       // Errors are not recorded verbatim: upstream text can hold credentials.
@@ -178,6 +213,12 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
         quality = noScans ? 'NO_SCANS_YET' : !h.parsed ? 'UNPARSED' : h.tables === 0 ? 'NO_WATCHED_TABLES' : 'RECEIVED';
       }
     }
+    let projectListing: unknown = null;
+    if (options.healthOnly) {
+      projectListing = sanitize(await client.projectListing?.() ?? null);
+      if (status.tools.includes('list_datasets')) await call('list_datasets', {});
+      if (status.tools.includes('data_trust')) for (const table of options.probeTables ?? []) await call('data_trust', { table });
+    }
     if (!options.healthOnly && status.tools.includes('list_inbox')) {
       const raw = await call('list_inbox', {});
       if (raw) {
@@ -186,10 +227,11 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
       }
     }
     if (!options.healthOnly && status.tools.includes('explain')) {
-      const targets = rows.filter((r) => r.provider_finding_id && r.raw.disposition === 'actionable').slice(0, options.explainLimit ?? 5);
+      // explain takes an inbox Issue id. Health finding ids are a different thing.
+      const targets = rows.filter((r) => r.raw.tool === 'list_inbox' && r.provider_finding_id && r.raw.disposition === 'actionable').slice(0, options.explainLimit ?? 5);
       for (const r of targets) {
         const raw = await call('explain', { id: r.provider_finding_id });
-        if (raw) r.raw.explanation = sanitize(raw);
+        if (raw) { r.raw.explanation = sanitize(raw); applyExplanation(r, raw); }
       }
     }
     if (!options.healthOnly && options.runRules && status.tools.includes('check_rule')) {
@@ -222,6 +264,7 @@ export async function pullFindings(client: PullClient, options: PullOptions = {}
     writeFileSync(receiptPath, `${JSON.stringify({
       provider: 'sodabase', provenance: client.provenance, endpoint: status.endpoint, project_ref: SODABASE_PROJECT_REF, observed_at: observedAt, scope: SCOPE_NOTE,
       quality_evidence: quality,
+      ...(options.healthOnly ? { project_listing: projectListing } : {}),
       tools_discovered: status.tools, ...(status.catalog ? { server_catalog: status.catalog } : {}), tool_calls: calls, counts, inserted_into_quality_findings: inserted, database_error: databaseError, findings: rows,
     }, null, 2)}\n`);
     return { status, provenance: client.provenance, observed_at: observedAt, rows, counts, quality_evidence: quality, receipt_path: receiptPath, inserted, database_error: databaseError };
