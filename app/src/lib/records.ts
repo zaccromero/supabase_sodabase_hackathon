@@ -45,6 +45,7 @@ export interface AttemptRow {
 }
 export interface EvidenceRow {
   id: string; output_id: string; kind: string; uri: string | null; sha256: string | null; created_by: string; created_at: Date;
+  historical_label: string | null;
 }
 export interface ApprovalRow { evaluation_id: string; decision: string; approver: string; created_at: Date }
 export interface PinRow { run_id: string; decision_id: string }
@@ -84,7 +85,8 @@ async function readAll(tx: Tx): Promise<Records> {
      from cm.attempts a left join cm.outputs o on o.attempt_id = a.id
      order by a.created_at desc, a.id limit 300`);
   const evidence = await tx.query<EvidenceRow>(
-    `select id, output_id, kind, uri, sha256, created_by, created_at from cm.evidence order by created_at desc, id limit 300`);
+    `select id, output_id, kind, uri, sha256, created_by, created_at, payload->>'historical_label' as historical_label
+     from cm.evidence order by created_at desc, id limit 300`);
   const approvals = await tx.query<ApprovalRow>(`select evaluation_id, decision, approver, created_at from cm.approvals`);
   const pins = await tx.query<PinRow>(`select run_id, decision_id from cm.run_decisions`);
   return { readAt: now, runs, chains, decisions, sources, evaluations, gates, quality, attempts, evidence, approvals, pins };
@@ -106,10 +108,12 @@ export function countedEvaluationIds(r: Records): Set<string> {
   return counted;
 }
 
-/** A run asked to revise a historical excerpt quotes it in `before`. Quoting it is not a new incident. */
-export function historicalInput(run: Pick<RunRow, 'task'> | null | undefined, body: Record<string, unknown> | null | undefined, excerpt?: string): boolean {
-  if (!run || !/\bhistorical\b/i.test(run.task)) return false;
-  if (excerpt === undefined) return true;
+/** The label the Milo handler records in evidence when its input is a historical excerpt. */
+export const historicalLabel = (r: Records, outputId: string | null | undefined): string | null =>
+  r.evidence.find((e) => e.output_id === outputId && e.historical_label)?.historical_label ?? null;
+
+/** An excerpt found only in the historical `before` text is the input being quoted, not new drift. */
+function quotesOnlyInput(body: Record<string, unknown> | null | undefined, excerpt: string): boolean {
   const before = typeof body?.before === 'string' ? body.before : '';
   const after = typeof body?.after === 'string' ? body.after : '';
   return before.includes(excerpt) && !after.includes(excerpt);
@@ -163,7 +167,7 @@ export function buildChain(r: Records, row: ChainRow): Chain {
   const freshEvaluations = freshRun?.attempt_id ? r.evaluations.filter((e) => e.attempt_id === freshRun.attempt_id && counted.has(e.id)) : [];
   const freshGate = freshRun ? r.gates.find((g) => g.run_id === freshRun.run_id) ?? null : null;
   const proven = row.status === 'verified' && freshIsNewRun && freshRun?.status === 'completed' && freshPinsCorrection;
-  const conflictIsHistoricalInput = historicalInput(conflictRun, conflictAttempt?.body, row.excerpt);
+  const conflictIsHistoricalInput = !!historicalLabel(r, row.target_output_id) && quotesOnlyInput(conflictAttempt?.body, row.excerpt);
   return { row, decision, source, conflictAttempt, conflictRun, conflictIsHistoricalInput, failedEvaluation, rejection, repairAttempt, repairEvaluation, repairGate, correction, freshRun, freshIsNewRun, freshPinsCorrection, freshEvaluations, freshGate, proven };
 }
 
