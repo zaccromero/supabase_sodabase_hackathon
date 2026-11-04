@@ -5,7 +5,7 @@ Deadline: **work-ready 17:50 ET, submit 18:30 ET**. Source of truth for tables a
 ## Non-negotiables
 - No fake data. Real sources only; historical items stay labeled `historical`; fault injection is labeled. Never fabricate an incident or a pass.
 - No DEV scheduler restart, no PROD access, no change in any company repo, no external publication, no new lanes. Other repos are read-only.
-- No member PII leaves Neon. Deck v8 and memo are NOT_FOR_DISTRIBUTION: one slide's text only, no financial figures.
+- No member PII leaves Neon. The investor deck and memo are NOT_FOR_DISTRIBUTION: one slide's text only, no financial figures.
 - Secrets only from Doppler `hackathon/dev` by name; never print them. Heavy commands: `/Users/zaccromero/bin/mac-workload run /absolute/executable args`.
 
 ## Bindings

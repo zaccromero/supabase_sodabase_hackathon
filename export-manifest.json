@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "source": { "doppler_project": "gym-nyc", "doppler_config": "dev", "schema": "public" },
+  "target": { "schema": "gym" },
+  "tables": [
+    {
+      "table": "locations",
+      "mode": "upsert",
+      "key": ["id"],
+      "columns": {
+        "id": { "type": "text" },
+        "lat": { "type": "float8" },
+        "lng": { "type": "float8" },
+        "created_at": { "type": "timestamptz" }
+      }
+    },
+    {
+      "table": "members",
+      "mode": "upsert",
+      "key": ["id"],
+      "columns": {
+        "id": { "type": "uuid" },
+        "ezf_client_id": { "type": "text", "hash": true },
+        "ezf_membership_number": { "type": "text", "hash": true },
+        "location_id": { "type": "text" },
+        "membership_type": { "type": "text" },
+        "membership_tier": { "type": "text" },
+        "expiration_date": { "type": "timestamptz" },
+        "term_months": { "type": "int4" },
+        "joined_at": { "type": "timestamptz" },
+        "churned_at": { "type": "timestamptz" },
+        "ezf_contract_status": { "type": "text" },
+        "last_check_in": { "type": "timestamptz" },
+        "is_modification_cancel": { "type": "bool" },
+        "last_synced_at": { "type": "timestamptz" }
+      }
+    },
+    {
+      "table": "checkins",
+      "mode": "upsert",
+      "key": ["id"],
+      "where": "checked_in_at >= now() - interval '6 months'",
+      "columns": {
+        "id": { "type": "uuid" },
+        "member_id": { "type": "uuid" },
+        "location_id": { "type": "text" },
+        "checked_in_at": { "type": "timestamptz" },
+        "ezf_checkin_id": { "type": "text", "hash": true },
+        "source": { "type": "text" },
+        "ingested_at": { "type": "timestamptz" }
+      }
+    },
+    {
+      "table": "ezf_active_memberships",
+      "mode": "full_replace",
+      "key": ["id"],
+      "columns": {
+        "id": { "type": "uuid" },
+        "location_id": { "type": "text" },
+        "source_membership_key": { "type": "text", "hash": true },
+        "ezf_membership_number": { "type": "text", "hash": true },
+        "member_id": { "type": "uuid" },
+        "membership_mode": { "type": "text" },
+        "membership_start": { "type": "date" },
+        "membership_end": { "type": "date" },
+        "bridge_class": { "type": "text" },
+        "report_as_of": { "type": "date" },
+        "source_csv_sha256": { "type": "text" },
+        "source_last_seen_at": { "type": "timestamptz" },
+        "ingested_at": { "type": "timestamptz" },
+        "updated_at": { "type": "timestamptz" }
+      }
+    },
+    {
+      "table": "ezf_active_membership_sync_runs",
+      "mode": "upsert",
+      "key": ["id"],
+      "columns": {
+        "id": { "type": "uuid" },
+        "location_id": { "type": "text" },
+        "report_as_of": { "type": "date" },
+        "report_filter_version": { "type": "text" },
+        "started_at": { "type": "timestamptz" },
+        "finished_at": { "type": "timestamptz" },
+        "source_csv_sha256": { "type": "text" },
+        "source_rows_total": { "type": "int4" },
+        "unique_membership_keys": { "type": "int4" },
+        "active_individual_members": { "type": "int4" },
+        "explained_exclusions": { "type": "int4" },
+        "structural_differences": { "type": "int4" },
+        "unmapped_members": { "type": "int4" },
+        "unexplained_records": { "type": "int4" },
+        "status": { "type": "text" },
+        "had_errors": { "type": "bool" },
+        "parse_drift": { "type": "bool" },
+        "error_code": { "type": "text" }
+      }
+    },
+    {
+      "table": "checkin_sync_runs",
+      "mode": "upsert",
+      "key": ["id"],
+      "columns": {
+        "id": { "type": "uuid" },
+        "location_id": { "type": "text" },
+        "started_at": { "type": "timestamptz" },
+        "finished_at": { "type": "timestamptz" },
+        "source_events_fetched": { "type": "int4" },
+        "matched_events": { "type": "int4" },
+        "inserted_events": { "type": "int4" },
+        "duplicate_events": { "type": "int4" },
+        "unmatched_events": { "type": "int4" },
+        "parse_error_count": { "type": "int4" },
+        "source_retry_count": { "type": "int4" },
+        "latest_source_event_at": { "type": "timestamptz" },
+        "had_error": { "type": "bool" },
+        "error_code": { "type": "text" },
+        "duration_seconds": { "type": "float8" }
+      }
+    },
+    {
+      "table": "finance_snapshots",
+      "mode": "upsert",
+      "key": ["snapshot_date", "location_id"],
+      "columns": {
+        "snapshot_date": { "type": "date" },
+        "location_id": { "type": "text" },
+        "recurring_mrr_cents": { "type": "int4" },
+        "committed_mrr_cents": { "type": "int4" },
+        "fee_unknown_count": { "type": "int4" },
+        "active_members": { "type": "int4" },
+        "churned_members_total": { "type": "int4" },
+        "ar_total_cents": { "type": "int4" },
+        "ar_source": { "type": "text" },
+        "flagged": { "type": "text" },
+        "computed_at": { "type": "timestamptz" }
+      }
+    }
+  ]
+}

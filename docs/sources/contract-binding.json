@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-11-04T21:37:41.869545+00:00",
+  "contract_path": "/Users/zaccromero/code/hackathon/supabase_sodabase_hackathon/docs/CONTRACT.md",
+  "contract_sha256": "d19c29d472b5c8880253fa5c286dfdc287e75fe83b83742f43a09f90ddbc01e0",
+  "schema_path": "/Users/zaccromero/code/hackathon/supabase_sodabase_hackathon/supabase/migrations/001_core.sql",
+  "schema_sha256": "ad61c9aec0f4dd67429396095ce2608cf6311b9a3f7345bea89541c03b376d7a",
+  "source_hash_semantics": "import.contract.json content_sha256 is SHA-256 of the exact UTF-8 excerpt in sources.json; file_sha256 in sources.json binds the full unexported source file.",
+  "ownership": "Independent packet only. Contract lane ownership mismatch is held for governor reconciliation. No shared checkout or worktree mutations.",
+  "deadline_note": "Receiving instruction: integration 17:40 ET, work-ready 18:00 ET, final 18:30 ET. CONTRACT.md currently states work-ready 17:50 ET; use earlier 17:50 as preparation target pending governor reconciliation, without changing owner deadline."
+}

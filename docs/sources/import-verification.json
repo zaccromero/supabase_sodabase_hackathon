@@ -1,0 +1,21 @@
+{
+  "checked_at": "2026-11-04T21:37:45.083Z",
+  "status": "PASS",
+  "environment": "ephemeral local PGlite; no live service and no company database",
+  "schema_sha256": "ad61c9aec0f4dd67429396095ce2608cf6311b9a3f7345bea89541c03b376d7a",
+  "counts": {
+    "sources": 7,
+    "proposed": 6,
+    "accepted": 0
+  },
+  "checks": [
+    "Exact contract source columns insert as gate_service",
+    "Exact contract decision columns insert as gate_service",
+    "Six proposals remain unaccepted",
+    "agent_worker cannot accept a proposal"
+  ],
+  "live_supabase": "NOT_RUN",
+  "sodabase": "NOT_RUN",
+  "founder_approval": "NOT_OBSERVED",
+  "fresh_run": "NOT_RUN"
+}

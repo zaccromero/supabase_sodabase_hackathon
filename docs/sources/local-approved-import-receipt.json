@@ -1,0 +1,62 @@
+{
+  "at": "2026-11-04T21:40:21.136Z",
+  "environment": "governor persistent local PGlite only",
+  "status": "PASS_LOCAL_APPROVED_IMPORT",
+  "bundle_sha256": "44f684a37655a5bbae291dea3625eb80839c1ad069f8b258942374cbbe24c85c",
+  "schema_sha256": "ad61c9aec0f4dd67429396095ce2608cf6311b9a3f7345bea89541c03b376d7a",
+  "approval_thread": "01a1a87b-06e7-7290-9248-339ebecabe46",
+  "approval_message": "01a1a880-0901-7480-aa7a-e4ba1e100a62",
+  "accepted": [
+    {
+      "id": "f72ccd1c-af28-5ce3-94b5-1c111a3ed775",
+      "decision_key": "gym.active_individual_definition",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    },
+    {
+      "id": "d1b6100d-6cce-5d8a-9381-13d42475a204",
+      "decision_key": "gym.freshness_completeness",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    },
+    {
+      "id": "62485fdb-c225-50cb-8bc7-c7976717d72c",
+      "decision_key": "milo.alpha_not_usage",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    },
+    {
+      "id": "d8a2cf4a-1be5-53a8-bb21-83d1f83a8931",
+      "decision_key": "milo.current_positioning",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    },
+    {
+      "id": "af7dccea-f9da-5b03-beb1-e947cffa4a74",
+      "decision_key": "milo.fee_not_collected",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    },
+    {
+      "id": "0cb43524-2f09-5427-89cb-67614535bee0",
+      "decision_key": "milo.gym_nyc_partner",
+      "version": 1,
+      "status": "accepted",
+      "accepted_by": "Zacc Romero",
+      "accepted_at": "2026-11-04T21:39:16.437Z"
+    }
+  ],
+  "hosted_supabase": "NOT_RUN",
+  "fresh_agent_run": "NOT_RUN",
+  "note": "Direct human approval independently read in supported thread tool. Local founder role exercised; no shared source or database modified."
+}

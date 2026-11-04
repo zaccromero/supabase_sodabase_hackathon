@@ -1,0 +1,92 @@
+{
+  "environment": "local PGlite test database, not hosted Supabase",
+  "model_transport": "cli",
+  "approved_packet_sha256": "44f684a37655a5bbae291dea3625eb80839c1ad069f8b258942374cbbe24c85c",
+  "started": "2026-11-04T21:59:47.027Z",
+  "finished": "2026-11-04T22:00:01.187Z",
+  "accepted_for_profile": [
+    "milo.alpha_not_usage@1",
+    "milo.current_positioning@1",
+    "milo.fee_not_collected@1",
+    "milo.gym_nyc_partner@1"
+  ],
+  "run_id": "e278c15c-de2b-44e8-bbb4-c95c39b93464",
+  "status": "awaiting_approval",
+  "contract_sha256": "a4a24411f14124ca8a6b0983c3e32061bb5ea9b0b9322ca2150684ca807a489b",
+  "pinned": [
+    {
+      "decision_key": "milo.alpha_not_usage",
+      "version": 1,
+      "status": "accepted"
+    },
+    {
+      "decision_key": "milo.current_positioning",
+      "version": 1,
+      "status": "accepted"
+    },
+    {
+      "decision_key": "milo.fee_not_collected",
+      "version": 1,
+      "status": "accepted"
+    },
+    {
+      "decision_key": "milo.gym_nyc_partner",
+      "version": 1,
+      "status": "accepted"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt_id": "17469a8a-3002-45dd-915d-0d2afa88af89",
+      "attempt_no": 1,
+      "kind": "initial",
+      "evaluator_errors": [],
+      "evaluations": [
+        {
+          "evaluation_id": "c7bdee08-9c56-4e3f-85d5-38a707bf940b",
+          "check_id": "milo.no_forbidden_claim",
+          "verdict": "pass",
+          "reason": "No forbidden claim found against milo.gym_nyc_partner, milo.fee_not_collected, milo.alpha_not_usage, milo.current_positioning"
+        },
+        {
+          "evaluation_id": "adbe7128-5945-4786-b87c-bf8f92ab988d",
+          "check_id": "milo.claims_sourced",
+          "verdict": "uncertain",
+          "reason": "claim 3 source \"milo-historical-slide\" is not a pinned or allowed source"
+        },
+        {
+          "evaluation_id": "10c33c54-24b6-43a3-87d4-65a47e176987",
+          "check_id": "critic.meaning",
+          "verdict": "pass",
+          "reason": "Critic: output honors milo.gym_nyc_partner v1: The output describes Gym NYC as a partner and explicitly states it is not the founder's gym, without asserting any equity ownership."
+        }
+      ],
+      "gate": {
+        "run_id": "e278c15c-de2b-44e8-bbb4-c95c39b93464",
+        "missing": [
+          {
+            "reason": "NEEDS_FOUNDER_APPROVAL",
+            "check_id": "milo.claims_sourced",
+            "evaluation_id": "adbe7128-5945-4786-b87c-bf8f92ab988d"
+          }
+        ],
+        "verdict": "awaiting_approval"
+      },
+      "output_id": "46237d87-4493-49c2-bfa7-7b13d92a5a52",
+      "output_sha256": "8b733f9e62e79111fb4e148d33d6b23774ca21b0e16d5bbfb958d00637f1a165"
+    }
+  ],
+  "gate_decisions": [
+    {
+      "verdict": "awaiting_approval",
+      "missing": [
+        {
+          "reason": "NEEDS_FOUNDER_APPROVAL",
+          "check_id": "milo.claims_sourced",
+          "evaluation_id": "adbe7128-5945-4786-b87c-bf8f92ab988d"
+        }
+      ],
+      "created_at": "2026-11-04T22:00:01.176Z"
+    }
+  ]
+}
