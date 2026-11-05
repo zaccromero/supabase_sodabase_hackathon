@@ -31,7 +31,7 @@ if (command === 'status') {
   if (status.state !== 'ready' || !(await client.verifyProject())) { console.log(JSON.stringify({ ...status, project_ref: SODABASE_PROJECT_REF }, null, 2)); process.exitCode = 3; }
   else {
     const results = [];
-    for (const t of TRIAGE.filter((x) => x.classification !== 'real_defect')) results.push({ issue_id: t.issue_id, table: t.table, response: sanitize(await client.markExpected(t.issue_id, t.reason)) });
+    for (const t of TRIAGE.filter((x) => x.classification === 'wrong_rule' || x.classification === 'legitimate_state')) results.push({ issue_id: t.issue_id, table: t.table, response: sanitize(await client.markExpected(t.issue_id, t.reason)) });
     mkdirSync('docs/receipts', { recursive: true });
     const path = `docs/receipts/sodabase-triage-${new Date().toISOString().replace(/\.\d+Z$/, 'Z').replace(/:/g, '-')}.json`;
     writeFileSync(path, `${JSON.stringify({ provider: 'sodabase', provenance: 'live', project_ref: SODABASE_PROJECT_REF, reaction: 'expected', triage: TRIAGE, responses: results }, null, 2)}\n`);

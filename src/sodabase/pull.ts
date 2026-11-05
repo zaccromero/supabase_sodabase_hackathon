@@ -107,6 +107,8 @@ function applyExplanation(row: QualityRow, explained: unknown): void {
   if (judged.every((j) => j.disposition === 'expected_by_definition')) {
     row.raw.disposition = 'expected_by_definition';
     row.raw.never_flag_id = judged[0]!.never_flag_id;
+  } else if (judged.some((j) => j.disposition === 'exploratory')) {
+    row.raw.disposition = 'exploratory';
   }
   const counts = findings.map((f) => firstNumber(f, COUNT_KEYS)).filter((n): n is number => n !== null);
   if (row.finding_count === null && counts.length) row.finding_count = counts.reduce((a, b) => a + b, 0);

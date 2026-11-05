@@ -7,16 +7,16 @@ export interface TriageEntry {
   issue_id: string;
   table: string;
   failing: number;
-  classification: 'wrong_rule' | 'legitimate_state' | 'real_defect';
+  classification: 'wrong_rule' | 'legitimate_state' | 'real_defect' | 'needs_review';
   root_cause: string;
   reason: string;
 }
 
 export const TRIAGE: TriageEntry[] = [
   {
-    issue_id: '5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6', table: 'gym.members', failing: 143, classification: 'wrong_rule',
+    issue_id: '5e456ed4-aeb7-4909-a0a7-d6ccdabac8e6', table: 'gym.members', failing: 143, classification: 'needs_review',
     root_cause: 'The rules compare joined_at to membership end dates, but joined_at is EZFacility client DateCreated, not a membership start (gym-nyc docs/audits/ezfacility-membership-movement-key-authority.md:119). Of 143: 67 are the same NY day, a timestamp against a date at midnight. 68 are client records created in the 2024 migration window (15,079 of 35,543 members were created before 2024-10-15). 6 are records created after the membership end. 2 are real bad dates.',
-    reason: 'joined_at is client DateCreated, not a membership start, so it can legitimately follow a membership end. 141 of 143 are explained that way. The other 2 are real bad 1980 expiration dates in the source (both Expired, neither in the canonical count). They are found by a direct count, because check_rule cannot express a date floor, and they remain open at the source.',
+    reason: 'Client creation and contract dates have different meanings, so the comparison alone cannot establish a defect or an expected case. Migration-window and same-day cohorts are context, not proof of every source date. Two documented 1980 expiry placeholders are normalized to unknown in a separate derived view, preserving raw source data. Keep the other observations under review; do not mark this aggregate expected.',
   },
   {
     issue_id: 'a0916704-dd17-4cd7-a6e8-808176ea4f8f', table: 'gym.finance_snapshots', failing: 28, classification: 'wrong_rule',

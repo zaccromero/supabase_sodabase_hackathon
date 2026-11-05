@@ -17,7 +17,6 @@ const expected: Record<string,{count: number; explanation: string}> = {
  'a0916704-dd17-4cd7-a6e8-808176ea4f8f':{count:28,explanation:'The combined-location rollup is documented behavior, not a missing gym.'},
  'bbee4bad-6a19-4ae3-917b-a320b997da95':{count:1,explanation:'Validated group: one matched individual plus one deliberately excluded additional membership, with distinct source keys.'},
  '6ac59cf6-da38-4ed3-a83a-db79b026b1ff':{count:1,explanation:'Validated additional membership is intentionally excluded from the individual count; it is not an accidental duplicate.'},
- 'beeef2aa-55e7-4cee-a502-a7f6191d7136':{count:6,explanation:'The original approval predates the later database import. Import time is not the original decision time.'},
  '8cd9cc17-c091-4794-9381-7ddc1ee4eff3':{count:6,explanation:'All six are first versions; having no predecessor is expected.'},
 };
 const dates=new Set(['8806f2bb-a4cc-4f2b-ba55-151962c06b24','bdc24c5d-ce55-4515-b2f0-dacc45eaf8c8']);
@@ -27,6 +26,7 @@ export function presentQuality(row:QualityPresentationRow,scope:QualityPresentat
  const reviewedMirror=scope.projectRef===project&&scope.mirrorRunId===mirror;
  const memberTable=row.table_name==='gym.members'||row.table_name===`${project}/postgres/gym/members`;
  const dateRule=row.problem?.trim();
+ if(reviewedMirror&&memberTable&&row.finding_count===64&&dateRule==='Missing values: ezf_membership_number: should not be missing (null)')return {...base,group:'coverage',label:'Coverage gap · source review needed',explanation:'64 source membership numbers are absent: 63 records have no contract status and type other; one is an expired annual membership. Neither nullability nor missing status proves these are all expected. Keep the values unknown until source reconciliation; do not invent membership numbers. Original provider verdict and stored classification remain provenance.'};
  const unresolvedDate=memberTable&&(
   (row.finding_count===91&&dateRule==='Rule broken: joined_at must be on or before expiration_date')||
   (row.finding_count===52&&dateRule==='Rule broken: joined_at must be on or before churned_at')||
