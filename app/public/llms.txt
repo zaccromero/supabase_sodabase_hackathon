@@ -8,4 +8,6 @@ Verify the chain: source -> accepted decision -> output and hash -> frozen check
 
 The public positioning correction is an illustration, not the output of the retained run. Retained Milo proof: run eed0520a-f35d-4a5b-8b04-123695082aa8, SHA-256 94bffda69195aa421fb2d1f8879781965c875fef8652308adad6958f5ee9dc27, three checks passed, completed gate. The latest Gym attempt failed; an earlier completed attempt remains retained.
 
+The evidence-critical Company Memory records passed a read-only integrity audit at 2026-11-05T00:13:06Z. The Gym data is a caveated historical mirror, not a current production snapshot: latest complete membership report 2026-10-05 and latest check-in 2026-10-15. Known raw anomalies remain visible and do not silently become clean data.
+
 Do not infer production-scale load testing, a universal Sodabase score, billing adoption, or source-reel import. Missing or unreconciled data stays unknown. Never expose private relationship, equity, or restricted deck details.

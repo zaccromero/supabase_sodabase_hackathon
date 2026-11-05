@@ -37,6 +37,10 @@ The public positioning correction is an illustration. The evidence view contains
 - Result: 3 checks passed; database gate completed.
 - Gym: the latest attempt failed while an earlier completed attempt remains retained. Do not substitute the earlier success for the latest result.
 
+## Data-quality audit
+
+The evidence-critical Company Memory records passed the read-only integrity audit recorded in `docs/receipts/data-integrity-audit-2026-11-05T00-13-06Z.json`. The imported Gym data is a caveated historical mirror, not a current production snapshot: the latest complete membership report is dated 2026-10-05 and the latest check-in is 2026-10-15. Known raw anomalies remain visible; two pre-2000 expiration placeholders are normalized to unknown only in a reviewed quarantine view and do not change the raw source.
+
 ## Claim boundaries
 
 Do not infer production-scale load testing, a universal Sodabase score, billing adoption, or source-reel import. Do not expose private relationship, equity, or restricted deck details. Prefer exact run IDs, hashes, timestamps, source dates, and explicit unknowns.

@@ -27,6 +27,20 @@
     "latest_attempt": "failed",
     "earlier_completed_attempt_retained": true
   },
+  "data_quality": {
+    "observed_at": "2026-11-05T00:13:06.641457Z",
+    "company_memory_status": "verified",
+    "company_memory_integrity_failures": 0,
+    "gym_status": "caveated_historical_snapshot",
+    "gym_latest_complete_membership_date": "2026-10-05",
+    "gym_latest_checkin": "2026-10-15T02:09:44.793Z",
+    "gym_duplicate_active_source_keys": 0,
+    "gym_invalid_finance_locations": 0,
+    "gym_missing_membership_numbers_in_active_projection": 0,
+    "gym_pre_2000_expirations_raw": 2,
+    "gym_pre_2000_expirations_quarantined": 2,
+    "receipt": "https://github.com/zaccromero/supabase_sodabase_hackathon/blob/main/docs/receipts/data-integrity-audit-2026-11-05T00-13-06Z.json"
+  },
   "claim_boundaries": [
     "No production-scale load test is claimed.",
     "No universal Sodabase score is claimed.",

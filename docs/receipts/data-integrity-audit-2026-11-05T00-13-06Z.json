@@ -1,0 +1,58 @@
+{
+  "project_ref": "dgqcanfiapxztmqqlqnh",
+  "observed_at": "2026-11-05T00:13:06.641457Z",
+  "method": "Read-only Supabase SQL integrity audit plus non-persistent Sodabase rule checks",
+  "company_memory": {
+    "status": "verified",
+    "sources_missing_identity": 0,
+    "sources_bad_sha256": 0,
+    "duplicate_source_uris": 0,
+    "decisions_missing_statement_or_scope": 0,
+    "duplicate_decision_key_versions": 0,
+    "accepted_decisions_missing_acceptance": 0,
+    "decision_acceptance_before_database_creation": 0,
+    "runs_without_contract": 0,
+    "completed_runs_without_completed_latest_gate": 0,
+    "latest_gate_attempt_mismatches": 0,
+    "evaluation_binding_mismatches": 0,
+    "required_evaluations_missing_evidence": 0,
+    "outputs_with_invalid_sha256": 0
+  },
+  "retained_milo_run": {
+    "run_id": "eed0520a-f35d-4a5b-8b04-123695082aa8",
+    "status": "completed",
+    "attempt": 1,
+    "checks_passed": 3,
+    "gate": "completed",
+    "output_sha256": "94bffda69195aa421fb2d1f8879781965c875fef8652308adad6958f5ee9dc27"
+  },
+  "gym_mirror": {
+    "status": "caveated_historical_snapshot",
+    "members_total": 35543,
+    "latest_complete_membership_date": "2026-10-05",
+    "latest_checkin": "2026-10-15T02:09:44.793Z",
+    "latest_mirror_finished": "2026-11-04T22:15:51.391124Z",
+    "duplicate_active_source_keys": 0,
+    "invalid_finance_locations": 0,
+    "missing_membership_numbers": 64,
+    "missing_numbers_in_active_projection": 0,
+    "missing_numbers_counted_active": 0,
+    "pre_2000_expirations_raw": 2,
+    "pre_2000_expirations_quarantined": 2,
+    "nonquarantine_normalization_drift": 0,
+    "joined_after_expiration_observations": 91,
+    "joined_after_churn_observations": 52,
+    "date_observation_note": "joined_at is client-record creation time, not membership activation. These comparisons remain review observations, not automatically classified defects."
+  },
+  "sodabase": {
+    "fresh_scan": "BLOCKED_BY_HOST_AUTO_REVIEW",
+    "non_persistent_rule_checks": {
+      "active_membership_location_and_source_key_unique": "pass_0_failures",
+      "finance_location_in_allowed_set": "pass_0_failures",
+      "decision_acceptance_order": "provider_unknown_live_sql_0_failures",
+      "decision_key_version_unique": "provider_unknown_live_sql_0_failures",
+      "run_memory_mode_non_null": "provider_unknown_live_sql_0_failures"
+    }
+  },
+  "claim": "The evidence-critical Company Memory records passed the audited integrity checks. The Gym data is a deliberately retained historical mirror with explicit freshness and semantic caveats; it is not represented as current production data."
+}
