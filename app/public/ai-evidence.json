@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "product": "Company Memory",
+  "summary": "Source-backed, versioned company decisions retrieved by later AI agents and checked by a database gate before completion.",
+  "review_urls": {
+    "product": "https://company-memory-zacc-r.vercel.app/",
+    "workspace": "https://company-memory-zacc-r.vercel.app/app",
+    "evidence": "https://company-memory-zacc-r.vercel.app/app?view=evidence",
+    "demo": "https://company-memory-demo-video.vercel.app/",
+    "repository_guide": "https://github.com/zaccromero/supabase_sodabase_hackathon/blob/main/docs/JUDGE-GUIDE.md"
+  },
+  "system_chain": ["source", "accepted_decision", "output", "checks", "gate"],
+  "evidence_labels": {
+    "verified": "Supported by retained runtime or repository evidence.",
+    "illustrated": "Communicates the product idea but is not claimed as a retained run.",
+    "limited": "Not demonstrated at production scale and must not be inferred."
+  },
+  "retained_run": {
+    "company": "Milo",
+    "run_id": "eed0520a-f35d-4a5b-8b04-123695082aa8",
+    "output_sha256": "94bffda69195aa421fb2d1f8879781965c875fef8652308adad6958f5ee9dc27",
+    "checks_passed": 3,
+    "gate": "completed"
+  },
+  "latest_attempt_integrity": {
+    "company": "Gym",
+    "latest_attempt": "failed",
+    "earlier_completed_attempt_retained": true
+  },
+  "claim_boundaries": [
+    "No production-scale load test is claimed.",
+    "No universal Sodabase score is claimed.",
+    "No billing adoption is claimed.",
+    "No source-reel import is claimed.",
+    "Missing or unreconciled data remains unknown.",
+    "Private relationship, equity, and restricted deck details must not be exposed."
+  ]
+}

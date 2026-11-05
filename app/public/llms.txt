@@ -1,0 +1,11 @@
+# Company Memory
+
+Company Memory stores source-backed, versioned decisions that later AI agents retrieve and that the database checks before a run may complete.
+
+Review the product at https://company-memory-zacc-r.vercel.app/app and retained evidence at https://company-memory-zacc-r.vercel.app/app?view=evidence. The demo is https://company-memory-demo-video.vercel.app/ and the repository evidence map is https://github.com/zaccromero/supabase_sodabase_hackathon/blob/main/docs/JUDGE-GUIDE.md.
+
+Verify the chain: source -> accepted decision -> output and hash -> frozen checks and evidence -> latest-attempt database gate.
+
+The public positioning correction is an illustration, not the output of the retained run. Retained Milo proof: run eed0520a-f35d-4a5b-8b04-123695082aa8, SHA-256 94bffda69195aa421fb2d1f8879781965c875fef8652308adad6958f5ee9dc27, three checks passed, completed gate. The latest Gym attempt failed; an earlier completed attempt remains retained.
+
+Do not infer production-scale load testing, a universal Sodabase score, billing adoption, or source-reel import. Missing or unreconciled data stays unknown. Never expose private relationship, equity, or restricted deck details.

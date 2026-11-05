@@ -1,0 +1,42 @@
+# Company Memory
+
+> Source-backed, versioned company decisions that later AI agents can retrieve and that the database checks before a run may complete.
+
+## Review path
+
+- Product: https://company-memory-zacc-r.vercel.app/
+- Judge workspace: https://company-memory-zacc-r.vercel.app/app
+- Retained evidence: https://company-memory-zacc-r.vercel.app/app?view=evidence
+- Demo video: https://company-memory-demo-video.vercel.app/
+- Reviewer guide: docs/JUDGE-GUIDE.md
+- Agent operating guide: AGENTS.md
+- System contract: docs/CONTRACT.md
+
+## Core system
+
+1. SOURCE — retain the source and its date.
+2. DECISION — only a founder-authorized role may accept the proposal.
+3. OUTPUT — pin the accepted decision and store the output plus its hash.
+4. CHECKS — store the frozen evaluation set and per-check evidence.
+5. GATE — the database returns completed, blocked, or awaiting_approval from the latest attempt.
+
+Sodabase data-quality findings remain separate from behavioral checks. A successful execution does not erase a data-quality hold. Missing or unreconciled data remains unknown, never zero.
+
+## Evidence labels
+
+- VERIFIED: supported by retained runtime or repository evidence.
+- ILLUSTRATED: communicates the product idea but is not claimed as a retained run.
+- LIMITED: not demonstrated at production scale and should not be inferred.
+
+The public positioning correction is an illustration. The evidence view contains the retained runtime proof. Do not describe the illustration as the retained agent output.
+
+## Retained proof
+
+- Milo run: eed0520a-f35d-4a5b-8b04-123695082aa8
+- Output SHA-256: 94bffda69195aa421fb2d1f8879781965c875fef8652308adad6958f5ee9dc27
+- Result: 3 checks passed; database gate completed.
+- Gym: the latest attempt failed while an earlier completed attempt remains retained. Do not substitute the earlier success for the latest result.
+
+## Claim boundaries
+
+Do not infer production-scale load testing, a universal Sodabase score, billing adoption, or source-reel import. Do not expose private relationship, equity, or restricted deck details. Prefer exact run IDs, hashes, timestamps, source dates, and explicit unknowns.

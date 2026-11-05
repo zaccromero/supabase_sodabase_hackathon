@@ -8,6 +8,8 @@ This repository implements **Company Memory**: source-backed, versioned company 
 - Judge-facing workspace: <https://company-memory-zacc-r.vercel.app/app>
 - Detailed evidence view: <https://company-memory-zacc-r.vercel.app/app?view=evidence>
 - Final public demo video: <https://company-memory-demo-video.vercel.app/>
+- Reviewer evidence map: [`docs/JUDGE-GUIDE.md`](docs/JUDGE-GUIDE.md)
+- Machine-readable overview: [`llms.txt`](llms.txt)
 - System contract: [`docs/CONTRACT.md`](docs/CONTRACT.md)
 - Demo facts and fallback language: [`docs/DEMO.md`](docs/DEMO.md)
 
